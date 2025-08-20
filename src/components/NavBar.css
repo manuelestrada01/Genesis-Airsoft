@@ -1,0 +1,90 @@
+
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: #222;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .navbar-logo {
+    margin-left: 300px; /* 👉 Mueve el logo hacia la derecha */
+  }
+  
+  .navbar-logo img {
+    height: 120px; /* 👉 Hacelo más grande */
+    width: auto;
+    display: block;
+  }
+  
+  .navbar-links {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    margin-left: 380px;
+    margin-right: auto;
+    position: relative;
+  }
+  
+  .navbar-links li {
+    position: relative;
+  }
+  
+  .navbar-links a {
+    color: white;
+    text-decoration: none;
+    padding: 8px;
+    display: block;
+  }
+  
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;         /* Aparece justo debajo del enlace */
+    left: 0;
+    background-color: #333;
+    padding: 0.5rem 0;
+    list-style: none;
+    min-width: 200px;
+    z-index: 999;
+  }
+  
+  .dropdown-menu li a {
+    padding: 0.5rem 1rem;
+    white-space: nowrap;
+    color: white;
+  }
+  
+  .dropdown-menu li a:hover {
+    background-color: #444;
+  }
+  
+  .dropdown:hover .dropdown-menu {
+    display: block;
+  }
+  
+  
+  .cart-widget {
+    font-size: 1.2rem;
+    position: relative;
+  }
+  
+  
+  .cart-widget span {
+    background: red;
+    border-radius: 50%;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+  }
+  
