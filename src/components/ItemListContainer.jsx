@@ -1,6 +1,6 @@
 // src/components/ItemListContainer.jsx
-
-import React from 'react';
+import './ItemListContainer.css';
+import React from 'react';  
 
 const ItemListContainer = ({ greeting }) => {
   return (
