@@ -13,7 +13,7 @@ const NavBarTop = () => {
       </div>
 
       {/* Navbar principal */}
-      <header className="navbar-top" style={{ top: "30px" }}> {/* ajusta según altura de top-bar */}
+      <header className="navbar-top" style={{ top: "30px" }}>
         <div className="navbar-logo">
           <img src={logo} alt="Logo de la tienda" />
         </div>
@@ -27,7 +27,10 @@ const NavBarTop = () => {
           <FaSearch className="search-icon" />
         </div>
 
-        <CartWidget />
+        <div className="navbar-actions">
+          <CartWidget />
+          <button className="login-btn">Login / Register</button>
+        </div>
       </header>
     </>
   );

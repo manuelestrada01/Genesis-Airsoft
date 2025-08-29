@@ -13,9 +13,17 @@ const NavBarBottom = () => {
             <li><a href="#">Marcadoras GBB</a></li>
             <li><a href="#">Indumentaria</a></li>
             <li><a href="#">Partes/Accesorios</a></li>
+            <li><a href="#">Insumos</a></li>
           </ul>
         </li>
         <li><a href="#">Contacto</a></li>
+                <li className="dropdown">
+          <a href="#">Alquileres</a>
+          <ul className="dropdown-menu">
+            <li><a href="#">Capital Federal</a></li>
+            <li><a href="#">Mendoza</a></li>
+          </ul>
+        </li>
       </ul>
     </nav>
   );
