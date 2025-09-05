@@ -1,17 +1,17 @@
 .carousel {
-  width: 100vw;
+  width: 100%;              /* ✅ ocupa todo el ancho sin desbordar */
   position: relative;
   display: flex;
-  overflow-x: auto;         /* solo scroll horizontal */
-  overflow-y: hidden;       /* 🔴 bloquea scroll vertical */
+  overflow-x: auto;         
+  overflow-y: hidden;       
   scroll-snap-type: x mandatory;
-  margin-top: 250px;
+  margin-top: 80px;
   padding: 0;
-  height: 500px;            /* altura fija */
+  height: 500px;            
 }
 
 .carousel-item {
-  min-width: 100vw;
+  min-width: 100%;          /* ✅ lo mismo que arriba */
   height: 100%;
   display: flex;
   justify-content: center;
@@ -21,7 +21,7 @@
 }
 
 .carousel-item img {
-  max-height: 100%;         /* nunca más grande que el alto del carrusel */
-  width: auto;              /* mantiene proporción */
-  object-fit: contain;      /* se adapta sin recorte */
+  max-height: 100%;         
+  width: auto;              
+  object-fit: contain;      
 }

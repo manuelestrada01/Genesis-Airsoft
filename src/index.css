@@ -22,13 +22,16 @@ a:hover {
   color: #535bf2;
 }
 
-body {
-  background-color: white;
+html, body, #root {
   margin: 0;
+  padding: 0;
+  height: 100%;        /* ocupa toda la ventana */
+}
+
+body {
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  flex-direction: column; /* apilar header/main/footer */
+  min-height: 100vh;      /* mínimo altura de la ventana */
 }
 
 h1 {

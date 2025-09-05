@@ -40,3 +40,24 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Evita el scroll horizontal innecesario */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* ocupa toda la pantalla */
+  overflow-x: hidden; /* ✅ bloquea scroll horizontal */
+}
+
+.app-main {
+  flex: 1; /* empuja el footer abajo */
+}
+

@@ -1,0 +1,28 @@
+.footer {
+  background: #222; /* color uniforme */
+  color: #fff;
+  padding: 20px 0;
+  text-align: center;
+
+  width: 100vw;   /* 👈 ocupa exactamente todo el viewport */
+  margin-left: calc(-50vw + 50%); /* 👈 corrige el “desplazamiento” */
+}
+
+
+
+/* Top (logo centrado) */
+.footer-top {
+  margin-bottom: 15px;
+}
+
+.footer-logo {
+  height: 80px; /* ajusta tamaño según tu logo */
+}
+
+/* Bottom (texto copyright) */
+.footer-bottom {
+  border-top: 1px solid #333; /* línea separadora */
+  padding-top: 10px;
+  font-size: 14px;
+  color: #bbb;
+}

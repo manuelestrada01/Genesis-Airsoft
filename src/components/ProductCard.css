@@ -27,10 +27,9 @@
   margin: 4px 0;
 }
 
-/* Card */
 .product-card {
   background: #fff;
-  border: 1px solid #e0e0e0; /* ✅ borde sutil gris */
+  border: none; /* aseguramos que no haya borde */
   border-radius: 10px;
   padding: 10px;
   text-align: center;
@@ -38,13 +37,16 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* sombra suave */
+  box-shadow: none; /* opcional, si querés quitar sombra también */
 }
+
 
 .product-card:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 15px rgba(0,0,0,0.2); /* sombra más intensa al hover */
 }
+
+
 
 .product-img {
   width: 100%;
@@ -63,15 +65,13 @@
   transform: translateY(-20px);
 }
 
-/* Botón agregar al carrito */
 .add-to-cart {
   position: absolute;
   bottom: -50px;
   left: 0;
   width: 100%;
   height: 45px;
-  padding: 0 12px;
-  background-color: #000;
+  background: #000;
   color: #fff;
   border: none;
   border-radius: 0 0 10px 10px;
@@ -81,8 +81,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  z-index: 99;
 }
+
+.product-card:hover .add-to-cart {
+  bottom: 0; /* aparece en hover */
+}
+
+
 
 /* Contenedor para texto y logo */
 .add-to-cart span,
