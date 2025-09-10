@@ -1,0 +1,157 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  width: 70%;         /* antes 80% → más angosta */
+  max-width: 700px;   /* antes 900px → más chica */
+  height: 400px;      /* antes 500px → más baja */
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+}
+
+.modal-body img {
+  width: 40%;
+  height: 100%;
+  object-fit: contain;
+  background: #f9f9f9;
+  border-radius: 10px;
+}
+
+.modal-details {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.price {
+  font-size: 22px;
+  font-weight: bold;
+  color: #000000;
+  margin-top: -10px;  /* 🔼 mueve hacia arriba */
+  margin-bottom: 20px; /* 🔽 deja aire debajo */
+}
+
+
+.add-cart-btn {
+  background: #000;        /* negro */
+  color: #fff;             /* texto blanco */
+  border: none;
+  padding: 12px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.add-cart-btn:hover {
+  background: #222;        /* un gris oscuro al hover para efecto */
+}
+
+
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  border: 1px solid #000;
+  border-radius: 4px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.quantity-selector button {
+  background: #fff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #000;
+  transition: background 0.2s ease;
+
+  /* 👇 centrado perfecto */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-selector button:focus {
+  outline: none;         /* 👈 elimina el borde azul al hacer clic */
+  box-shadow: none;      /* 👈 por si algún navegador lo reemplaza */
+}
+
+
+.quantity-selector button:hover {
+  background: #f2f2f2;
+}
+
+.quantity-selector span {
+  width: 40px;   /* mismo tamaño que los botones */
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #000;
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
+}
+
+
+.modal-actions {
+    display: flex;
+  align-items: center;
+  gap: 15px;       /* espacio entre contador y botón */
+  margin-left: 50px;  /* 👈 regulás manualmente moviéndolo a la izquierda */
+}
+
+.preview-description {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: #555;
+  margin-top: 10px; /* separación de la botonera */
+  text-align: center;
+  line-height: 1.4;
+  max-height: 40px; /* limita altura para que no estire demasiado */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
