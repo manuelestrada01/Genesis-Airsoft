@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
+import ProductDetail from "./components/ItemDetailContainer"; 
 import NavBarTop from "./components/NavBarTop";
 import NavBarBottom from "./components/NavBarBottom";
 import Carousel from "./components/Carousel";
@@ -28,13 +28,12 @@ function App() {
       <NavBarTop />
       <NavBarBottom />
 
-      <div style={{ minHeight: "80vh" }}>
+      <div style={{ minHeight: "80vh", marginTop: "200px" }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
-
-          {/* 👇 Nueva ruta para categorías */}
           <Route path="/category/:categoryId" element={<ProductList />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
         </Routes>
       </div>
 

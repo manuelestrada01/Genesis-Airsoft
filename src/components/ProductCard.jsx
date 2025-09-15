@@ -2,15 +2,19 @@ import React, { useState } from "react";
 import "./ProductCard.css";
 import { FaShoppingCart, FaSearch } from "react-icons/fa"; 
 import ProductPreview from "./ProductPreview";
+import { Link } from "react-router-dom"; // 👈 para navegar al detalle
 
-const ProductCard = ({ name, price, image, category, description }) => {
+// Ahora recibimos también el `id`
+const ProductCard = ({ id, name, price, image, category, description }) => {
   const [showPreview, setShowPreview] = useState(false);
 
   return (
     <>
       <div className="product-card">
-        {/* Imagen del producto */}
-        <img src={image} alt={name} className="product-img" />
+        {/* Imagen del producto envuelta en un Link */}
+        <Link to={`/product/${id}`}>
+          <img src={image} alt={name} className="product-img" />
+        </Link>
 
         {/* Botón lupa (aparece en hover) */}
         <button
@@ -22,7 +26,10 @@ const ProductCard = ({ name, price, image, category, description }) => {
 
         {/* Info del producto */}
         <div className="product-info">
-          <p className="product-title">{name}</p>
+          {/* El título también lleva al detalle */}
+          <Link to={`/product/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
+            <p className="product-title">{name}</p>
+          </Link>
           <p className="product-category">{category}</p>
           <p className="product-price">${price}</p>
         </div>
@@ -37,7 +44,7 @@ const ProductCard = ({ name, price, image, category, description }) => {
       {/* Modal Preview */}
       {showPreview && (
         <ProductPreview
-          product={{ name, price, image, category, description }}
+          product={{ id, name, price, image, category, description }}
           onClose={() => setShowPreview(false)}
         />
       )}

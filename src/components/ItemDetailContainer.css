@@ -1,0 +1,103 @@
+.product-detail {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  justify-content: center;
+  margin-top: 120px; /* 👈 separa del navbar */
+  padding: 20px;
+}
+
+.detail-img {
+  width: 350px;
+  height: 350px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+}
+
+.detail-info {
+  max-width: 500px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.detail-info h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.detail-category {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.detail-price {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+.detail-description {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.detail-add-to-cart {
+  background: #000;
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.detail-add-to-cart:hover {
+  background: #333;
+}
+
+.detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantity-selector button {
+  padding: 5px 10px;
+  border: none;
+  background: #ddd;
+  cursor: pointer;
+  font-size: 18px;
+  border-radius: 4px;
+}
+
+.quantity-selector span {
+  font-size: 18px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.detail-add-to-cart {
+  background: #007bff;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.detail-add-to-cart:hover {
+  background: #0056b3;
+}
