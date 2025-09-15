@@ -1,27 +1,28 @@
 import React from "react";
+import { Link } from "react-router-dom"; // 👈 importamos Link
 import "./NavBar.css";
 
 const NavBarBottom = () => {
   return (
     <nav className="navbar-bottom">
       <ul className="navbar-links">
-        <li><a href="#">Inicio</a></li>
+        <li><Link to="/">Inicio</Link></li>
         <li className="dropdown">
-          <a href="#">Categorías</a>
+          <span>Categorías</span>
           <ul className="dropdown-menu">
-            <li><a href="#">Marcadoras AEG</a></li>
-            <li><a href="#">Marcadoras GBB</a></li>
-            <li><a href="#">Indumentaria</a></li>
-            <li><a href="#">Partes/Accesorios</a></li>
-            <li><a href="#">Insumos</a></li>
+            <li><Link to="/category/Marcadoras AEG">Marcadoras AEG</Link></li>
+            <li><Link to="/category/Marcadoras GBB">Marcadoras GBB</Link></li>
+            <li><Link to="/category/Indumentaria">Indumentaria</Link></li>
+            <li><Link to="/category/Accesorios">Accesorios</Link></li>
+            <li><Link to="/category/Insumos">Insumos</Link></li>
           </ul>
         </li>
-        <li><a href="#">Contacto</a></li>
-                <li className="dropdown">
-          <a href="#">Alquileres</a>
+        <li><Link to="/contacto">Contacto</Link></li>
+        <li className="dropdown">
+          <span>Alquileres</span>
           <ul className="dropdown-menu">
-            <li><a href="#">Capital Federal</a></li>
-            <li><a href="#">Mendoza</a></li>
+            <li><Link to="/alquileres/capital-federal">Capital Federal</Link></li>
+            <li><Link to="/alquileres/mendoza">Mendoza</Link></li>
           </ul>
         </li>
       </ul>

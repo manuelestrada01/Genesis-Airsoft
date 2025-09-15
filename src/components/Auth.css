@@ -1,0 +1,70 @@
+.auth-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 1000px;
+  margin: 190px auto 50px auto; /* 👈 agrega margen arriba */
+  padding: 20px;
+}
+
+.auth-box {
+  
+  padding: 20px;
+}
+
+.auth-box:last-child {
+  border-right: none;
+}
+
+.auth-box h2 {
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.auth-box form {
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-box label {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.auth-box input {
+  margin-bottom: 15px;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.btn-login {
+  background: #222;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 20px;
+  margin-bottom: 10px;
+}
+
+.btn-register {
+  background: #222;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 20px;
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.privacy {
+  font-size: 13px;
+  margin: 10px 0;
+}

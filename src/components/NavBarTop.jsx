@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom"; // 👈 Importante para la navegación
 import CartWidget from "./CartWidget";
 import logo from "../assets/LogoGenesis.png";
 import { FaSearch } from "react-icons/fa";
@@ -8,14 +9,15 @@ const NavBarTop = () => {
   return (
     <>
       {/* Franja superior */}
-      <div className="top-bar">
-        Envíos a todo Argentina
-      </div>
+      <div className="top-bar">Envíos a todo Argentina</div>
 
       {/* Navbar principal */}
       <header className="navbar-top" style={{ top: "30px" }}>
         <div className="navbar-logo">
-          <img src={logo} alt="Logo de la tienda" />
+          {/* 👇 Logo con Link a Home */}
+          <Link to="/">
+            <img src={logo} alt="Logo de la tienda" />
+          </Link>
         </div>
 
         <div className="search-container">
@@ -29,7 +31,10 @@ const NavBarTop = () => {
 
         <div className="navbar-actions">
           <CartWidget />
-          <button className="login-btn">Login / Register</button>
+          {/* 🔹 Link que redirige a la ruta /auth */}
+          <Link to="/auth" className="login-btn">
+            Login / Register
+          </Link>
         </div>
       </header>
     </>
