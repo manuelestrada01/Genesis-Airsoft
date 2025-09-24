@@ -12,11 +12,13 @@ import "./App.css";
 
 const Home = () => (
   <div className="app-container">
-    <div style={{ marginTop: "170px", display: "flex", justifyContent: "center" }}>
+    {/* Reducimos el marginTop */}
+    <div style={{ marginTop: "-100px", display: "flex", justifyContent: "center" }}>
       <Carousel />
     </div>
+
     <ItemListContainer greeting="¡Bienvenido a Genesis Airsoft!" />
-    <div style={{ margin: "40px 20px" }}>
+    <div style={{ margin: "10px 20px" }}>
       <ProductList />
     </div>
   </div>
@@ -28,7 +30,8 @@ function App() {
       <NavBarTop />
       <NavBarBottom />
 
-      <div style={{ minHeight: "80vh", marginTop: "200px" }}>
+      {/* 👇 Usamos clase global en lugar de marginTop suelto */}
+      <div className="app-main">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
@@ -41,5 +44,7 @@ function App() {
     </BrowserRouter>
   );
 }
+
+
 
 export default App;

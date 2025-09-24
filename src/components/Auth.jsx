@@ -1,24 +1,27 @@
-import React, { useState } from "react";
+// src/components/Auth.jsx
+import React, { useState, useContext } from "react";
 import "./Auth.css";
-import { registerUser, loginUser } from "../services/authService"; // 👈 funciones de firebase
+import AuthContext from "../context/AuthContext"; // 👈 usamos el contexto
 
 const Auth = () => {
+  const { registerUser, loginUser, user } = useContext(AuthContext); // 👈 traemos también el user si lo querés usar
+
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     username: "",
     email: "",
     password: "",
   });
-  const [error, setError] = useState(""); // Para mostrar errores
-  const [success, setSuccess] = useState(""); // Para mostrar éxito
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Manejo de cambios en los inputs
-  const handleLoginChange = (e) => {
-    setLoginData({ ...loginData, [e.target.name]: e.target.value });
-  };
-
-  const handleRegisterChange = (e) => {
-    setRegisterData({ ...registerData, [e.target.name]: e.target.value });
+  // Inputs handlers
+  const handleChange = (e, type) => {
+    if (type === "login") {
+      setLoginData({ ...loginData, [e.target.name]: e.target.value });
+    } else {
+      setRegisterData({ ...registerData, [e.target.name]: e.target.value });
+    }
   };
 
   // Login
@@ -30,9 +33,10 @@ const Auth = () => {
       await loginUser(loginData.email, loginData.password);
       setSuccess("¡Login exitoso!");
       console.log("Usuario logueado:", loginData.email);
+      setLoginData({ email: "", password: "" }); // limpiar form
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError("Error al iniciar sesión: " + err.message);
     }
   };
 
@@ -49,16 +53,16 @@ const Auth = () => {
       );
       setSuccess("¡Registro exitoso!");
       console.log("Usuario registrado:", registerData.email);
-      setRegisterData({ username: "", email: "", password: "" });
+      setRegisterData({ username: "", email: "", password: "" }); // limpiar form
     } catch (err) {
       console.error(err);
-      setError(err.message);
+      setError("Error al registrarse: " + err.message);
     }
   };
 
   return (
     <div className="auth-container">
-      {/* Mostrar errores o éxito */}
+      {/* Mensajes */}
       {error && <p className="auth-error">{error}</p>}
       {success && <p className="auth-success">{success}</p>}
 
@@ -71,7 +75,7 @@ const Auth = () => {
             type="email"
             name="email"
             value={loginData.email}
-            onChange={handleLoginChange}
+            onChange={(e) => handleChange(e, "login")}
             required
           />
           <label>Password *</label>
@@ -79,7 +83,7 @@ const Auth = () => {
             type="password"
             name="password"
             value={loginData.password}
-            onChange={handleLoginChange}
+            onChange={(e) => handleChange(e, "login")}
             required
           />
           <button type="submit" className="btn-login">
@@ -97,7 +101,7 @@ const Auth = () => {
             type="text"
             name="username"
             value={registerData.username}
-            onChange={handleRegisterChange}
+            onChange={(e) => handleChange(e, "register")}
             required
           />
           <label>Dirección de correo electrónico *</label>
@@ -105,7 +109,7 @@ const Auth = () => {
             type="email"
             name="email"
             value={registerData.email}
-            onChange={handleRegisterChange}
+            onChange={(e) => handleChange(e, "register")}
             required
           />
           <label>Contraseña *</label>
@@ -113,10 +117,12 @@ const Auth = () => {
             type="password"
             name="password"
             value={registerData.password}
-            onChange={handleRegisterChange}
+            onChange={(e) => handleChange(e, "register")}
             required
           />
-          <p className="privacy">🔒 Política de Privacidad y Protección de Datos</p>
+          <p className="privacy">
+            🔒 Política de Privacidad y Protección de Datos
+          </p>
           <button type="submit" className="btn-register">
             Registrarse
           </button>

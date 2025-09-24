@@ -55,9 +55,12 @@ html, body {
   flex-direction: column;
   min-height: 100vh; /* ocupa toda la pantalla */
   overflow-x: hidden; /* ✅ bloquea scroll horizontal */
+  padding-top: 170px;
 }
 
 .app-main {
   flex: 1; /* empuja el footer abajo */
+  min-height: 80vh;
+  padding-top: 70px; /* Ajusta según la altura combinada de NavBarTop + NavBarBottom */
 }
 

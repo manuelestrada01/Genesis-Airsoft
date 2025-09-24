@@ -171,7 +171,245 @@
   transition: background 0.3s ease;
 }
 
-.login-btn:hover {
-  background: #e05500; /* un tono más oscuro al pasar el mouse */
+/* === NAVBAR SUPERIOR === */
+.navbar-top {
+    background: #222; /* color uniforme */
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    height: 120px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
 }
+
+  
+  .navbar-logo img {
+    height: 120px;
+    width: auto;
+    position: relative;
+    left: 500px;
+  }
+  
+  /* Barra de búsqueda dentro de la navbar superior */
+  .search-container {
+    position: relative;
+    flex-grow: 1;
+    max-width: 250px;
+    margin: 0 2rem;
+    left: 0px;
+  }
+
+  .search-bar {
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 1rem; /* espacio a la derecha para la lupa */
+    border-radius: 4px;
+    border: none;
+    font-size: 1rem;
+  }
+
+  .search-icon {
+    position: absolute;
+    right: -100px;
+    top: 50%;
+    transform: translateY(-50%); /* centra verticalmente */
+    color: #999;
+    cursor: pointer;
+  }
+
+  
+  .navbar-bottom {
+    background: radial-gradient(circle, #333333 0%, #141414 100%);
+    color: white;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    position: fixed;
+    top: 170px;   /* justo debajo de la navbar-top + top-bar */
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+}
+  
+  .navbar-links {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    align-items: center;
+  }
+  
+  
+  .navbar-links li.dropdown {
+    position: relative;  /* Esto hace que el dropdown se posicione respecto al li */
+}
+
+  
+  .navbar-links a {
+    color: white;
+    text-decoration: none;
+    display: flex;               /* 👉 flex en los links */
+    align-items: center;         /* 👉 centra el texto */
+    height: 100%;                /* 👉 ocupa toda la altura de la navbar */
+    padding: 0 1rem;             /* 👉 solo padding horizontal */
+  }
+  
+  
+  
+  /* === Dropdown menu === */
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #333;
+    list-style: none;
+    padding: 0.5rem 0;
+    min-width: 200px;
+    z-index: 999;
+  }
+  
+  .dropdown-menu li a {
+    color: white;
+    padding: 0.5rem 1rem;
+    display: block;
+  }
+  
+  .dropdown-menu li a:hover {
+    background-color: #444;
+  }
+  
+  .dropdown:hover .dropdown-menu {
+    display: block;
+  }
+  
+  /* === Cart Widget === */
+  .cart-widget {
+    font-size: 1.5rem;
+    color: white;
+    position: relative; /* asegurás que pueda posicionarse */
+    left: -20px;        /* mueve el carrito hacia la izquierda sin afectar la barra */
+  }
+
+  
+  .cart-widget span {
+    background: red;
+    border-radius: 50%;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+  }
+  
+
+/* === Top Info Bar con degradé radial equilibrado === */
+.top-bar {
+    background: radial-gradient(circle, #333333 0%, #141414 100%);
+    color: white;
+    text-align: center;
+    padding: 0.5rem 0;
+    font-size: 0.9rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1100;
+}
+
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* espacio entre carrito y botón */
+}
+
+
+
+/* Botón principal */
+.login-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #222;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: background 0.25s ease;
+  text-decoration: none;
+  color: #fff; /* 👈 color fijo blanco */
+}
+
+/* Forzamos el color blanco en todos los estados de Link */
+.login-btn:link,
+.login-btn:visited,
+.login-btn:hover,
+.login-btn:focus,
+.login-btn:active {
+  color: #fff;
+  text-decoration: none; /* evitamos subrayados */
+}
+
+/* Hover/focus del botón */
+.login-btn:hover,
+.login-btn:focus {
+  background-color: #333;
+  outline: none;
+}
+
+
+/* Texto visible inicialmente */
+.btn-text {
+  display: inline-block;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: none; /* evita foco accidental en el span */
+}
+
+/* Icono posicionado absolutamente (no ocupa espacio inicial) */
+.user-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  opacity: 0;
+  color: #fff;             /* icono blanco */
+  font-size: 18px;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+}
+
+/* Hover / focus: texto se oculta, icono aparece */
+.login-btn:hover .btn-text,
+.login-btn:focus .btn-text {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.95);
+}
+
+.login-btn:hover .user-icon,
+.login-btn:focus .user-icon {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Accesibilidad: mostrar icono también al navegar con teclado (focus-visible) */
+.login-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(34,34,34,0.15);
+}
+
+
+
 
