@@ -2,13 +2,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../firebase/db";
 import "./ItemDetailContainer.css";
+import ItemCount from "./ItemCount";
 
 const ProductDetail = () => {
-  const { id } = useParams(); // 👈 obtenemos el ID de la URL
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1); // 👈 contador
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -29,9 +29,6 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
-  const increase = () => setQuantity(prev => prev + 1);
-  const decrease = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
-
   if (!product) {
     return (
       <p style={{ marginTop: "120px", textAlign: "center" }}>
@@ -43,24 +40,15 @@ const ProductDetail = () => {
   return (
     <div className="product-detail">
       <img src={product.image} alt={product.name} className="detail-img" />
+
       <div className="detail-info">
         <h2>{product.name}</h2>
         <p className="detail-category">{product.category}</p>
         <p className="detail-price">${product.price}</p>
         <p className="detail-description">{product.description}</p>
 
-        {/* Contador + Botón */}
-        <div className="detail-actions">
-          <div className="quantity-selector">
-            <button onClick={decrease}>-</button>
-            <span>{quantity}</span>
-            <button onClick={increase}>+</button>
-          </div>
-
-          <button className="detail-add-to-cart">
-            Agregar al carrito
-          </button>
-        </div>
+        {/* 👇 solo pasamos el producto */}
+        <ItemCount product={product} />
       </div>
     </div>
   );

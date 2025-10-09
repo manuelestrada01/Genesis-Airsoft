@@ -1,22 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import "./ProductCard.css";
 import { FaShoppingCart, FaSearch } from "react-icons/fa"; 
 import ProductPreview from "./ProductPreview";
-import { Link } from "react-router-dom"; // 👈 para navegar al detalle
+import { Link } from "react-router-dom"; 
+import { CartContext } from "../context/CartContext";
 
-// Ahora recibimos también el `id`
 const ProductCard = ({ id, name, price, image, category, description }) => {
   const [showPreview, setShowPreview] = useState(false);
+  const { addToCart } = useContext(CartContext); // 🔹 extraemos función del context
+
+  const handleAddToCart = () => {
+    addToCart({ id, name, price, image, category, description }, 1); // siempre 1 unidad
+  };
 
   return (
     <>
       <div className="product-card">
-        {/* Imagen del producto envuelta en un Link */}
         <Link to={`/product/${id}`}>
           <img src={image} alt={name} className="product-img" />
         </Link>
 
-        {/* Botón lupa (aparece en hover) */}
         <button
           className="quick-view-btn"
           onClick={() => setShowPreview(true)}
@@ -24,9 +27,7 @@ const ProductCard = ({ id, name, price, image, category, description }) => {
           <FaSearch />
         </button>
 
-        {/* Info del producto */}
         <div className="product-info">
-          {/* El título también lleva al detalle */}
           <Link to={`/product/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
             <p className="product-title">{name}</p>
           </Link>
@@ -35,13 +36,12 @@ const ProductCard = ({ id, name, price, image, category, description }) => {
         </div>
 
         {/* Botón agregar al carrito */}
-        <button className="add-to-cart">
+        <button className="add-to-cart" onClick={handleAddToCart}>
           <span className="btn-text">Agregar al carrito</span>
           <FaShoppingCart className="btn-icon" />
         </button>
       </div>
 
-      {/* Modal Preview */}
       {showPreview && (
         <ProductPreview
           product={{ id, name, price, image, category, description }}

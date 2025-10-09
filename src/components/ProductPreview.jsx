@@ -1,20 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import "./ProductPreview.css";
-import { FaShoppingCart } from "react-icons/fa";
+import ItemCount from "./ItemCount"; // ✅ contador reutilizable con lógica del carrito
 
 const ProductPreview = ({ product, onClose }) => {
-  const [quantity, setQuantity] = useState(1);
-
-  const increase = () => setQuantity(prev => prev + 1);
-  const decrease = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
-
   return (
     <div className="modal-overlay">
       <div className="modal-content">
         <span className="close" onClick={onClose}>&times;</span>
 
         <div className="modal-body">
-          {/* Imagen */}
+          {/* Imagen del producto */}
           <img src={product.image} alt={product.name} />
 
           {/* Detalles */}
@@ -23,19 +18,10 @@ const ProductPreview = ({ product, onClose }) => {
             <p>{product.description}</p>
             <p className="price">${product.price}</p>
 
-            {/* Contador + Botón juntos */}
-            <div className="modal-actions">
-              <div className="quantity-selector">
-                <button onClick={decrease}>-</button>
-                <span>{quantity}</span>
-                <button onClick={increase}>+</button>
-              </div>
+            {/* 👇 Reutilizamos el contador (ya incluye el botón "Agregar al carrito") */}
+            <ItemCount product={product} initial={1} stock={10} />
 
-              <button className="add-cart-btn">
-                Agregar al carrito
-              </button>
-            </div>
-                        <div className="preview-description">
+            <div className="preview-description">
               {product.shortDescription || product.description}
             </div>
           </div>

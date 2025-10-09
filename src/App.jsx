@@ -4,10 +4,12 @@ import ProductDetail from "./components/ItemDetailContainer";
 import NavBarTop from "./components/NavBarTop";
 import NavBarBottom from "./components/NavBarBottom";
 import Carousel from "./components/Carousel";
-import ItemListContainer from "./components/greeting"; 
-import ProductList from "./components/ItemListContainer";
+import Greetting from "./components/greeting"; 
+import ItemListContainer from "./components/ItemListContainer";
 import Footer from "./components/Footer";
 import Auth from "./components/Auth";
+import CartContainer from "./components/CartContainer";
+import Checkout from "./components/Checkout";
 import "./App.css";
 
 const Home = () => (
@@ -17,9 +19,9 @@ const Home = () => (
       <Carousel />
     </div>
 
-    <ItemListContainer greeting="¡Bienvenido a Genesis Airsoft!" />
+    <Greetting Greetting="¡Bienvenido a Genesis Airsoft!" />
     <div style={{ margin: "10px 20px" }}>
-      <ProductList />
+      <ItemListContainer />
     </div>
   </div>
 );
@@ -35,8 +37,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/category/:categoryId" element={<ProductList />} />
+          <Route path="/category/:categoryId" element={<ItemListContainer />} />
           <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/cart" element={<CartContainer />} />
+          <Route path="/checkout" element={<Checkout />} />
         </Routes>
       </div>
 

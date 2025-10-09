@@ -1,48 +1,66 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom"; // 👈 para leer la categoría
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase.js";
-import ProductCard from "./ProductCard";
-import "./ItemListContainer.css";
 
-const ProductList = () => {
-  const { categoryId } = useParams(); // 👈 capturamos la categoría
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db, getProducts, getCategories } from "../firebase/db";
+import ItemList from "./ItemList";
+
+const ItemListContainer = () => {
+  const { categoryId } = useParams();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    
+    const fetchCategories = async () => {
+      try {
+        const cats = await getCategories();
+        setCategories(cats);
+      } catch (error) {
+        console.error("Error al traer categorías:", error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        let q;
+        let productsFromDb;
+
         if (categoryId) {
-          q = query(collection(db, "products"), where("category", "==", categoryId));
+          
+          const categoryExists = categories.some((cat) => cat.name === categoryId);
+          if (!categoryExists) {
+            setProducts([]);
+            return;
+          }
+
+          
+          const q = query(collection(db, "products"), where("category", "==", categoryId));
+          const querySnapshot = await getDocs(q);
+          productsFromDb = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
         } else {
-          q = collection(db, "products");
+          
+          productsFromDb = await getProducts();
         }
 
-        const querySnapshot = await getDocs(q);
-        const productsFromDb = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
         setProducts(productsFromDb);
+        console.log("Productos traídos desde Firebase:", productsFromDb);
       } catch (error) {
         console.error("Error al traer productos:", error);
       }
     };
 
     fetchProducts();
-  }, [categoryId]);
+  }, [categoryId, categories]);
 
   return (
-    <div className="product-list">
-      {products.length > 0 ? (
-        products.map(product => <ProductCard key={product.id} {...product} />)
-      ) : (
-        <p>No hay productos en esta categoría.</p>
-      )}
-    </div>
+    <ItemList products={products} />
   );
 };
 
-export default ProductList;
+export default ItemListContainer;

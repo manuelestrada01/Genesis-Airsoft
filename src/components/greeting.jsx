@@ -2,12 +2,12 @@
 import './ItemListContainer.css';
 import React from 'react';  
 
-const ItemListContainer = ({ greeting }) => {
+const Greetting = ({ Greetting }) => {
   return (
-    <div className="item-list-container">
-      <h2>{greeting}</h2>
+    <div className="Greetting">
+      <h2>{Greetting}</h2>
     </div>
   );
 };
 
-export default ItemListContainer;
+export default Greetting;

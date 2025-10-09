@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AuthContext from "./AuthContext"; // 👈 Import correcto
-import { auth } from "../firebase";
+import { auth } from "../firebase/config";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
