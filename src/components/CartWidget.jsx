@@ -1,7 +1,8 @@
 import React, { useContext } from "react";
 import { CartContext } from "../context/CartContext";
-import "./CartWidget.css";
 import { useNavigate } from "react-router-dom";
+import { FiShoppingCart } from "react-icons/fi"; // icono minimalista
+import "./CartWidget.css";
 
 const CartWidget = () => {
   const { cart } = useContext(CartContext);
@@ -14,8 +15,8 @@ const CartWidget = () => {
   };
 
   return (
-    <button className="cart-widget" onClick={handleClick}>
-      🛒
+    <button className="cart-widget" onClick={handleClick} aria-label="Ir al carrito">
+      <FiShoppingCart className="cart-icon" />
       {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
     </button>
   );

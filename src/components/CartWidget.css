@@ -1,19 +1,49 @@
 .cart-widget {
+  all: unset;              /* elimina todos los estilos por defecto */
   position: relative;
-  font-size: 24px;
-  cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background-color: transparent !important; /* asegura que no tenga fondo */
+  color: white;
+  -webkit-tap-highlight-color: transparent; /* elimina highlight en mobile */
+  user-select: none;        /* opcional, evita selección al click */
+}
+
+.cart-widget:focus,
+.cart-widget:active {
+  outline: none;            /* quita el outline */
+  box-shadow: none;         /* quita cualquier sombra de foco */
+  background: transparent;  /* asegura fondo transparente */
 }
 
 .cart-count {
-  position: absolute;
-  top: -8px;
-  right: -10px;
-  background-color: red;
+  background: red;
   color: white;
   border-radius: 50%;
-  padding: 2px 6px;
-  font-size: 14px;
-  font-weight: bold;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.8rem;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+/* Icono del carrito */
+.cart-widget .cart-icon {
+  font-size: 1.8rem;
+  color: white;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+/* Hover: pequeño zoom y cambio de color */
+.cart-widget:hover .cart-icon {
+  transform: scale(1.2) rotate(-10deg); /* un giro sutil y zoom */
+  
+}
+
+/* Contador también puede “saltar” ligeramente */
+.cart-widget:hover .cart-count {
+  transform: scale(1.2);
+  transition: transform 0.2s ease;
 }

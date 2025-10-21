@@ -12,20 +12,21 @@ const Carousel = () => {
 
   const slides = [trinitymk3, ak74, atak, ar15, vanguard];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const nextIndex = (currentIndex + 1) % slides.length;
-      setCurrentIndex(nextIndex);
-      if (carouselRef.current) {
-        carouselRef.current.scrollTo({
-          left: nextIndex * window.innerWidth,
-          behavior: "smooth",
-        });
-      }
-    }, 5000);
+useEffect(() => {
+  const interval = setInterval(() => {
+    const nextIndex = (currentIndex + 1) % slides.length;
+    setCurrentIndex(nextIndex);
+    if (carouselRef.current) {
+      const slideWidth = carouselRef.current.offsetWidth; // ✅ ancho real del carrusel
+      carouselRef.current.scrollTo({
+        left: nextIndex * slideWidth,
+        behavior: "smooth",
+      });
+    }
+  }, 5000);
 
-    return () => clearInterval(interval);
-  }, [currentIndex, slides.length]);
+  return () => clearInterval(interval);
+}, [currentIndex, slides.length]);
 
   return (
     <div className="carousel" ref={carouselRef}>
