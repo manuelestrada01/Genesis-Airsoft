@@ -15,10 +15,14 @@ const CartWidget = () => {
   };
 
   return (
-    <button className="cart-widget" onClick={handleClick} aria-label="Ir al carrito">
-      <FiShoppingCart className="cart-icon" />
-      {itemCount > 0 && <span className="cart-count">{itemCount}</span>}
-    </button>
+    <button className="cart-widget" onClick={handleClick}>
+  <FiShoppingCart className="cart-icon" />
+  {itemCount > 0 && (
+  <span className="cart-count">{itemCount}</span>
+)}
+
+</button>
+
   );
 };
 

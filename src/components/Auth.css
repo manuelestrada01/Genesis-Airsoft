@@ -3,12 +3,45 @@
   grid-template-columns: 1fr 1fr;
   gap: 40px;
   max-width: 1000px;
-  margin: 190px auto 50px auto; /* 👈 agrega margen arriba */
+  margin: 190px auto 50px auto; /* 👈 margen superior */
   padding: 20px;
+  position: relative; /* necesario para ubicar mensajes */
 }
 
+/* 🔹 Contenedor para los mensajes de error/éxito */
+.auth-messages {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: 100%;
+  height: 40px; /* espacio reservado */
+}
+
+/* 🔹 Mensajes */
+.auth-error,
+.auth-success {
+  margin: 0;
+  display: inline-block;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.auth-error {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+.auth-success {
+  background-color: #27ae60;
+  color: #fff;
+}
+
+/* 🔹 Formulario */
 .auth-box {
-  
   padding: 20px;
 }
 
@@ -37,18 +70,16 @@
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
 }
 
-.btn-login {
-  background: #222;
-  color: #fff;
-  border: none;
-  padding: 12px;
-  cursor: pointer;
-  border-radius: 20px;
-  margin-bottom: 10px;
+.auth-box input:focus {
+  border-color: #888;
 }
 
+/* 🔹 Botones */
+.btn-login,
 .btn-register {
   background: #222;
   color: #fff;
@@ -56,8 +87,16 @@
   padding: 12px;
   cursor: pointer;
   border-radius: 20px;
+  margin-bottom: 10px;
+  transition: background 0.3s ease;
 }
 
+.btn-login:hover,
+.btn-register:hover {
+  background: #444;
+}
+
+/* 🔹 Extras */
 .options {
   display: flex;
   justify-content: space-between;
@@ -67,4 +106,5 @@
 .privacy {
   font-size: 13px;
   margin: 10px 0;
+  color: #555;
 }

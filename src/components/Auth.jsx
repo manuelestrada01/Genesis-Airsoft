@@ -2,6 +2,7 @@
 import React, { useState, useContext } from "react";
 import "./Auth.css";
 import AuthContext from "../context/AuthContext"; // 👈 usamos el contexto
+import { useNavigate } from "react-router-dom";
 
 const Auth = () => {
   const { registerUser, loginUser, user } = useContext(AuthContext); // 👈 traemos también el user si lo querés usar
@@ -24,48 +25,42 @@ const Auth = () => {
     }
   };
 
+const navigate = useNavigate();
   // Login
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    try {
-      await loginUser(loginData.email, loginData.password);
-      setSuccess("¡Login exitoso!");
-      console.log("Usuario logueado:", loginData.email);
-      setLoginData({ email: "", password: "" }); // limpiar form
-    } catch (err) {
-      console.error(err);
-      setError("Error al iniciar sesión: " + err.message);
-    }
-  };
+const handleLoginSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+  try {
+    await loginUser(loginData.email, loginData.password);
+    setSuccess("¡Login exitoso!");
+    navigate("/"); // 🔹 redirige a Home
+  } catch (err) {
+    setError("Dirección de correo electrónico o contraseña desconocida");
+  }
+};
 
   // Registro
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    try {
-      await registerUser(
-        registerData.username,
-        registerData.email,
-        registerData.password
-      );
-      setSuccess("¡Registro exitoso!");
-      console.log("Usuario registrado:", registerData.email);
-      setRegisterData({ username: "", email: "", password: "" }); // limpiar form
-    } catch (err) {
-      console.error(err);
-      setError("Error al registrarse: " + err.message);
-    }
-  };
+const handleRegisterSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  setSuccess("");
+  try {
+    await registerUser(registerData.username, registerData.email, registerData.password);
+    setSuccess("¡Registro exitoso!");
+    navigate("/"); // 🔹 redirige a Home
+  } catch (err) {
+    setError("Error al registrarse: " + err.message);
+  }
+};
+
 
   return (
     <div className="auth-container">
-      {/* Mensajes */}
-      {error && <p className="auth-error">{error}</p>}
-      {success && <p className="auth-success">{success}</p>}
-
+     <div className="auth-messages">
+        {error && <p className="auth-error">{error}</p>}
+        {success && <p className="auth-success">{success}</p>}
+      </div>
       {/* LOGIN */}
       <div className="auth-box">
         <h2>ACCEDER</h2>

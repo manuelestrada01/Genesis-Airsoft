@@ -1,33 +1,39 @@
 .cart-widget {
-  all: unset;              /* elimina todos los estilos por defecto */
+  all: unset;                  /* elimina casi todos los estilos por defecto */
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background-color: transparent !important; /* asegura que no tenga fondo */
-  color: white;
-  -webkit-tap-highlight-color: transparent; /* elimina highlight en mobile */
-  user-select: none;        /* opcional, evita selección al click */
+
+  background: transparent !important; /* fondo transparente */
+  border: none !important;            /* sin borde */
+  box-shadow: none !important;        /* sin sombra */
+  outline: none !important;           /* sin outline */
+  -webkit-tap-highlight-color: transparent; /* mobile */
 }
+
 
 .cart-widget:focus,
 .cart-widget:active {
-  outline: none;            /* quita el outline */
-  box-shadow: none;         /* quita cualquier sombra de foco */
-  background: transparent;  /* asegura fondo transparente */
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
+
 .cart-count {
-  background: red;
-  color: white;
-  border-radius: 50%;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.8rem;
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: white !important; /* o negro según tu navbar */
+  font-weight: bold !important;
+  font-size: 0.9rem;
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -6px;
+  right: -6px;
 }
+
 
 /* Icono del carrito */
 .cart-widget .cart-icon {
