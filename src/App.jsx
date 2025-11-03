@@ -10,6 +10,7 @@ import Footer from "./components/Footer";
 import Auth from "./components/Auth";
 import CartContainer from "./components/CartContainer";
 import Checkout from "./components/Checkout";
+import Profile from "./components/Profile";
 import "./App.css";
 
 const Home = () => (
@@ -41,6 +42,7 @@ function App() {
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<CartContainer />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
 

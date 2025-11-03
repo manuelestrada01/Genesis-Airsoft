@@ -9,11 +9,11 @@ import CheckoutProvider from "./context/CheckoutProvider.jsx";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-      <CheckoutProvider>
-        <CartProvider>
+      <CartProvider>
+        <CheckoutProvider>
           <App />
-        </CartProvider>
-      </CheckoutProvider>
+        </CheckoutProvider>
+      </CartProvider>
     </AuthProvider>
   </StrictMode>
 );

@@ -1,0 +1,71 @@
+.profile-container {
+  max-width: 600px;
+  margin: 80px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.profile-info {
+  margin-bottom: 30px;
+}
+
+.profile-info p {
+  margin: 10px 0;
+  font-size: 1.1rem;
+}
+
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.btn-orders,
+.btn-logout {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-orders {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-orders:hover {
+  background-color: #0069d9;
+}
+
+.btn-logout {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-logout:hover {
+  background-color: #c82333;
+}
+
+.orders-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.order-item {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.order-item strong {
+  color: #333;
+}

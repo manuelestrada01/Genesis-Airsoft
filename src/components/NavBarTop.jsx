@@ -7,12 +7,11 @@ import AuthContext from "../context/AuthContext";
 import "./NavBar.css";
 
 const NavBarTop = () => {
-  const { user, logoutUser } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logoutUser();
-    navigate("/"); // redirige a home
+  const handleProfileClick = () => {
+    navigate("/profile"); // redirige a la sección del perfil
   };
 
   return (
@@ -27,7 +26,11 @@ const NavBarTop = () => {
         </div>
 
         <div className="search-container">
-          <input type="text" className="search-bar" placeholder="Buscar productos..." />
+          <input
+            type="text"
+            className="search-bar"
+            placeholder="Buscar productos..."
+          />
         </div>
 
         <div className="navbar-actions">
@@ -38,11 +41,10 @@ const NavBarTop = () => {
               <span className="btn-text">Login / Register</span>
               <FaUser className="user-icon" aria-hidden="true" />
             </Link>
-
           ) : (
-            <button className="login-btn" onClick={handleLogout}>
+            <button className="login-btn" onClick={handleProfileClick}>
               <FaUser style={{ marginRight: "8px" }} />
-              Cerrar sesión
+              Mi Perfil
             </button>
           )}
         </div>
