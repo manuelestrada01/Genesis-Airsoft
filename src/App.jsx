@@ -12,6 +12,9 @@ import CartContainer from "./components/CartContainer";
 import Checkout from "./components/Checkout";
 import Profile from "./components/Profile";
 import "./App.css";
+import CheckoutSuccess from "./components/CheckoutSuccess";
+import CheckoutFailure from "./components/CheckoutFailure";
+import CheckoutPending from "./components/CheckoutPending";
 
 const Home = () => (
   <div className="app-container">
@@ -43,6 +46,9 @@ function App() {
           <Route path="/cart" element={<CartContainer />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/checkout-success" element={<CheckoutSuccess />} />
+          <Route path="/checkout-failure" element={<CheckoutFailure />} />
+          <Route path="/checkout-pending" element={<CheckoutPending />} />
         </Routes>
       </div>
 
