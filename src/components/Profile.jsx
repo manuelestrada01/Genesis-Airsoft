@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { db } from "../firebase/config";
 import AuthContext from "../context/AuthContext";
+import { updatePassword, updateProfile } from "firebase/auth";
 import "./Profile.css";
 
 const Profile = () => {
@@ -11,14 +12,42 @@ const Profile = () => {
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
+  const [displayName, setDisplayName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [message, setMessage] = useState("");
+
   const handleLogout = () => {
     logoutUser();
     navigate("/");
   };
 
+  const handleSaveChanges = async () => {
+    try {
+      setMessage("");
+
+      if (displayName && displayName !== user.displayName) {
+        await updateProfile(user, { displayName });
+      }
+
+      if (newPassword) {
+        await updatePassword(user, newPassword);
+      }
+
+      setMessage("✅ Datos actualizados correctamente.");
+      setNewPassword("");
+    } catch (error) {
+      console.error("❌ Error updating profile:", error);
+      setMessage("❌ No se pudieron actualizar los datos.");
+    }
+  };
+
+  useEffect(() => {
+    if (user?.displayName) setDisplayName(user.displayName);
+  }, [user]);
+
   useEffect(() => {
     const fetchOrders = async () => {
-      if (loading || !user) return; // ✅ espera a que user esté listo
+      if (loading || !user) return;
 
       try {
         console.log("🔎 Fetching orders for UID:", user.uid);
@@ -26,7 +55,7 @@ const Profile = () => {
         const q = query(
           ordersRef,
           where("userId", "==", user.uid),
-          orderBy("createdAt", "desc") // 🔹 requiere índice compuesto
+          orderBy("createdAt", "desc")
         );
 
         const querySnapshot = await getDocs(q);
@@ -35,7 +64,6 @@ const Profile = () => {
           ...doc.data(),
         }));
 
-        console.log("📦 Orders found:", userOrders.length);
         setOrders(userOrders);
       } catch (error) {
         console.error("❌ Error loading orders:", error);
@@ -49,20 +77,15 @@ const Profile = () => {
 
   return (
     <div className="profile-container">
-      <h2>My Profile</h2>
+      <h2>Mi Perfil</h2>
 
       {user ? (
-        <>
-          <div className="profile-info">
-            <p><strong>Username:</strong> {user.displayName || user.email}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-          </div>
-
-          <div className="profile-actions">
-            <h3>My Orders</h3>
-
+        <div className="profile-grid">
+          {/* 🧾 Panel Izquierdo: Órdenes */}
+          <div className="orders-section">
+            <h3>Mis Pedidos</h3>
             {loadingOrders ? (
-              <p>Loading your orders...</p>
+              <p>Cargando tus pedidos...</p>
             ) : orders.length > 0 ? (
               <ul className="orders-list">
                 {orders.map((order) => (
@@ -71,31 +94,63 @@ const Profile = () => {
                       <strong>Order ID:</strong> {order.id}
                     </div>
                     <div>
-                      <strong>Date:</strong>{" "}
+                      <strong>Fecha:</strong>{" "}
                       {order.createdAt?.toDate
                         ? order.createdAt.toDate().toLocaleString()
-                        : "Unknown"}
+                        : "Desconocida"}
                     </div>
                     <div>
-                      <strong>Total:</strong> ${order.total?.toFixed(2) || "N/A"}
+                      <strong>Total:</strong> $
+                      {order.total?.toFixed(2) || "N/A"}
                     </div>
                     <div>
-                      <strong>Status:</strong> {order.status || "Pending"}
+                      <strong>Estado:</strong>{" "}
+                      {order.status
+                        ? order.status.charAt(0).toUpperCase() +
+                          order.status.slice(1)
+                        : "Pending"}
                     </div>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p>You have no orders yet.</p>
+              <p>No tienes pedidos aún.</p>
             )}
-
-            <button className="btn-logout" onClick={handleLogout}>
-              Log out
-            </button>
           </div>
-        </>
+
+          {/* ⚙️ Panel Derecho: Configuración */}
+          <div className="settings-section">
+            <h3>Configuración</h3>
+            <div className="settings-form">
+              <label>Nombre de usuario:</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+
+              <label>Correo electrónico:</label>
+              <input type="email" value={user.email} disabled />
+
+              <label>Nueva contraseña:</label>
+              <input
+                type="password"
+                placeholder="********"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+
+              <button onClick={handleSaveChanges}>Guardar cambios</button>
+              <button className="btn-logout" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
+
+              {message && <p className="update-message">{message}</p>}
+            </div>
+          </div>
+        </div>
       ) : (
-        <p>You are not logged in.</p>
+        <p>No estás logueado.</p>
       )}
     </div>
   );

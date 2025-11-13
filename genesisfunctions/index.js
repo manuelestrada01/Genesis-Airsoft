@@ -76,41 +76,56 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
       const paymentData = result || {};
       console.log("💳 Detalles completos del pago:", paymentData);
 
-      // 🔹 Extraer los datos reales
-      const buyerEmail =
-        paymentData.payer?.email || "sin-correo@desconocido.com";
+      const buyerEmail = paymentData.payer?.email || "sin-correo@desconocido.com";
       const orderId = paymentData.external_reference || paymentId;
       const totalAmount = paymentData.transaction_amount || 0;
+      const paymentStatus = paymentData.status || "pending"; // 🔹 Estado real del pago
 
-      console.log(`✅ Pago aprobado. Monto: $${totalAmount}`);
+      console.log(`🧾 Estado del pago: ${paymentStatus}`);
 
-      // 📧 Enviar correo de confirmación
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.GMAIL_EMAIL,
-          pass: process.env.GMAIL_PASSWORD,
+      // 🔹 Actualizar Firestore
+      const orderRef = admin.firestore().collection("orders").doc(orderId);
+      await orderRef.set(
+        {
+          status: paymentStatus,
+          total: totalAmount,
+          email: buyerEmail,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
-      });
+        { merge: true }
+      );
 
-      await transporter.sendMail({
-        from: `"Genesis Airsoft" <${process.env.GMAIL_EMAIL}>`,
-        to: buyerEmail,
-        subject: "✅ Confirmación de tu compra en Genesis Airsoft",
-        html: `
-          <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2>Gracias por tu compra 🛒</h2>
-            <p>Tu pago ha sido <strong>aprobado</strong>.</p>
-            <p><strong>ID de orden:</strong> ${orderId}</p>
-            <p><strong>Monto:</strong> $${totalAmount.toFixed(2)}</p>
-            <hr/>
-            <p>Te contactaremos en breve con los detalles de envío o retiro en tienda.</p>
-            <p>¡Gracias por confiar en <strong>Genesis Airsoft</strong>!</p>
-          </div>
-        `,
-      });
+      console.log(`📦 Orden ${orderId} actualizada a estado: ${paymentStatus}`);
 
-      console.log(`📨 Correo enviado correctamente a ${buyerEmail}`);
+      // ✅ Solo enviar correo si fue aprobado
+      if (paymentStatus === "approved") {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.GMAIL_EMAIL,
+            pass: process.env.GMAIL_PASSWORD,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"Genesis Airsoft" <${process.env.GMAIL_EMAIL}>`,
+          to: buyerEmail,
+          subject: "✅ Confirmación de tu compra en Genesis Airsoft",
+          html: `
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h2>Gracias por tu compra 🛒</h2>
+              <p>Tu pago ha sido <strong>aprobado</strong>.</p>
+              <p><strong>ID de orden:</strong> ${orderId}</p>
+              <p><strong>Monto:</strong> $${totalAmount.toFixed(2)}</p>
+              <hr/>
+              <p>Te contactaremos en breve con los detalles de envío o retiro en tienda.</p>
+              <p>¡Gracias por confiar en <strong>Genesis Airsoft</strong>!</p>
+            </div>
+          `,
+        });
+
+        console.log(`📨 Correo enviado correctamente a ${buyerEmail}`);
+      }
     }
 
     res.sendStatus(200);
@@ -119,4 +134,5 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
     res.sendStatus(500);
   }
 });
+
 

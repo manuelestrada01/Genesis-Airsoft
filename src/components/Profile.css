@@ -1,11 +1,19 @@
 .profile-container {
-  max-width: 600px;
+  max-width: 1000px;
   margin: 80px auto;
   padding: 30px;
   background-color: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
+}
+
+/* --- Estructura general --- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 30px;
 }
 
 .profile-info {
@@ -17,38 +25,14 @@
   font-size: 1.1rem;
 }
 
-.profile-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+/* --- Sección de pedidos --- */
+.orders-section {
+  text-align: left;
 }
 
-.btn-orders,
-.btn-logout {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-orders {
-  background-color: #007bff;
-  color: white;
-}
-
-.btn-orders:hover {
-  background-color: #0069d9;
-}
-
-.btn-logout {
-  background-color: #dc3545;
-  color: white;
-}
-
-.btn-logout:hover {
-  background-color: #c82333;
+.orders-section h3 {
+  text-align: center;
+  margin-bottom: 15px;
 }
 
 .orders-list {
@@ -64,8 +48,101 @@
   padding: 15px;
   margin-bottom: 15px;
   text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .order-item strong {
   color: #333;
+}
+
+/* --- Sección de configuración --- */
+.settings-section {
+  text-align: left;
+}
+
+.settings-section h3 {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.settings-form label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.settings-form input {
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.settings-form input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
+}
+
+.settings-form button {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 10px;
+}
+
+/* --- Botones --- */
+.settings-form button:first-of-type {
+  background-color: #000000;
+  color: white;
+}
+
+.settings-form button:first-of-type:hover {
+  background-color: #000000;
+}
+
+.btn-logout {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-logout:hover {
+  background-color: #c82333;
+}
+
+/* --- Mensaje de actualización --- */
+.update-message {
+  text-align: center;
+  margin-top: 10px;
+  font-weight: bold;
+  color: green;
+}
+
+/* --- Responsive --- */
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .orders-section,
+  .settings-section {
+    text-align: center;
+  }
+
+  .order-item {
+    text-align: center;
+  }
 }
