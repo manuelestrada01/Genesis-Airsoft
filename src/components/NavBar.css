@@ -287,3 +287,20 @@
     top: 200px;
   }
 }
+
+
+.admin-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-right: 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.admin-btn:hover {
+  background-color: #005ad1;
+}

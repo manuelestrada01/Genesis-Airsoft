@@ -11,14 +11,14 @@ const NavBarTop = () => {
   const navigate = useNavigate();
 
   const handleProfileClick = () => {
-    navigate("/profile"); // redirige a la sección del perfil
+    navigate("/profile");
   };
 
   return (
     <>
       <div className="top-bar">Envíos a todo Argentina</div>
 
-      <header className="navbar-top" style={{ top: "30px" }}>
+      <header className="navbar-top">
         <div className="navbar-logo">
           <Link to="/">
             <img src={logo} alt="Logo de la tienda" />
@@ -36,6 +36,14 @@ const NavBarTop = () => {
         <div className="navbar-actions">
           <CartWidget />
 
+          {/* 👇 BOTÓN DE ADMIN SOLO PARA ADMINS */}
+          {user?.role === "admin" && (
+            <Link to="/admin/products" className="admin-btn">
+              Panel Admin
+            </Link>
+          )}
+
+          {/* Login o perfil */}
           {!user ? (
             <Link to="/auth" className="login-btn" aria-label="Login / Register">
               <span className="btn-text">Login / Register</span>

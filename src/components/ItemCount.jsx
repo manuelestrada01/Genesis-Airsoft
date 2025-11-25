@@ -1,42 +1,47 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { CartContext } from "../context/CartContext";
-import "./ProductPreview.css";
+import "./ItemCount.css";
 
-const ItemCount = ({ stock = 10, initial = 1, product }) => {
+const ItemCount = ({ stock = 10, initial = 1, product, onQuantityChange }) => {
   const [quantity, setQuantity] = useState(initial);
-  const [added, setAdded] = useState(false); // 👈 Nuevo estado
+  const [added, setAdded] = useState(false); 
   const { addToCart } = useContext(CartContext);
 
-  const increase = () => setQuantity(prev => (prev < stock ? prev + 1 : prev));
-  const decrease = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+  // Notifica al padre cada vez que cambia
+  useEffect(() => {
+    if (onQuantityChange) onQuantityChange(quantity);
+  }, [quantity]);
+
+  const increase = () =>
+    setQuantity((prev) => (prev < stock ? prev + 1 : prev));
+
+  const decrease = () =>
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
-    setAdded(true); // 👈 Oculta el selector luego de agregar
+
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
   };
 
   return (
-    <div className="modal-actions">
-      {!added ? (
-        <>
-          <div className="quantity-selector">
-            <button onClick={decrease}>-</button>
-            <span>{quantity}</span>
-            <button onClick={increase}>+</button>
-          </div>
+    <div className="count-row">
 
-          <button className="add-cart-btn" onClick={handleAddToCart}>
-            Agregar al carrito
-          </button>
-        </>
-      ) : (
-        <div className="after-add">
-          <p>Producto agregado ✅</p>
-          <button onClick={() => setAdded(false)}>Seguir comprando</button>
-          {/* O podrías agregar un enlace a tu carrito */}
-          {/* <Link to="/cart">Ver carrito</Link> */}
-        </div>
-      )}
+      <div className="count-box">
+        <button className="count-btn" onClick={decrease}>−</button>
+        <span className="count-number">{quantity}</span>
+        <button className="count-btn" onClick={increase}>+</button>
+      </div>
+
+      <button
+        className={`count-add-btn ${added ? "added" : ""}`}
+        onClick={handleAddToCart}
+        disabled={added}
+      >
+        {added ? "✔ Agregado" : "Agregar al carrito"}
+      </button>
+
     </div>
   );
 };

@@ -1,0 +1,110 @@
+.admin-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f4f4;
+}
+
+.admin-sidebar {
+  width: 220px;
+  background: #111;
+  color: white;
+  padding: 20px;
+}
+
+.admin-title {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.admin-menu {
+  list-style: none;
+  padding: 0;
+}
+
+.admin-menu li {
+  margin: 10px 0;
+}
+
+.admin-menu a {
+  color: white;
+  text-decoration: none;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 30px;
+}
+
+.admin-cards {
+  display: flex;
+  gap: 20px;
+}
+
+.admin-card {
+  background: white;
+  padding: 20px;
+  border-radius: 6px;
+  width: 200px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.admin-add-btn,
+.admin-edit-btn {
+  display: inline-block;
+  padding: 8px 12px;
+  background: #0078ff;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.admin-table {
+  width: 90%;
+  margin-top: 20px;
+  background: white;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+  gap: 10px;
+}
+
+.admin-form input,
+.admin-form textarea {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.admin-save-btn {
+  background: #00a100;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-delete-btn {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.admin-delete-btn:hover {
+  background-color: #c9302c;
+}
