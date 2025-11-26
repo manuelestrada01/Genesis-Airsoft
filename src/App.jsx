@@ -13,6 +13,7 @@ import Auth from "./components/Auth";
 import CartContainer from "./components/CartContainer";
 import Checkout from "./components/Checkout";
 import Profile from "./components/Profile";
+import ScrollToTop from "./components/ScrollToTop";
 
 import CheckoutSuccess from "./components/CheckoutSuccess";
 import CheckoutFailure from "./components/CheckoutFailure";
@@ -33,7 +34,6 @@ const Home = () => (
       <Carousel />
     </div>
 
-    <Greetting Greetting="¡Bienvenido a Genesis Airsoft!" />
     <div style={{ margin: "10px 20px" }}>
       <ItemListContainer />
     </div>
@@ -43,6 +43,7 @@ const Home = () => (
 function App() {
   return (
     <BrowserRouter>
+    <ScrollToTop />
       {/* RUTAS ADMIN – OCULTAN NAVBAR Y FOOTER */}
       <Routes>
         <Route

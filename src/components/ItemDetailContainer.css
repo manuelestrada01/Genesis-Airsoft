@@ -1,13 +1,14 @@
 /* === LAYOUT GENERAL === */
 .detail-layout {
   display: grid;
-  grid-template-columns: 120px 1fr 450px;
+  grid-template-columns: 120px 1fr 380px; /* antes tenías 450px */
   gap: 40px;
   margin-top: 150px;
-  padding: 20px;
+  padding: 20px 150px; /* nuevo padding horizontal */
   align-items: flex-start;
   font-family: "Montserrat", sans-serif;
 }
+
 
 /* === MINIATURAS === */
 .detail-thumbs-column {

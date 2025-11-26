@@ -4,9 +4,11 @@ import React from 'react';
 
 const Greetting = ({ Greetting }) => {
   return (
-    <div className="Greetting">
-      <h2>{Greetting}</h2>
-    </div>
+   <div className="greeting-container">
+  <h2>¡Bienvenido a Genesis Airsoft!</h2>
+  </div>
+
+
   );
 };
 

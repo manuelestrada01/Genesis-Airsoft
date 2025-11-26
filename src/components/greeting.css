@@ -2,6 +2,14 @@
     padding: 2rem;
     text-align: center;
     font-size: 1.5rem;
-    color: #222; /* texto oscuro */
+    color: #ff0000; /* texto oscuro */
   }
   
+.greeting-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-top: 20px;
+  text-align: center;
+}
