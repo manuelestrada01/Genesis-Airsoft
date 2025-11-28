@@ -30,20 +30,17 @@ function AuthProvider({ children }) {
   };
 
   // 🟢 Detecta cambios de sesión
-  useEffect(() => {
+useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
     if (currentUser) {
-      // Forzar refresco del token para obtener los custom claims
       await currentUser.getIdToken(true);
-
       const tokenResult = await currentUser.getIdTokenResult();
-
       const role = tokenResult.claims.role || "user";
 
-      setUser({
-        ...currentUser,
-        role: role,   // ← Ahora sí user.role existe 👌
-      });
+      // 👇 NO CLONAMOS, MODIFICAMOS EL OBJETO ORIGINAL
+      currentUser.role = role;
+
+      setUser(currentUser);
     } else {
       setUser(null);
     }
@@ -53,6 +50,7 @@ function AuthProvider({ children }) {
 
   return () => unsubscribe();
 }, []);
+
 
 
   // 🟢 Registrar usuario

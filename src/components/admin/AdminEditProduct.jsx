@@ -18,9 +18,6 @@ export default function AdminEditProduct() {
   const [product, setProduct] = useState(null);
   const [newImages, setNewImages] = useState([]);
 
-  // ============================================================
-  // 1️⃣ Cargar producto
-  // ============================================================
   useEffect(() => {
     const loadProduct = async () => {
       try {
@@ -34,14 +31,11 @@ export default function AdminEditProduct() {
         }
 
         const data = snap.data();
-
-        // 🔥 Normalizar estructura de imágenes
         let imagesArray = [];
 
-        if (data.images && Array.isArray(data.images)) {
+        if (data.images) {
           imagesArray = data.images;
         } else if (data.imageUrl) {
-          // Producto viejo → convertir a formato nuevo
           imagesArray = [
             {
               imageUrl: data.imageUrl,
@@ -66,47 +60,32 @@ export default function AdminEditProduct() {
     loadProduct();
   }, [id]);
 
-  // ============================================================
-  // 2️⃣ Cambios en formulario
-  // ============================================================
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
-  // ============================================================
-  // 3️⃣ Cargar imágenes nuevas
-  // ============================================================
   const handleNewImages = (e) => {
     setNewImages(Array.from(e.target.files));
   };
 
-  // ============================================================
-  // 4️⃣ Eliminar una imagen existente
-  // ============================================================
   const handleDeleteImage = async (img) => {
-    const ok = confirm("¿Eliminar esta imagen?");
-    if (!ok) return;
+    if (!confirm("¿Eliminar esta imagen?")) return;
 
     try {
-      // Eliminar del storage
       if (img.imagePath) await deleteProductImage(img.imagePath);
 
-      // Quitarla del array
       const updatedImages = product.images.filter(
         (i) => i.imagePath !== img.imagePath
       );
 
-      // Actualizar portada si eliminaste la primera
       const newCover =
         updatedImages.length > 0 ? updatedImages[0].imageUrl : "";
 
-      // Actualizar Firestore
       await updateDoc(doc(db, "products", product.id), {
         images: updatedImages,
         cover: newCover,
       });
 
-      // Actualizar en estado local
       setProduct({ ...product, images: updatedImages, cover: newCover });
 
       alert("Imagen eliminada");
@@ -116,14 +95,10 @@ export default function AdminEditProduct() {
     }
   };
 
-  // ============================================================
-  // 5️⃣ Guardar cambios (nombre, precio, categoría, nuevas imágenes…)
-  // ============================================================
   const handleSave = async () => {
     if (!product) return;
 
-    const ok = confirm("¿Guardar cambios?");
-    if (!ok) return;
+    if (!confirm("¿Guardar cambios?")) return;
 
     setSaving(true);
 
@@ -132,28 +107,27 @@ export default function AdminEditProduct() {
 
       let updatedImages = [...product.images];
 
-      // 🔥 Subir imágenes nuevas (si existen)
       if (newImages.length > 0) {
         const uploaded = await uploadMultipleImages(newImages, product.id);
         updatedImages = [...updatedImages, ...uploaded];
       }
 
-      // La portada es SIEMPRE la primera imagen
       const newCover =
         updatedImages.length > 0 ? updatedImages[0].imageUrl : "";
 
-      // Guardar cambios
       await updateDoc(ref, {
         name: product.name,
         price: Number(product.price),
         category: product.category,
         description: product.description,
+        tag: product.tag || "",       // ← NUEVO
         images: updatedImages,
         cover: newCover,
       });
 
       alert("Producto actualizado ✔");
       navigate("/admin/products");
+
     } catch (err) {
       console.error("Error guardando:", err);
       alert("Error al guardar el producto");
@@ -162,9 +136,6 @@ export default function AdminEditProduct() {
     }
   };
 
-  // ============================================================
-  // 6️⃣ Render
-  // ============================================================
   if (loading) return <p style={{ padding: 20 }}>Cargando producto...</p>;
 
   return (
@@ -175,66 +146,45 @@ export default function AdminEditProduct() {
         <h1>Editar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-          {/* Campos básicos */}
+
           <label>Nombre</label>
           <input name="name" value={product.name} onChange={handleChange} />
 
           <label>Precio</label>
-          <input
-            name="price"
-            type="number"
-            value={product.price}
-            onChange={handleChange}
-          />
+          <input name="price" type="number" value={product.price} onChange={handleChange} />
 
           <label>Categoría</label>
-          <input
-            name="category"
-            value={product.category}
-            onChange={handleChange}
-          />
+          <input name="category" value={product.category} onChange={handleChange} />
 
           <label>Descripción</label>
-          <textarea
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-          ></textarea>
+          <textarea name="description" value={product.description} onChange={handleChange}></textarea>
 
-          {/* =============================== */}
-          {/*    Vista de imágenes actuales    */}
-          {/* =============================== */}
+          {/* TAG MODIFY */}
+          <label>Etiqueta (opcional)</label>
+          <select name="tag" value={product.tag || ""} onChange={handleChange}>
+            <option value="">Sin etiqueta</option>
+            <option value="hot">🔥 Hot</option>
+            <option value="new">🆕 Nuevo</option>
+            <option value="sale">💸 Oferta</option>
+            <option value="limited">⭐ Limited</option>
+          </select>
+
           <label>Imágenes actuales</label>
           <div className="admin-image-grid">
             {product.images.map((img, i) => (
               <div key={i} className="admin-image-box">
-                <img
-                  src={img.imageUrl}
-                  alt="img"
-                  className="admin-image-preview"
-                />
-                <button
-                  type="button"
-                  className="admin-delete-img"
-                  onClick={() => handleDeleteImage(img)}
-                >
+                <img src={img.imageUrl} alt="img" className="admin-image-preview" />
+                <button type="button" className="admin-delete-img" onClick={() => handleDeleteImage(img)}>
                   eliminar
                 </button>
               </div>
             ))}
           </div>
 
-          {/* Nuevas imágenes */}
           <label>Agregar nuevas imágenes</label>
           <input type="file" accept="image/*" multiple onChange={handleNewImages} />
 
-          {/* Botón guardar */}
-          <button
-            type="button"
-            className="admin-save-btn"
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <button type="button" className="admin-save-btn" onClick={handleSave} disabled={saving}>
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </form>

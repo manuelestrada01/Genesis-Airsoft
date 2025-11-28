@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import AdminSidebar from "./AdminSidebar";
 import { db } from "../../firebase/config";
 import { collection, addDoc, updateDoc } from "firebase/firestore";
-import { uploadMultipleImages } from "../../firebase/uploadProductImage"; // 🔥 MULTI-IMAGEN
+import { uploadMultipleImages } from "../../firebase/uploadProductImage";
 import "./admin.css";
 
 export default function AdminAddProduct() {
@@ -11,13 +11,13 @@ export default function AdminAddProduct() {
     price: "",
     category: "",
     description: "",
-    imageFiles: [], // 🔥 ahora ES UN ARRAY
+    imageFiles: [],
+    tag: "",           // ← NUEVO
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // 🔥 HANDLER para inputs + múltiples imágenes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -28,57 +28,52 @@ export default function AdminAddProduct() {
     }
   };
 
-  // 🔥 GUARDAR PRODUCTO
   const handleSave = async () => {
     try {
       setLoading(true);
       setMessage("");
 
-      // Validaciones
       if (!form.name || !form.price || !form.category) {
         setMessage("Todos los campos obligatorios deben estar completos.");
         setLoading(false);
         return;
       }
 
-      if (!form.imageFiles || form.imageFiles.length === 0) {
-  setMessage("Debes seleccionar al menos una imagen.");
-  return;
-}
+      if (!form.imageFiles.length) {
+        setMessage("Debes seleccionar al menos una imagen.");
+        return;
+      }
 
-
-      // 1️⃣ Crear documento inicial (sin imágenes)
       const productRef = await addDoc(collection(db, "products"), {
         name: form.name,
         price: Number(form.price),
         category: form.category,
         description: form.description,
-        images: [],      // 🔥 MULTI-IMAGEN
-        cover: "",       // 🔥 imagen principal
+        tag: form.tag || "",     // ← NUEVO
+        images: [],
+        cover: "",
         createdAt: new Date(),
       });
 
-      // 2️⃣ Subir TODAS las imágenes seleccionadas
       const uploadedImages = await uploadMultipleImages(
         form.imageFiles,
         productRef.id
       );
 
-      // 3️⃣ Guardar en Firestore
       await updateDoc(productRef, {
-        images: uploadedImages,          // 🔥 array [{ imageUrl, imagePath }]
-        cover: uploadedImages[0].imageUrl,  // primera imagen = portada
+        images: uploadedImages,
+        cover: uploadedImages[0].imageUrl,
       });
 
       setMessage("Producto guardado con éxito ✔");
 
-      // 4️⃣ Reset formulario
       setForm({
         name: "",
         price: "",
         category: "",
         description: "",
         imageFiles: [],
+        tag: "",
       });
 
     } catch (error) {
@@ -97,34 +92,31 @@ export default function AdminAddProduct() {
         <h1>Agregar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
+
           <label>Nombre</label>
           <input name="name" value={form.name} onChange={handleChange} />
 
           <label>Precio</label>
-          <input
-            name="price"
-            type="number"
-            value={form.price}
-            onChange={handleChange}
-          />
+          <input name="price" type="number" value={form.price} onChange={handleChange} />
 
           <label>Categoría</label>
           <input name="category" value={form.category} onChange={handleChange} />
 
           <label>Descripción</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-          />
+          <textarea name="description" value={form.description} onChange={handleChange}></textarea>
+
+          {/* TAG SELECTOR */}
+          <label>Etiqueta (opcional)</label>
+          <select name="tag" value={form.tag} onChange={handleChange}>
+            <option value="">Sin etiqueta</option>
+            <option value="hot">🔥 Hot</option>
+            <option value="new">🆕 Nuevo</option>
+            <option value="sale">💸 Oferta</option>
+            <option value="limited">⭐ Limited</option>
+          </select>
 
           <label>Imágenes (puedes seleccionar varias)</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple      // 🔥 MULTI-IMAGEN
-            onChange={handleChange}
-          />
+          <input type="file" accept="image/*" multiple onChange={handleChange} />
 
           <button type="button" onClick={handleSave} disabled={loading}>
             {loading ? "Guardando..." : "Guardar Producto"}

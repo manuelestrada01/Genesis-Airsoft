@@ -18,6 +18,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import CheckoutSuccess from "./components/CheckoutSuccess";
 import CheckoutFailure from "./components/CheckoutFailure";
 import CheckoutPending from "./components/CheckoutPending";
+import OrderDetail from "./components/OrderDetail";
 
 // Admin components
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -25,6 +26,8 @@ import AdminProducts from "./components/admin/AdminProducts";
 import AdminAddProduct from "./components/admin/AdminAddProduct";
 import AdminEditProduct from "./components/admin/AdminEditProduct";
 import AdminRoute from "./components/admin/AdminRoute"; // 🔥 PROTECCIÓN ADMIN
+import AdminOrders from "./components/admin/AdminOrders";
+import AdminOrderDetail from "./components/admin/AdminOrderDetail";
 
 import "./App.css";
 
@@ -78,6 +81,23 @@ function App() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrders />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/orders/:id"
+          element={
+            <AdminRoute>
+              <AdminOrderDetail />
+            </AdminRoute>
+          }
+        />
+
       </Routes>
 
       {/* RUTAS PÚBLICAS */}
@@ -96,6 +116,7 @@ function App() {
           <Route path="/checkout-success" element={<CheckoutSuccess />} />
           <Route path="/checkout-failure" element={<CheckoutFailure />} />
           <Route path="/checkout-pending" element={<CheckoutPending />} />
+          <Route path="/order/:id" element={<OrderDetail />} />
         </Routes>
       </div>
 

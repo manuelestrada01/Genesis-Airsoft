@@ -8,7 +8,7 @@
   text-align: center;
 }
 
-/* --- Estructura general --- */
+/* GRID GENERAL */
 .profile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -16,19 +16,7 @@
   margin-top: 30px;
 }
 
-.profile-info {
-  margin-bottom: 30px;
-}
-
-.profile-info p {
-  margin: 10px 0;
-  font-size: 1.1rem;
-}
-
-/* --- Sección de pedidos --- */
-.orders-section {
-  text-align: left;
-}
+/* =========== PEDIDOS =========== */
 
 .orders-section h3 {
   text-align: center;
@@ -41,29 +29,99 @@
   margin-top: 20px;
 }
 
-.order-item {
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
+/* Tarjeta de pedido */
+.order-card {
+  background: #fff;
+  padding: 16px;
   margin-bottom: 15px;
-  text-align: left;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.15s ease;
 }
 
-.order-item:hover {
+.order-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.order-item strong {
-  color: #333;
+/* Fila */
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* --- Sección de configuración --- */
-.settings-section {
-  text-align: left;
+/* Etiqueta */
+.order-label {
+  font-weight: 600;
+  color: #444;
 }
+
+/* Valor */
+.order-value {
+  font-weight: 500;
+  color: #222;
+}
+
+/* ID con monoespaciado */
+.order-id {
+  font-family: "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+/* Estado Badge */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.approved {
+  background-color: #00a84f;
+}
+
+.status-badge.pending {
+  background-color: #d98300;
+}
+
+/* Despachado Badge */
+.dispatch-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dispatch-badge.done {
+  background-color: #00a84f;
+}
+
+.dispatch-badge.not-done {
+  background-color: #d00000;
+}
+
+/* Botón Cargar más */
+.btn-load-more {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #000;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-load-more:hover {
+  background: #333;
+}
+
+/* =========== CONFIGURACIÓN =========== */
 
 .settings-section h3 {
   text-align: center;
@@ -84,46 +142,27 @@
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 1rem;
-}
-
-.settings-form input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 4px rgba(0, 123, 255, 0.3);
 }
 
 .settings-form button {
   width: 100%;
-  padding: 12px 20px;
-  border: none;
+  padding: 12px;
   border-radius: 8px;
-  font-size: 1rem;
+  border: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
   margin-top: 10px;
 }
 
-/* --- Botones --- */
 .settings-form button:first-of-type {
-  background-color: #000000;
+  background: #000;
   color: white;
-}
-
-.settings-form button:first-of-type:hover {
-  background-color: #000000;
 }
 
 .btn-logout {
-  background-color: #dc3545;
+  background: #dc3545;
   color: white;
 }
 
-.btn-logout:hover {
-  background-color: #c82333;
-}
-
-/* --- Mensaje de actualización --- */
 .update-message {
   text-align: center;
   margin-top: 10px;
@@ -131,18 +170,24 @@
   color: green;
 }
 
-/* --- Responsive --- */
+/* Responsive */
 @media (max-width: 900px) {
   .profile-grid {
     grid-template-columns: 1fr;
   }
 
-  .orders-section,
-  .settings-section {
-    text-align: center;
+  .order-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
+}
 
-  .order-item {
-    text-align: center;
-  }
+.clickable-order {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.clickable-order:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }

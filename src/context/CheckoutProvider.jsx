@@ -17,6 +17,15 @@ function CheckoutProvider({ children }) {
     name: "",
     email: "",
     phone: "",
+
+    // Campos adicionales usados en Checkout.jsx
+    street: "",
+    number: "",
+    city: "",
+    province: "",
+    zip: "",
+    notes: "",
+    method: "delivery",
   });
 
   const [orderId, setOrderId] = useState(null);
@@ -24,32 +33,32 @@ function CheckoutProvider({ children }) {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  /* ✅ Actualiza SOLO el campo editado */
   const handleBuyerChange = (e) => {
     const { name, value } = e.target;
     setBuyer((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ✅ Limpia buyer COMPLETO cuando cambia el usuario */
   const resetBuyer = () => {
     setBuyer({
       name: "",
       email: "",
       phone: "",
+      street: "",
+      number: "",
+      city: "",
+      province: "",
+      zip: "",
+      notes: "",
+      method: "delivery",
     });
   };
 
-  /* ✅ EFECTO CRÍTICO:
-       - Si NO hay usuario → limpiar buyer (no debe ver datos previos)
-       - Si hay usuario → completar del auth
-  */
   useEffect(() => {
     if (!user) {
-      resetBuyer(); // ✅ limpia datos cuando se desloguea
+      resetBuyer();
       return;
     }
 
-    // ✅ Autocomplete si el usuario está logueado
     setBuyer((prev) => ({
       ...prev,
       name: user.displayName || prev.name || "",
@@ -57,23 +66,17 @@ function CheckoutProvider({ children }) {
     }));
   }, [user]);
 
-  /* ✅ Crear orden */
   const completeCheckout = async () => {
-    console.log("🛒 Current cart:", cart);
-
-    // Si Firebase Auth sigue cargando
     if (loading) {
       setError("⏳ Waiting for user authentication...");
       return;
     }
 
-    // Si NO hay usuario
     if (!user || !user.uid) {
       setError("❌ You must be logged in to complete the purchase.");
       return;
     }
 
-    // Si el carrito está vacío
     if (!cart || cart.length === 0) {
       setError("❌ Your cart is empty. Please add some products first.");
       return;
@@ -88,22 +91,42 @@ function CheckoutProvider({ children }) {
 
       const orderData = {
         userId: user.uid,
-        buyer,
-        items: cart,
+
+        buyer: {
+          name: buyer.name,
+          email: buyer.email,
+          phone: buyer.phone,
+          street: buyer.street,
+          number: buyer.number,
+          city: buyer.city,
+          province: buyer.province,
+          zip: buyer.zip,
+          notes: buyer.notes,
+          method: buyer.method,
+        },
+
+        items: cart.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+
         total: totalPrice,
-        status: "pending",
+
         createdAt: serverTimestamp(),
+        dispatched: false, // 🔥 NUEVO: estado envío
+        status: "pending",
       };
 
       const docRef = await addDoc(ordersRef, orderData);
 
       setOrderId(docRef.id);
       setSuccess("✅ Order created successfully!");
-      console.log("🟢 Order created with ID:", docRef.id, "for user:", user.uid);
 
       await clearCart();
 
-      return docRef.id; // ✅ DEVUELVE el orderId al checkout
+      return docRef.id;
     } catch (err) {
       console.error("❌ Error creating order:", err);
       setError("❌ An error occurred while processing your order.");
@@ -112,7 +135,6 @@ function CheckoutProvider({ children }) {
     }
   };
 
-  /* ✅ Reset general del checkout */
   const resetCheckout = () => {
     resetBuyer();
     setOrderId(null);
@@ -131,7 +153,6 @@ function CheckoutProvider({ children }) {
         success,
         completeCheckout,
         resetCheckout,
-        resetBuyer, // ✅ lo exporto por si querés usarlo desde Auth
       }}
     >
       {children}

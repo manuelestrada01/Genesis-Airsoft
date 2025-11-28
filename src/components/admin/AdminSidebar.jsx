@@ -5,13 +5,15 @@ import "./admin.css";
 export default function AdminSidebar() {
   return (
     <div className="admin-sidebar">
-      <h2 className="admin-title">Admin Panel</h2>
+      <h2 className="admin-title">Panel Admin</h2>
 
-      <ul className="admin-menu">
-        <li><Link to="/admin">Dashboard</Link></li>
-        <li><Link to="/admin/products">Productos</Link></li>
-        <li><Link to="/admin/products/add">Agregar Producto</Link></li>
-      </ul>
+      <nav className="admin-menu">
+        <Link to="/admin" className="admin-link">🏠 Dashboard</Link>
+        <Link to="/admin/products" className="admin-link">📦 Productos</Link>
+        <Link to="/admin/products/add" className="admin-link">➕ Agregar Producto</Link>
+        <Link to="/admin/orders" className="admin-link">🧾 Pedidos</Link>
+      </nav>
     </div>
   );
+  
 }

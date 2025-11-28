@@ -1,98 +1,100 @@
+/* ======== LAYOUT GENERAL ======== */
+
 .admin-container {
   display: flex;
+  width: 100%;
   min-height: 100vh;
-  background: #f4f4f4;
+  background: #f1f1f1;
+  margin-top: 160px; /* para no quedar tapado por navbar fija */
 }
 
+/* ======== SIDEBAR ======== */
+
 .admin-sidebar {
-  width: 220px;
+  width: 250px;
   background: #111;
   color: white;
-  padding: 20px;
+  padding: 25px;
+  min-height: calc(100vh - 160px);
+  position: fixed; /* queda firme al costado */
+  top: 160px; /* debajo del header */
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .admin-title {
   font-size: 22px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .admin-menu {
-  list-style: none;
-  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.admin-menu li {
-  margin: 10px 0;
-}
-
-.admin-menu a {
-  color: white;
+.admin-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #ddd;
   text-decoration: none;
+  background: #1a1a1a;
+  transition: 0.3s ease;
+  font-size: 16px;
 }
+
+.admin-link:hover {
+  background: #333;
+  color: white;
+}
+
+/* ======== CONTENIDO ======== */
 
 .admin-content {
   flex: 1;
-  padding: 30px;
-}
-
-.admin-cards {
-  display: flex;
-  gap: 20px;
-}
-
-.admin-card {
+  padding: 40px;
+  margin-left: 270px; /* deja espacio para Sidebar fija */
   background: white;
-  padding: 20px;
-  border-radius: 6px;
-  width: 200px;
-  text-align: center;
-  font-weight: bold;
+  min-height: calc(100vh - 160px);
+  border-left: 1px solid #ddd;
 }
 
-.admin-add-btn,
-.admin-edit-btn {
-  display: inline-block;
+/* ======== TABLAS ======== */
+
+.admin-table {
+  width: 100%;
+  background: white;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+/* ======== BOTONES ======== */
+
+.admin-add-btn {
   padding: 8px 12px;
   background: #0078ff;
   color: white;
   border-radius: 4px;
   text-decoration: none;
+  display: inline-block;
+  margin-bottom: 15px;
 }
 
-.admin-table {
-  width: 90%;
-  margin-top: 20px;
-  background: white;
-  border-collapse: collapse;
-}
-
-.admin-table th,
-.admin-table td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.admin-form {
-  display: flex;
-  flex-direction: column;
-  width: 400px;
-  gap: 10px;
-}
-
-.admin-form input,
-.admin-form textarea {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.admin-save-btn {
-  background: #00a100;
+.admin-edit-btn {
+  padding: 6px 10px;
+  background: #0078ff;
   color: white;
-  padding: 10px;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
+  text-decoration: none;
 }
 
 .admin-delete-btn {
@@ -109,13 +111,36 @@
   background-color: #c9302c;
 }
 
-.admin-container {
-  display: flex;
+/* ======== PEDIDOS ======== */
+
+.admin-filter-btn {
+  margin-right: 10px;
+  padding: 8px 15px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
-.admin-content {
-  flex: 1;
-  margin-top: 220px !important;
-  padding: 20px;
-  padding-left: 40px; /* deja respiración respecto al sidebar */
+.admin-filter-btn:hover {
+  background: #555;
+}
+
+.admin-dispatched {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.admin-not-dispatched {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
 }

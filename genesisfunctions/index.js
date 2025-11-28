@@ -3,7 +3,7 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 const mercadopago = require("mercadopago");
-const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer");       
 
 // Inicializar Firebase
 admin.initializeApp();
@@ -35,8 +35,10 @@ exports.createPreference = functions.https.onRequest((req, res) => {
           quantity: item.quantity,
           unit_price: item.price,
           currency_id: "ARS",
+          category_id: item.category || "others"   // 🔥 requerido
         })),
         payer: { email: email || "comprador@ejemplo.com" },
+         statement_descriptor: "GENESIS AIRSOFT",  // 🔥 requerido
         external_reference: orderId || `order_${Date.now()}`,
         metadata: { userId, orderId },
         back_urls: {
@@ -68,23 +70,31 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
     if (payment.type === "payment" && payment.data && payment.data.id) {
       const paymentId = payment.data.id;
 
-      // 🔍 Obtener información completa del pago desde Mercado Pago
+      // Obtener datos completos del pago
       const { Payment } = require("mercadopago");
       const client = new Payment(mp);
       const result = await client.get({ id: paymentId });
-
       const paymentData = result || {};
-      console.log("💳 Detalles completos del pago:", paymentData);
 
-      const buyerEmail = paymentData.payer?.email || "sin-correo@desconocido.com";
       const orderId = paymentData.external_reference || paymentId;
       const totalAmount = paymentData.transaction_amount || 0;
-      const paymentStatus = paymentData.status || "pending"; // 🔹 Estado real del pago
+      const paymentStatus = paymentData.status || "pending";
 
       console.log(`🧾 Estado del pago: ${paymentStatus}`);
 
-      // 🔹 Actualizar Firestore
+      // Buscar la orden original en Firestore
       const orderRef = admin.firestore().collection("orders").doc(orderId);
+      const orderSnap = await orderRef.get();
+
+      let buyerEmail = paymentData.payer?.email; // fallback
+      if (orderSnap.exists) {
+        const orderData = orderSnap.data();
+        if (orderData?.buyer?.email) {
+          buyerEmail = orderData.buyer.email; // ⬅ EMAIL REAL DEL USUARIO DE TU WEB
+        }
+      }
+
+      // Actualizar Firestore
       await orderRef.set(
         {
           status: paymentStatus,
@@ -95,9 +105,9 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
         { merge: true }
       );
 
-      console.log(`📦 Orden ${orderId} actualizada a estado: ${paymentStatus}`);
+      console.log(`📦 Orden ${orderId} actualizada correctamente.`);
 
-      // ✅ Solo enviar correo si fue aprobado
+      // Enviar correo solo si es aprobado
       if (paymentStatus === "approved") {
         const transporter = nodemailer.createTransport({
           service: "gmail",
@@ -109,7 +119,7 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
 
         await transporter.sendMail({
           from: `"Genesis Airsoft" <${process.env.GMAIL_EMAIL}>`,
-          to: buyerEmail,
+          to: buyerEmail,  // ← AHORA SÍ, EMAIL DEL USUARIO LOGUEADO
           subject: "✅ Confirmación de tu compra en Genesis Airsoft",
           html: `
             <div style="font-family: Arial, sans-serif; color: #333;">
@@ -124,7 +134,7 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
           `,
         });
 
-        console.log(`📨 Correo enviado correctamente a ${buyerEmail}`);
+        console.log(`📨 Correo enviado correctamente a: ${buyerEmail}`);
       }
     }
 
@@ -134,5 +144,45 @@ exports.webhook = functions.https.onRequest(async (req, res) => {
     res.sendStatus(500);
   }
 });
+
+//3) EMAIL AL CAMBIAR CONTRASEÑA
+exports.passwordChanged = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      const { email, name } = req.body;
+
+      console.log("🔐 Notificación cambio de password para:", email);
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_EMAIL,
+          pass: process.env.GMAIL_PASSWORD,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"Genesis Airsoft" <${process.env.GMAIL_EMAIL}>`,
+        to: email,
+        subject: "🔒 Tu contraseña fue actualizada",
+        html: `
+          <div style="font-family: Arial; color:#333;">
+            <h2>Hola ${name},</h2>
+            <p>Tu contraseña fue cambiada correctamente.</p>
+            <p>Si vos <strong>no realizaste este cambio</strong>, contactanos de inmediato.</p>
+          </div>
+        `,
+      });
+
+      console.log(`📨 Email enviado correctamente a ${email}`);
+
+      return res.status(200).json({ ok: true });
+    } catch (error) {
+      console.error("❌ Error enviando email:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+});
+
 
 

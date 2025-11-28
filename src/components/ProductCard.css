@@ -149,3 +149,58 @@
   border-color: #000;
 }
 
+/* -------------------------- */
+/* 🔥 BADGE en esquina superior izquierda */
+/* -------------------------- */
+
+.product-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  color: white;
+  z-index: 120;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Colores según tipo */
+.badge-nuevo {
+  background: #000000; /* azul */
+}
+
+.badge-hot {
+  background: #e60023; /* rojo */
+}
+
+.badge-oferta {
+  background: #28a745; /* verde */
+}
+
+.badge-limited {
+  background: #ff8c00; /* naranja */
+}
+
+/* Por si no coincide ningún tipo */
+.product-badge {
+  background: #000;
+}
+
+/* BADGE TAG */
+.product-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 10px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  z-index: 150;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  pointer-events: none;
+}
