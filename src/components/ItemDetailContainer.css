@@ -173,3 +173,20 @@
   display: none;
 }
 
+/* Precio con descuento */
+.info-price-box {
+  margin: 15px 0;
+}
+
+.info-price-final {
+  font-size: 24px;
+  font-weight: 700;
+  color: #000;
+}
+
+.info-price-original {
+  font-size: 18px;
+  color: #999;
+  text-decoration: line-through;
+  margin-left: 10px;
+}

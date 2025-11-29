@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../../firebase/config";
 import AdminSidebar from "./AdminSidebar";
 import "./admin.css";
@@ -7,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
-  const [filter, setFilter] = useState("day"); // day | week | month
+  const [filter, setFilter] = useState("day");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,22 +49,46 @@ export default function AdminOrders() {
 
   /* 🔥 Cambiar estado de despachado */
   const toggleDispatch = async (orderId, currentStatus) => {
-    const confirmSend = window.confirm(
+    const ok = window.confirm(
       currentStatus
         ? "¿Marcar este pedido como NO despachado?"
         : "¿Marcar este pedido como DESPACHADO?"
     );
 
-    if (!confirmSend) return;
+    if (!ok) return;
 
     await updateDoc(doc(db, "orders", orderId), {
-      dispatched: !currentStatus
+      dispatched: !currentStatus,
     });
 
     setOrders((prev) =>
       prev.map((o) =>
         o.id === orderId ? { ...o, dispatched: !currentStatus } : o
       )
+    );
+  };
+
+  /* 🎨 Badge de estado del pago */
+  const renderStatusBadge = (status) => {
+    let color = "#555";
+
+    if (status === "approved") color = "#28a745";
+    if (status === "pending") color = "#ffc107";
+    if (status === "rejected") color = "#dc3545";
+
+    return (
+      <span
+        style={{
+          padding: "4px 10px",
+          borderRadius: "6px",
+          background: color,
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "12px",
+        }}
+      >
+        {status?.toUpperCase() || "UNKNOWN"}
+      </span>
     );
   };
 
@@ -67,7 +99,7 @@ export default function AdminOrders() {
       <div className="admin-content">
         <h1>Pedidos</h1>
 
-        {/* BOTONES DE FILTRO */}
+        {/* FILTROS */}
         <div style={{ marginBottom: "20px" }}>
           <button onClick={() => setFilter("day")} className="admin-filter-btn">
             Hoy
@@ -88,9 +120,10 @@ export default function AdminOrders() {
                 <th>Cliente</th>
                 <th>Items</th>
                 <th>Total</th>
+                <th>Estado Pago</th>     {/* 👈 ESTA ES LA QUE FALTABA */}
                 <th>Despachado</th>
             </tr>
-          </thead>
+            </thead>
 
           <tbody>
             {orders.map((o) => (
@@ -103,31 +136,46 @@ export default function AdminOrders() {
                 {/* FECHA */}
                 <td>{o.createdAt?.toDate().toLocaleString()}</td>
 
-                {/* NUMERO P */}
+                {/* ID */}
                 <td>{o.id}</td>
-
 
                 {/* CLIENTE */}
                 <td>
-                  {o.buyer?.name} <br />
+                  {o.buyer?.name}
+                  <br />
                   <small>{o.buyer?.email}</small>
                 </td>
 
                 {/* ITEMS */}
                 <td>
                   {o.items?.map((it, i) => (
-                    <div key={i}>• {it.name} × {it.quantity}</div>
+                    <div key={i}>
+                      • {it.name} × {it.quantity}
+                    </div>
                   ))}
                 </td>
 
                 {/* TOTAL */}
                 <td>${o.total}</td>
 
-                {/* DESPACHADO */}
-                <td onClick={(e) => e.stopPropagation() /* ⬅ no abrir detalle */}>
+                {/* 🔥 ESTADO DE PAGO */}
+                <td>{renderStatusBadge(o.status)}</td>
+
+                {/* 🔥 DESPACHADO */}
+                <td onClick={(e) => e.stopPropagation()}>
                   <button
+                    disabled={o.status !== "approved"} // ❗ Bloqueado si NO está aprobado
+                    title={
+                      o.status !== "approved"
+                        ? "El pago NO está aprobado. No puedes despachar este pedido."
+                        : "Marcar como despachado"
+                    }
                     className={
-                      o.dispatched ? "admin-dispatched" : "admin-not-dispatched"
+                      o.dispatched
+                        ? "admin-dispatched"
+                        : o.status !== "approved"
+                        ? "admin-disabled-btn"
+                        : "admin-not-dispatched"
                     }
                     onClick={() => toggleDispatch(o.id, o.dispatched)}
                   >
@@ -138,7 +186,6 @@ export default function AdminOrders() {
             ))}
           </tbody>
         </table>
-
       </div>
     </div>
   );

@@ -64,86 +64,123 @@ exports.createPreference = functions.https.onRequest((req, res) => {
 // ✅ Webhook: recibe confirmación de pago y envía el mail
 exports.webhook = functions.https.onRequest(async (req, res) => {
   try {
-    const payment = req.body;
-    console.log("📩 Notificación recibida de Mercado Pago:", payment);
+    const notification = req.body;
+    console.log("📨 Webhook recibido:", notification);
 
-    if (payment.type === "payment" && payment.data && payment.data.id) {
-      const paymentId = payment.data.id;
+    // Mercado Pago manda solo esto:
+    // { "type": "payment", "data": { "id": "123456" } }
+    if (!notification.type || notification.type !== "payment") {
+      console.log("⚠ Webhook ignorado (no es un pago)");
+      return res.sendStatus(200);
+    }
 
-      // Obtener datos completos del pago
-      const { Payment } = require("mercadopago");
-      const client = new Payment(mp);
-      const result = await client.get({ id: paymentId });
-      const paymentData = result || {};
+    const paymentId = notification.data?.id;
+    if (!paymentId) {
+      console.log("⚠ Webhook sin paymentId");
+      return res.sendStatus(200);
+    }
 
-      const orderId = paymentData.external_reference || paymentId;
-      const totalAmount = paymentData.transaction_amount || 0;
-      const paymentStatus = paymentData.status || "pending";
+    // Obtener datos completos del pago
+    const { Payment } = require("mercadopago");
+    const client = new Payment(mp);
 
-      console.log(`🧾 Estado del pago: ${paymentStatus}`);
+    const paymentResponse = await client.get({ id: paymentId });
+    const paymentData = paymentResponse;
 
-      // Buscar la orden original en Firestore
-      const orderRef = admin.firestore().collection("orders").doc(orderId);
-      const orderSnap = await orderRef.get();
+    console.log("💰 Datos del pago:", paymentData);
 
-      let buyerEmail = paymentData.payer?.email; // fallback
-      if (orderSnap.exists) {
-        const orderData = orderSnap.data();
-        if (orderData?.buyer?.email) {
-          buyerEmail = orderData.buyer.email; // ⬅ EMAIL REAL DEL USUARIO DE TU WEB
-        }
-      }
+    const orderId = paymentData.external_reference;
+    if (!orderId) {
+      console.error("❌ ERROR: No existe external_reference en el pago");
+      return res.sendStatus(200);
+    }
 
-      // Actualizar Firestore
+    // Buscar la orden original
+    const orderRef = admin.firestore().collection("orders").doc(orderId);
+    const orderSnap = await orderRef.get();
+
+    if (!orderSnap.exists) {
+      console.error("❌ ERROR: Orden no encontrada:", orderId);
+      return res.sendStatus(200);
+    }
+
+    const orderData = orderSnap.data();
+
+    // VALIDACIÓN: monto real del pago = monto de la orden
+    const paymentAmount = paymentData.transaction_amount;
+    if (paymentAmount !== orderData.total) {
+      console.error("⚠ Monto pagado no coincide con la orden!");
+      // NO marcamos paid, pero tampoco devolvemos error
       await orderRef.set(
         {
-          status: paymentStatus,
-          total: totalAmount,
-          email: buyerEmail,
+          status: "amount_mismatch",
+          mpPaymentId: paymentId,
+          mpRawData: paymentData,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
-
-      console.log(`📦 Orden ${orderId} actualizada correctamente.`);
-
-      // Enviar correo solo si es aprobado
-      if (paymentStatus === "approved") {
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.GMAIL_EMAIL,
-            pass: process.env.GMAIL_PASSWORD,
-          },
-        });
-
-        await transporter.sendMail({
-          from: `"Genesis Airsoft" <${process.env.GMAIL_EMAIL}>`,
-          to: buyerEmail,  // ← AHORA SÍ, EMAIL DEL USUARIO LOGUEADO
-          subject: "✅ Confirmación de tu compra en Genesis Airsoft",
-          html: `
-            <div style="font-family: Arial, sans-serif; color: #333;">
-              <h2>Gracias por tu compra 🛒</h2>
-              <p>Tu pago ha sido <strong>aprobado</strong>.</p>
-              <p><strong>ID de orden:</strong> ${orderId}</p>
-              <p><strong>Monto:</strong> $${totalAmount.toFixed(2)}</p>
-              <hr/>
-              <p>Te contactaremos en breve con los detalles de envío o retiro en tienda.</p>
-              <p>¡Gracias por confiar en <strong>Genesis Airsoft</strong>!</p>
-            </div>
-          `,
-        });
-
-        console.log(`📨 Correo enviado correctamente a: ${buyerEmail}`);
-      }
+      return res.sendStatus(200);
     }
 
-    res.sendStatus(200);
-  } catch (error) {
-    console.error("❌ Error en webhook:", error);
-    res.sendStatus(500);
+    const status = paymentData.status; // approved, pending, rejected
+    const buyerEmail =
+      orderData.buyer?.email || paymentData.payer?.email || null;
+
+    // Actualizar orden
+    await orderRef.set(
+      {
+        status: status,
+        mpPaymentId: paymentId,
+        paymentMethod: paymentData.payment_method_id,
+        installments: paymentData.installments,
+        paidAt:
+          status === "approved"
+            ? admin.firestore.FieldValue.serverTimestamp()
+            : null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        rawPayment: paymentData, // Auditoría completa
+      },
+      { merge: true }
+    );
+
+    console.log(`📦 Orden ${orderId} actualizada: ${status}`);
+
+    // Enviar email SOLO si está aprobado
+    if (status === "approved" && buyerEmail) {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_EMAIL,
+          pass: process.env.GMAIL_PASSWORD,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"Genesis Airsoft" <${process.env.GMAIL_EMAIL}>`,
+        to: buyerEmail,
+        subject: "✅ Confirmación de pago en Genesis Airsoft",
+        html: `
+          <h2>Gracias por tu compra</h2>
+          <p>Tu pago fue aprobado correctamente.</p>
+          <p><strong>ID Pedido:</strong> ${orderId}</p>
+          <p><strong>Monto abonado:</strong> $${paymentAmount}</p>
+          <hr/>
+          <p>Nos contactaremos para coordinar el envío o retiro.</p>
+        `,
+      });
+
+      console.log("📨 Email enviado a:", buyerEmail);
+    }
+
+    return res.sendStatus(200);
+  } catch (e) {
+    console.error("❌ ERROR WEBHOOK:", e);
+    // SIEMPRE responder 200 incluso si hay error interno.
+    return res.sendStatus(200);
   }
 });
+
 
 //3) EMAIL AL CAMBIAR CONTRASEÑA
 exports.passwordChanged = functions.https.onRequest((req, res) => {
@@ -184,5 +221,120 @@ exports.passwordChanged = functions.https.onRequest((req, res) => {
   });
 });
 
+exports.createSecureOrder = functions.https.onRequest(async (req, res) => {
+  cors(req, res, async () => {
+    try {
+      if (req.method !== "POST")
+        return res.status(405).send("Method not allowed");
 
+      const { items, userId, buyer } = req.body;
+
+      if (!items || !Array.isArray(items) || items.length === 0)
+        return res.status(400).send("No items provided");
+
+      if (!userId) return res.status(400).send("User ID missing");
+
+      const db = admin.firestore();
+
+      let verifiedItems_MP = [];   // ← Ítems para Mercado Pago
+      let verifiedItems_DB = [];   // ← Ítems para Firestore / Frontend
+      let total = 0;
+
+      // 🔥 VALIDACIÓN SEGURA + CÁLCULO REAL DE PRECIOS
+      for (const cartItem of items) {
+        const productRef = db.collection("products").doc(cartItem.id);
+        const productSnap = await productRef.get();
+
+        if (!productSnap.exists)
+          return res.status(400).send(`Product ${cartItem.id} does not exist`);
+
+        const product = productSnap.data();
+
+        const discount = product.discount || 0;
+        const hasDiscount = discount > 0;
+
+        const finalPrice = hasDiscount
+          ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+          : product.price;
+
+        const qty = cartItem.quantity || 1;
+
+        // ======================================
+        // ✔ Datos PARA FIRESTORE (mostrar pedidos)
+        // ======================================
+        verifiedItems_DB.push({
+          productId: productRef.id,
+          name: product.name,
+          price: finalPrice,
+          quantity: qty
+        });
+
+        // =====================================================
+        // ✔ Datos PARA MERCADOPAGO (exige campos específicos)
+        // =====================================================
+        verifiedItems_MP.push({
+          id: productRef.id,                                     // ← Código único del ítem
+          title: product.name,                                   // ← Nombre del producto
+          description: product.description || "Producto Airsoft",// ← Descripción requerida
+          category_id: product.category || "others",             // ← Categoría MP
+          unit_price: finalPrice,
+          quantity: qty,
+          currency_id: "ARS"
+        });
+
+        total += finalPrice * qty;
+      }
+
+      // =======================================================
+      // 🔥 CREAR ORDEN SEGURA EN FIRESTORE
+      // =======================================================
+      const orderRef = await db.collection("orders").add({
+        userId,
+        buyer,
+        items: verifiedItems_DB,
+        total,
+        dispatched: false,
+        status: "pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      // =======================================================
+      // 🔥 CREAR PREFERENCIA EN MERCADOPAGO (FORMATO ENRIQUECIDO)
+      // =======================================================
+      const preference = new Preference(mp);
+      const prefResult = await preference.create({
+        body: {
+          items: verifiedItems_MP,
+          payer: {
+            name: buyer.name,
+            email: buyer.email
+          },
+          external_reference: orderRef.id,
+          statement_descriptor: "GENESIS AIRSOFT",
+          back_urls: {
+            success: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
+            failure: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
+            pending: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending"
+          },
+          notification_url:
+            "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook",
+          auto_return: "approved"
+        }
+      });
+
+      // =======================================================
+      // 🔥 RESPUESTA PARA EL FRONTEND
+      // =======================================================
+      res.status(200).json({
+        orderId: orderRef.id,
+        preferenceId: prefResult.id,
+        total
+      });
+
+    } catch (err) {
+      console.error("❌ Error en createSecureOrder:", err);
+      res.status(500).send("Server error");
+    }
+  });
+});
 

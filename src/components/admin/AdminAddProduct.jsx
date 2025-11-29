@@ -1,3 +1,4 @@
+// AdminAddProduct.jsx
 import React, { useState } from "react";
 import AdminSidebar from "./AdminSidebar";
 import { db } from "../../firebase/config";
@@ -9,10 +10,10 @@ export default function AdminAddProduct() {
   const [form, setForm] = useState({
     name: "",
     price: "",
+    discount: 0,       // 🔥 NUEVO CAMPO
     category: "",
     description: "",
     imageFiles: [],
-    tag: "",           // ← NUEVO
   });
 
   const [loading, setLoading] = useState(false);
@@ -39,17 +40,22 @@ export default function AdminAddProduct() {
         return;
       }
 
-      if (!form.imageFiles.length) {
+      if (!form.imageFiles || form.imageFiles.length === 0) {
         setMessage("Debes seleccionar al menos una imagen.");
         return;
       }
 
+      const priceNum = Number(form.price);
+      const discountNum = Number(form.discount);
+      const finalPrice = priceNum - (priceNum * discountNum) / 100; // 🔥 Cálculo
+
       const productRef = await addDoc(collection(db, "products"), {
         name: form.name,
-        price: Number(form.price),
+        price: priceNum,
+        discount: discountNum,   // 🔥 Guardar descuento
+        finalPrice: finalPrice,  // 🔥 Guardar precio final real
         category: form.category,
         description: form.description,
-        tag: form.tag || "",     // ← NUEVO
         images: [],
         cover: "",
         createdAt: new Date(),
@@ -70,12 +76,11 @@ export default function AdminAddProduct() {
       setForm({
         name: "",
         price: "",
+        discount: 0,
         category: "",
         description: "",
         imageFiles: [],
-        tag: "",
       });
-
     } catch (error) {
       console.error("Error al guardar producto:", error);
       setMessage("Ocurrió un error al guardar el producto.");
@@ -92,31 +97,44 @@ export default function AdminAddProduct() {
         <h1>Agregar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-
           <label>Nombre</label>
           <input name="name" value={form.name} onChange={handleChange} />
 
           <label>Precio</label>
-          <input name="price" type="number" value={form.price} onChange={handleChange} />
+          <input
+            name="price"
+            type="number"
+            value={form.price}
+            onChange={handleChange}
+          />
+
+          <label>Descuento (%)</label>
+          <input
+            name="discount"
+            type="number"
+            min="0"
+            max="90"
+            value={form.discount}
+            onChange={handleChange}
+          />
 
           <label>Categoría</label>
           <input name="category" value={form.category} onChange={handleChange} />
 
           <label>Descripción</label>
-          <textarea name="description" value={form.description} onChange={handleChange}></textarea>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+          />
 
-          {/* TAG SELECTOR */}
-          <label>Etiqueta (opcional)</label>
-          <select name="tag" value={form.tag} onChange={handleChange}>
-            <option value="">Sin etiqueta</option>
-            <option value="hot">🔥 Hot</option>
-            <option value="new">🆕 Nuevo</option>
-            <option value="sale">💸 Oferta</option>
-            <option value="limited">⭐ Limited</option>
-          </select>
-
-          <label>Imágenes (puedes seleccionar varias)</label>
-          <input type="file" accept="image/*" multiple onChange={handleChange} />
+          <label>Imágenes</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleChange}
+          />
 
           <button type="button" onClick={handleSave} disabled={loading}>
             {loading ? "Guardando..." : "Guardar Producto"}

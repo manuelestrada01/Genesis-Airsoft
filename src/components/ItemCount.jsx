@@ -7,7 +7,7 @@ const ItemCount = ({ stock = 10, initial = 1, product, onQuantityChange }) => {
   const [added, setAdded] = useState(false); 
   const { addToCart } = useContext(CartContext);
 
-  // Notifica al padre cada vez que cambia
+  // Notifica al padre cada vez que cambia la cantidad
   useEffect(() => {
     if (onQuantityChange) onQuantityChange(quantity);
   }, [quantity]);
@@ -19,7 +19,21 @@ const ItemCount = ({ stock = 10, initial = 1, product, onQuantityChange }) => {
     setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    // 🔥 Calcular precio final con descuento
+    const discount = product.discount || 0;
+    const hasDiscount = discount > 0;
+
+    const finalPrice = hasDiscount
+      ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+      : product.price;
+
+    // 🔥 Crear objeto con precio corregido
+    const productForCart = {
+      ...product,
+      price: finalPrice
+    };
+
+    addToCart(productForCart, quantity);
 
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);

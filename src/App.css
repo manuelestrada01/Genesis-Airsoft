@@ -62,7 +62,7 @@ html, body {
   flex: 1;
   min-height: 80vh;
   margin-top: 200px;
-  padding-bottom: 60px; /* ⬅️ NUEVO: evita la línea blanca al final */
+  padding-bottom: 20px; /* ⬅️ NUEVO: evita la línea blanca al final */
 }
 
 body {
@@ -71,3 +71,6 @@ body {
   
 }
 
+.about-wrapper {
+  margin-bottom: 10px; /* ajustá a gusto */
+}

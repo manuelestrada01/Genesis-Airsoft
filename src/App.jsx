@@ -14,23 +14,26 @@ import CartContainer from "./components/CartContainer";
 import Checkout from "./components/Checkout";
 import Profile from "./components/Profile";
 import ScrollToTop from "./components/ScrollToTop";
-
 import CheckoutSuccess from "./components/CheckoutSuccess";
 import CheckoutFailure from "./components/CheckoutFailure";
 import CheckoutPending from "./components/CheckoutPending";
 import OrderDetail from "./components/OrderDetail";
+
+// New component (🔥 añadido)
+import AboutGenesis from "./components/AboutGenesis";
 
 // Admin components
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminProducts from "./components/admin/AdminProducts";
 import AdminAddProduct from "./components/admin/AdminAddProduct";
 import AdminEditProduct from "./components/admin/AdminEditProduct";
-import AdminRoute from "./components/admin/AdminRoute"; // 🔥 PROTECCIÓN ADMIN
+import AdminRoute from "./components/admin/AdminRoute"; 
 import AdminOrders from "./components/admin/AdminOrders";
 import AdminOrderDetail from "./components/admin/AdminOrderDetail";
 
 import "./App.css";
 
+// HOME
 const Home = () => (
   <div className="app-container">
     <div style={{ marginTop: "-100px", display: "flex", justifyContent: "center" }}>
@@ -40,13 +43,17 @@ const Home = () => (
     <div style={{ margin: "10px 20px" }}>
       <ItemListContainer />
     </div>
+
+    {/* 🔥 Nueva sección institucional */}
+    <AboutGenesis />
   </div>
 );
 
 function App() {
   return (
     <BrowserRouter>
-    <ScrollToTop />
+      <ScrollToTop />
+
       {/* RUTAS ADMIN – OCULTAN NAVBAR Y FOOTER */}
       <Routes>
         <Route
@@ -97,7 +104,6 @@ function App() {
             </AdminRoute>
           }
         />
-
       </Routes>
 
       {/* RUTAS PÚBLICAS */}

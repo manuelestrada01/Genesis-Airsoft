@@ -59,7 +59,7 @@
 
 /* Al hacer hover, el texto sube para dejar espacio al botón */
 .product-card:hover .product-info {
-  transform: translateY(-20px);
+  transform: translateY(-35px); /* 🔥 Antes era -20 */
 }
 
 /* Botón "Agregar al carrito" */
@@ -203,4 +203,41 @@
   letter-spacing: 0.5px;
   text-transform: uppercase;
   pointer-events: none;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #000;
+  color: #fff;
+  padding: 5px 9px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  z-index: 120;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+}
+
+.price-box {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.final-price {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #000;
+}
+
+.old-price {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: #777;
+  text-decoration: line-through;
+  margin-top: 2px;
 }

@@ -14,7 +14,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState(null);
   const [mainImage, setMainImage] = useState("");
   const [showFullDesc, setShowFullDesc] = useState(false);
-  const [quantity, setQuantity] = useState(1); // 🔥 Cantidad del ItemCount
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -34,7 +34,6 @@ const ProductDetail = () => {
 
           setProduct(data);
           setMainImage(firstImage);
-          
         }
       } catch (err) {
         console.error("Error cargando producto:", err);
@@ -50,12 +49,53 @@ const ProductDetail = () => {
   const isLong = desc.length > 150;
   const visibleText = showFullDesc ? desc : desc.substring(0, 150);
 
-  // 🔥 COMPRA DIRECTA
-  const handleBuyNow = () => {
-    clearCart(); // limpia el carrito para compra directa
-    addToCart(product, quantity); // añade SOLO este producto con la cantidad seleccionada
-    navigate("/checkout"); // redirige al checkout
+  // 🔥 Cálculo del precio con descuento
+  const discount = product.discount || 0;
+  const hasDiscount = discount > 0;
+
+  const finalPrice = hasDiscount
+    ? (product.price - product.price * (discount / 100)).toFixed(2)
+    : product.price;
+
+  // 🔥 Comprar ahora
+// Comprar ahora con precio con descuento
+    const handleBuyNow = () => {
+
+      const discount = product.discount || 0;
+      const hasDiscount = discount > 0;
+
+      // 🔥 Precio real del producto
+      const finalPrice = hasDiscount
+        ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+        : product.price;
+
+      const productToCart = {
+        ...product,
+        price: finalPrice   // ← EL PRECIO QUE ENTRA AL CARRITO
+      };
+
+      clearCart();
+      addToCart(productToCart, quantity);
+      navigate("/checkout");
+    };
+
+    const handleAddToCart = () => {
+
+  const discount = product.discount || 0;
+  const hasDiscount = discount > 0;
+
+  const finalPrice = hasDiscount
+    ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+    : product.price;
+
+  const productToCart = {
+    ...product,
+    price: finalPrice
   };
+
+  addToCart(productToCart, quantity);
+};
+
 
   return (
     <div className="detail-layout">
@@ -78,15 +118,45 @@ const ProductDetail = () => {
 
       {/* IMAGEN PRINCIPAL */}
       <div className="detail-main-img-wrapper">
+        {hasDiscount && (
+          <div
+            className="detail-discount-tag"
+            style={{
+              position: "absolute",
+              top: "10px",
+              left: "10px",
+              background: "#e60023",
+              color: "white",
+              padding: "6px 10px",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              fontSize: "14px",
+              zIndex: 10
+            }}
+          >
+            -{discount}%
+          </div>
+        )}
+
         <img src={mainImage} alt={product.name} className="detail-main-img" />
       </div>
 
-      {/* INFORMACION */}
+      {/* INFORMACIÓN */}
       <div className="info-box">
         <h1 className="info-title">{product.name}</h1>
         <p className="info-cat">Categoría: {product.category}</p>
 
-        <p className="info-price">${product.price}</p>
+        {/* 🔥 PRECIOS */}
+        <div className="info-price-box">
+          {hasDiscount ? (
+            <>
+              <p className="info-price-final">${finalPrice}</p>
+              <p className="info-price-original">${product.price}</p>
+            </>
+          ) : (
+            <p className="info-price-final">${product.price}</p>
+          )}
+        </div>
 
         {/* DESCRIPCIÓN */}
         <p className="info-short">
@@ -106,10 +176,7 @@ const ProductDetail = () => {
         {/* CANTIDAD */}
         <div className="info-qty-box">
           <label>Cantidad *</label>
-          <ItemCount
-            product={product}
-            onQuantityChange={setQuantity} // 🔥 recibimos la cantidad aquí
-          />
+          <ItemCount product={product} onQuantityChange={setQuantity} />
         </div>
 
         {/* COMPRA DIRECTA */}

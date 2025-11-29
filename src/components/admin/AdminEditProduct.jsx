@@ -1,3 +1,4 @@
+// AdminEditProduct.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -18,6 +19,9 @@ export default function AdminEditProduct() {
   const [product, setProduct] = useState(null);
   const [newImages, setNewImages] = useState([]);
 
+  // ============================================================
+  // ⭐ 1️⃣ Cargar producto existente
+  // ============================================================
   useEffect(() => {
     const loadProduct = async () => {
       try {
@@ -31,16 +35,14 @@ export default function AdminEditProduct() {
         }
 
         const data = snap.data();
+
         let imagesArray = [];
 
-        if (data.images) {
+        if (data.images && Array.isArray(data.images)) {
           imagesArray = data.images;
         } else if (data.imageUrl) {
           imagesArray = [
-            {
-              imageUrl: data.imageUrl,
-              imagePath: data.imagePath || "",
-            },
+            { imageUrl: data.imageUrl, imagePath: data.imagePath || "" },
           ];
         }
 
@@ -49,6 +51,8 @@ export default function AdminEditProduct() {
           ...data,
           images: imagesArray,
           cover: data.cover || imagesArray[0]?.imageUrl || "",
+          discount: data.discount || 0,
+          finalPrice: data.finalPrice || data.price,
         });
 
         setLoading(false);
@@ -58,18 +62,28 @@ export default function AdminEditProduct() {
     };
 
     loadProduct();
-  }, [id]);
+  }, [id, navigate]);
 
+  // ============================================================
+  // ⭐ 2️⃣ Cambios en inputs
+  // ============================================================
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
+  // ============================================================
+  // ⭐ 3️⃣ Cargar nuevas imágenes
+  // ============================================================
   const handleNewImages = (e) => {
     setNewImages(Array.from(e.target.files));
   };
 
+  // ============================================================
+  // ⭐ 4️⃣ Eliminar imagen existente
+  // ============================================================
   const handleDeleteImage = async (img) => {
-    if (!confirm("¿Eliminar esta imagen?")) return;
+    const ok = confirm("¿Eliminar esta imagen?");
+    if (!ok) return;
 
     try {
       if (img.imagePath) await deleteProductImage(img.imagePath);
@@ -95,10 +109,14 @@ export default function AdminEditProduct() {
     }
   };
 
+  // ============================================================
+  // ⭐ 5️⃣ Guardar cambios y recalcular descuento
+  // ============================================================
   const handleSave = async () => {
     if (!product) return;
 
-    if (!confirm("¿Guardar cambios?")) return;
+    const ok = confirm("¿Guardar cambios?");
+    if (!ok) return;
 
     setSaving(true);
 
@@ -107,27 +125,34 @@ export default function AdminEditProduct() {
 
       let updatedImages = [...product.images];
 
+      // Subir nuevas imágenes
       if (newImages.length > 0) {
         const uploaded = await uploadMultipleImages(newImages, product.id);
         updatedImages = [...updatedImages, ...uploaded];
       }
 
-      const newCover =
+      const coverImage =
         updatedImages.length > 0 ? updatedImages[0].imageUrl : "";
 
+      const priceNum = Number(product.price);
+      const discountNum = Number(product.discount);
+      const finalPrice =
+        priceNum - (priceNum * discountNum) / 100; // 🔥 cálculo real
+
+      // Guardar cambios
       await updateDoc(ref, {
         name: product.name,
-        price: Number(product.price),
+        price: priceNum,
+        discount: discountNum,
+        finalPrice: finalPrice,
         category: product.category,
         description: product.description,
-        tag: product.tag || "",       // ← NUEVO
         images: updatedImages,
-        cover: newCover,
+        cover: coverImage,
       });
 
       alert("Producto actualizado ✔");
       navigate("/admin/products");
-
     } catch (err) {
       console.error("Error guardando:", err);
       alert("Error al guardar el producto");
@@ -138,6 +163,9 @@ export default function AdminEditProduct() {
 
   if (loading) return <p style={{ padding: 20 }}>Cargando producto...</p>;
 
+  // ============================================================
+  // ⭐ 6️⃣ Render del formulario
+  // ============================================================
   return (
     <div className="admin-container">
       <AdminSidebar />
@@ -146,35 +174,51 @@ export default function AdminEditProduct() {
         <h1>Editar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-
           <label>Nombre</label>
           <input name="name" value={product.name} onChange={handleChange} />
 
           <label>Precio</label>
-          <input name="price" type="number" value={product.price} onChange={handleChange} />
+          <input
+            name="price"
+            type="number"
+            value={product.price}
+            onChange={handleChange}
+          />
+
+          <label>Descuento (%)</label>
+          <input
+            name="discount"
+            type="number"
+            min="0"
+            max="90"
+            value={product.discount}
+            onChange={handleChange}
+          />
 
           <label>Categoría</label>
-          <input name="category" value={product.category} onChange={handleChange} />
+          <input
+            name="category"
+            value={product.category}
+            onChange={handleChange}
+          />
 
           <label>Descripción</label>
-          <textarea name="description" value={product.description} onChange={handleChange}></textarea>
-
-          {/* TAG MODIFY */}
-          <label>Etiqueta (opcional)</label>
-          <select name="tag" value={product.tag || ""} onChange={handleChange}>
-            <option value="">Sin etiqueta</option>
-            <option value="hot">🔥 Hot</option>
-            <option value="new">🆕 Nuevo</option>
-            <option value="sale">💸 Oferta</option>
-            <option value="limited">⭐ Limited</option>
-          </select>
+          <textarea
+            name="description"
+            value={product.description}
+            onChange={handleChange}
+          ></textarea>
 
           <label>Imágenes actuales</label>
           <div className="admin-image-grid">
             {product.images.map((img, i) => (
               <div key={i} className="admin-image-box">
-                <img src={img.imageUrl} alt="img" className="admin-image-preview" />
-                <button type="button" className="admin-delete-img" onClick={() => handleDeleteImage(img)}>
+                <img src={img.imageUrl} className="admin-image-preview" />
+                <button
+                  type="button"
+                  className="admin-delete-img"
+                  onClick={() => handleDeleteImage(img)}
+                >
                   eliminar
                 </button>
               </div>
@@ -184,7 +228,12 @@ export default function AdminEditProduct() {
           <label>Agregar nuevas imágenes</label>
           <input type="file" accept="image/*" multiple onChange={handleNewImages} />
 
-          <button type="button" className="admin-save-btn" onClick={handleSave} disabled={saving}>
+          <button
+            type="button"
+            className="admin-save-btn"
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </form>

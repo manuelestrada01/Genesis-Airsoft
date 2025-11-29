@@ -73,42 +73,55 @@ function Checkout() {
     return Object.keys(next).length === 0;
   };
 
-  const handlePayment = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    try {
-      setProcessingPayment(true);
-      const createdId = await completeCheckout();
-      const oid = createdId || orderIdRef.current;
-
-      const response = await fetch("https://createpreference-jin2ghc5ya-uc.a.run.app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-          userId: user?.uid || "guest",
-          orderId: oid,
-          total: totalPrice,
-          email: form.email,
-        }),
-      });
-
-      const data = await response.json();
-      if (data?.id)
-        window.location.href = `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.id}`;
-      else alert("❌ No se pudo crear la preferencia de pago.");
-    } catch (err) {
-      console.error("❌ Error en el pago:", err);
-      alert("Ocurrió un error al procesar el pago con Mercado Pago.");
-    } finally {
-      setProcessingPayment(false);
-    }
+  // Cálculo de descuento
+  const calculateDiscountedPrice = (price, discount) => {
+    return discount ? (price - price * (discount / 100)).toFixed(2) : price;
   };
+
+    const handlePayment = async (e) => {
+      e.preventDefault();
+      if (!validate()) return;
+
+      try {
+        setProcessingPayment(true);
+
+        // 1) Crear orden segura + preferencia MP
+        const response = await fetch(
+          "https://us-central1-genesis-airsoft.cloudfunctions.net/createSecureOrder",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: user.uid,
+              buyer: form,
+              items: cart.map(item => ({
+                id: item.id,
+                quantity: item.quantity
+              }))
+            })
+          }
+        );
+
+        const data = await response.json();
+
+        if (!data.preferenceId) {
+          alert("❌ Error creando la preferencia segura.");
+          return;
+        }
+
+    // 2) Redirigir al checkout de Mercado Pago
+    window.location.href =
+      `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
+
+  } catch (err) {
+    console.error("❌ Error en el pago:", err);
+    alert("Ocurrió un error al procesar el pago.");
+  } finally {
+    setProcessingPayment(false);
+  }
+};
+
+
 
   return (
     <div className="checkout-wrapper">
