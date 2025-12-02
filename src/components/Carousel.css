@@ -9,7 +9,15 @@
   padding: 0;
   height: 60vh;
   max-height: 500px;
+
+  /* Ocultar scroll en Firefox */
+  scrollbar-width: none;
 }
+
+.carousel::-webkit-scrollbar {
+  display: none; /* Chrome / Safari */
+}
+
 
 .carousel-item {
   flex: 0 0 100%;

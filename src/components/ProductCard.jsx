@@ -104,6 +104,7 @@ const ProductCard = ({
             name,
             price,
             finalPrice,
+            discount,       // 🔥 NECESARIO
             category,
             description,
             image: finalImage,

@@ -1,0 +1,144 @@
+.contact-section {
+  display: flex;
+  max-width: 1400px;
+  margin: 180px auto 80px auto;
+  padding: 20px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.contact-section.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* IMAGEN GRANDE */
+.contact-image {
+  flex: 1.2;
+  display: flex;
+}
+
+.contact-image img {
+  width: 100%;
+  height: 520px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* CONTENIDO */
+.contact-content {
+  flex: 1;
+  padding: 30px 40px;
+}
+
+.contact-content h2 {
+  font-size: 2.3rem;
+  margin-bottom: 10px;
+}
+
+.contact-content h3 {
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.contact-content p {
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+
+/* FORM */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.contact-form button {
+  padding: 12px;
+  background: #000;
+  color: white;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.contact-form button:hover {
+  background: #333;
+}
+
+/* RESPONSIVE */
+@media (max-width: 950px) {
+  .contact-section {
+    flex-direction: column;
+  }
+
+  .contact-image img {
+    height: 380px;
+  }
+
+  .contact-content {
+    padding: 20px;
+  }
+}
+
+/* ========================= */
+/* Redes / Botones Sociales */
+/* ========================= */
+
+.contact-links {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0 25px 0;
+}
+
+.contact-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 16px;
+  border-radius: 25px;
+
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+
+  border: none;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+/* ICONO */
+.contact-btn img {
+  width: 20px;
+  height: 20px;
+}
+
+/* WHATSAPP */
+.whatsapp {
+  background: #25d366;
+  color: #fff;
+}
+.whatsapp:hover {
+  background: #1ebe5c;
+}
+
+/* INSTAGRAM */
+.instagram {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  color: white;
+}
+.instagram:hover {
+  filter: brightness(1.15);
+}

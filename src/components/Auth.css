@@ -108,3 +108,29 @@
   margin: 10px 0;
   color: #555;
 }
+
+.forgot-password-link {
+  margin-top: 10px;
+  color: #0077ff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+.reset-box {
+  margin-top: 15px;
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.btn-reset {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  background: #111;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}

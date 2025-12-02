@@ -16,50 +16,7 @@ const mp = new mercadopago.MercadoPagoConfig({
 const { Preference } = require("mercadopago");
 
 // ✅ Crear preferencia de pago
-exports.createPreference = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    if (req.method !== "POST") {
-      return res.status(405).send("Method not allowed");
-    }
 
-    try {
-      console.log("🛒 Datos recibidos:", req.body);
-
-      const { items, userId, orderId, email } = req.body;
-
-      const body = {
-        items: items.map((item) => ({
-          id: item.id || "SKU-" + item.name.replace(/\s+/g, "-").toUpperCase(),
-          title: item.name,
-          description: item.description || "Producto de Genesis Airsoft",
-          quantity: item.quantity,
-          unit_price: item.price,
-          currency_id: "ARS",
-          category_id: item.category || "others"   // 🔥 requerido
-        })),
-        payer: { email: email || "comprador@ejemplo.com" },
-         statement_descriptor: "GENESIS AIRSOFT",  // 🔥 requerido
-        external_reference: orderId || `order_${Date.now()}`,
-        metadata: { userId, orderId },
-        back_urls: {
-          success: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
-          failure: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
-          pending: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
-        },
-        notification_url: "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook",
-        auto_return: "approved",
-      };
-
-      const preference = new Preference(mp);
-      const result = await preference.create({ body });
-
-      res.status(200).json({ id: result.id });
-    } catch (error) {
-      console.error("❌ Error creando preferencia:", error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-});
 
 // ✅ Webhook: recibe confirmación de pago y envía el mail
 exports.webhook = functions.https.onRequest(async (req, res) => {
@@ -337,4 +294,57 @@ exports.createSecureOrder = functions.https.onRequest(async (req, res) => {
     }
   });
 });
+
+// ======================================================
+// 4) FORMULARIO DE CONTACTO
+// ======================================================
+exports.contactForm = functions.https.onRequest((req, res) => {
+  cors(req, res, async () => {
+    try {
+      if (req.method !== "POST") {
+        return res.status(405).send("Method not allowed");
+      }
+
+      const { name, email, message } = req.body;
+
+      if (!name || !email || !message) {
+        return res.status(400).send("Missing fields");
+      }
+
+      console.log("📨 Nuevo mensaje desde el formulario:", req.body);
+
+      // Configurar transporte
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.GMAIL_EMAIL,
+          pass: process.env.GMAIL_PASSWORD,
+        },
+      });
+
+      await transporter.sendMail({
+        from: `"Genesis Airsoft - Formulario" <${process.env.GMAIL_EMAIL}>`,
+        to: process.env.GMAIL_EMAIL, // <-- EL EMAIL QUE RECIBE LOS MENSAJES
+        subject: `Nuevo mensaje de contacto de ${name}`,
+        html: `
+          <h2>Nuevo mensaje desde la web</h2>
+          <p><strong>Nombre:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Mensaje:</strong></p>
+          <p>${message}</p>
+          <hr>
+          <p>Enviado automáticamente desde el formulario de contacto de Genesis Airsoft</p>
+        `,
+      });
+
+      console.log("📩 Email enviado correctamente");
+
+      return res.status(200).json({ ok: true });
+    } catch (error) {
+      console.error("❌ Error en contacto:", error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+});
+
 

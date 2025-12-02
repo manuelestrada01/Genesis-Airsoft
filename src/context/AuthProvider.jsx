@@ -1,10 +1,13 @@
+// src/context/AuthProvider.jsx
 import React, { useState, useEffect } from "react";
 import AuthContext from "./AuthContext";
 import { auth } from "../firebase/config";
+
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
@@ -12,65 +15,74 @@ import {
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false); // 👈 NUEVO
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 🔥 Función para leer claims del usuario
+  // 🔥 Cargar claims del usuario
   const loadUserClaims = async (firebaseUser) => {
     if (!firebaseUser) {
       setIsAdmin(false);
       return;
     }
 
-    const tokenResult = await firebaseUser.getIdTokenResult(true); // fuerza refresh
-    const role = tokenResult.claims.role;
+    const tokenResult = await firebaseUser.getIdTokenResult(true);
+    const role = tokenResult.claims.role || "user";
 
-    console.log("🔐 Claims del usuario:", tokenResult.claims);
-
+    firebaseUser.role = role;
     setIsAdmin(role === "admin");
   };
 
-  // 🟢 Detecta cambios de sesión
-useEffect(() => {
-  const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-    if (currentUser) {
-      await currentUser.getIdToken(true);
-      const tokenResult = await currentUser.getIdTokenResult();
-      const role = tokenResult.claims.role || "user";
+  // 🔥 Detectar cambios de sesión
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        await currentUser.getIdToken(true);
+        await loadUserClaims(currentUser);
+        setUser(currentUser);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+      setLoading(false);
+    });
 
-      // 👇 NO CLONAMOS, MODIFICAMOS EL OBJETO ORIGINAL
-      currentUser.role = role;
+    return () => unsub();
+  }, []);
 
-      setUser(currentUser);
-    } else {
-      setUser(null);
-    }
-
-    setLoading(false);
-  });
-
-  return () => unsubscribe();
-}, []);
-
-
-
-  // 🟢 Registrar usuario
+  // 🟢 Registrar usuario + enviar verificación + desloguear
   const registerUser = async (name, email, password) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(auth.currentUser, { displayName: name });
 
-    await loadUserClaims(auth.currentUser); // 👈 importante
-    setUser(auth.currentUser);
-    return auth.currentUser;
+    await updateProfile(userCredential.user, { displayName: name });
+
+    // Enviar mail de verificación
+    await sendEmailVerification(userCredential.user);
+
+    // Desloguear hasta que verifique el correo
+    await signOut(auth);
+
+    return {
+      emailSent: true,
+      message:
+        "Se envió un correo de verificación. Por favor revisá tu email antes de iniciar sesión.",
+    };
   };
 
-  // 🟢 Login usuario
+  // 🟢 Login con verificación obligatoria
   const loginUser = async (email, password) => {
-    await signInWithEmailAndPassword(auth, email, password);
-    await auth.currentUser.getIdToken(true); // 🔥 fuerza refresh del token
+    const credential = await signInWithEmailAndPassword(auth, email, password);
 
-    await loadUserClaims(auth.currentUser); // 👈 importante
-    setUser(auth.currentUser);
-    return auth.currentUser;
+    if (!credential.user.emailVerified) {
+      await signOut(auth);
+      const error = new Error("Email no verificado");
+      error.code = "auth/email-not-verified";
+      throw error;
+    }
+
+    await credential.user.getIdToken(true);
+    await loadUserClaims(credential.user);
+    setUser(credential.user);
+
+    return credential.user;
   };
 
   // 🟢 Logout
@@ -85,7 +97,7 @@ useEffect(() => {
       value={{
         user,
         loading,
-        isAdmin,        // 👈 EXPUSE ESTO AL CONTEXTO
+        isAdmin,
         registerUser,
         loginUser,
         logoutUser,

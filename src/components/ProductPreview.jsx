@@ -1,29 +1,77 @@
 import React from "react";
 import "./ProductPreview.css";
-import ItemCount from "./ItemCount"; // ✅ contador reutilizable con lógica del carrito
+import ItemCount from "./ItemCount";
 
 const ProductPreview = ({ product, onClose }) => {
+  // 🔥 Garantizar siempre una imagen válida
+  const previewImage =
+    product.cover ||
+    product.image ||
+    product.imageUrl ||
+    (product.images && product.images[0]?.imageUrl) ||
+    "/placeholder.jpg";
+
+  // 🔥 Calcular descuento correctamente
+  const hasDiscount = product.discount > 0;
+
+  const finalPrice = hasDiscount
+    ? Number(
+        product.finalPrice ||
+          product.price - product.price * (product.discount / 100)
+      ).toFixed(2)
+    : product.price;
+
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <span className="close" onClick={onClose}>&times;</span>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <span className="close" onClick={onClose}>
+          &times;
+        </span>
 
         <div className="modal-body">
-          {/* Imagen del producto */}
-          <img src={product.image} alt={product.name} />
 
-          {/* Detalles */}
+          {/* IMAGEN */}
+          <div className="modal-img-container">
+            <img src={previewImage} alt={product.name} />
+          </div>
+
           <div className="modal-details">
+
+            {/* TITULO */}
             <h2>{product.name}</h2>
-            <p>{product.description}</p>
-            <p className="price">${product.price}</p>
 
-            {/* 👇 Reutilizamos el contador (ya incluye el botón "Agregar al carrito") */}
-            <ItemCount product={product} initial={1} stock={10} />
+            {/* DESCUENTO */}
+            {hasDiscount && (
+              <div className="modal-discount-badge">-{product.discount}%</div>
+            )}
 
-            <div className="preview-description">
-              {product.shortDescription || product.description}
+            {/* PRECIOS */}
+            <div className="modal-price-box">
+              {hasDiscount ? (
+                <>
+                  <span className="modal-final-price">${finalPrice}</span>
+                  <span className="modal-old-price">${product.price}</span>
+                </>
+              ) : (
+                <span className="modal-final-price">${product.price}</span>
+              )}
             </div>
+
+            {/* ITEM COUNT — 🔥 image siempre incluida */}
+            <ItemCount
+              product={{
+                ...product,
+                price: Number(finalPrice),
+                image: previewImage, // ✔ SIEMPRE GARANTIZADA
+              }}
+              initial={1}
+              stock={10}
+            />
+
+            {/* DESCRIPCION */}
+            <p className="preview-description">
+              {product.shortDescription || product.description}
+            </p>
           </div>
         </div>
       </div>

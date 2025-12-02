@@ -43,38 +43,68 @@ function CartProvider({ children }) {
     if (!loadingUser) fetchCart();
   }, [user, loadingUser]);
 
+
+  
   // Guardar carrito en Firestore solo después de que se cargó desde Firestore
   useEffect(() => {
-    const saveCart = async () => {
-      if (user && cartLoaded) {
-        try {
-          const cartRef = doc(db, "carts", user.uid);
-          await setDoc(cartRef, { items: cart }, { merge: true });
-        } catch (error) {
-          console.error("❌ Error al guardar carrito:", error);
-        }
+  const saveCart = async () => {
+    if (user && cartLoaded) {
+
+      // 🚨 DEBUG: detectar qué item tiene undefined
+      cart.forEach((item, index) => {
+        Object.entries(item).forEach(([key, value]) => {
+          if (value === undefined) {
+            console.error(`❌ ERROR: Item ${index} tiene campo ${key} = undefined`);
+          }
+        });
+      });
+
+      try {
+        const cartRef = doc(db, "carts", user.uid);
+        await setDoc(cartRef, { items: cart }, { merge: true });
+      } catch (error) {
+        console.error("❌ Error al guardar carrito:", error);
       }
-    };
-    saveCart();
-  }, [cart, user, cartLoaded]); // 👈 cambiamos dependencia a cartLoaded
+    }
+  };
+
+  saveCart();
+}, [cart, user, cartLoaded]);
+
 
   // Agregar item al carrito
-  const addToCart = (item, quantity) => {
-    setCart((prev) => {
-      const existing = prev.find((prod) => prod.id === item.id);
-      if (existing) {
-        return prev.map((prod) =>
-          prod.id === item.id
-            ? { ...prod, quantity: prod.quantity + quantity }
-            : prod
-        );
-      } else {
-        return [...prev, { ...item, quantity }];
-      }
-    });
+const addToCart = (item, quantity) => {
 
-    if (resetCheckout) resetCheckout();
+  // Normalizar item: reemplazar undefined por valores válidos
+  const safeItem = {
+    id: item.id || "",
+    name: item.name || "",
+    price: item.price || 0,
+    image: item.image || "/placeholder.jpg",
+    category: item.category || "",
+    description: item.description || "",
+    images: Array.isArray(item.images) ? item.images : [],
   };
+
+  setCart((prev) => {
+    const existing = prev.find((prod) => prod.id === safeItem.id);
+
+    if (existing) {
+      return prev.map((prod) =>
+        prod.id === safeItem.id
+          ? { ...prod, quantity: prod.quantity + quantity }
+          : prod
+      );
+    }
+
+    return [...prev, { ...safeItem, quantity }];
+  });
+
+  if (resetCheckout) resetCheckout();
+};
+
+
+
 
   // Eliminar item
   const removeFromCart = (id) =>
@@ -83,10 +113,11 @@ function CartProvider({ children }) {
   // Vaciar carrito
   const clearCart = async () => {
     setCart([]);
+
     if (user) {
       try {
         const cartRef = doc(db, "carts", user.uid);
-        await updateDoc(cartRef, { items: [] });
+        await setDoc(cartRef, { items: [] }, { merge: true });
       } catch (error) {
         console.error("❌ Error al limpiar carrito:", error);
       }

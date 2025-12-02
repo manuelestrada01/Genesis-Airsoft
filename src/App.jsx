@@ -18,8 +18,7 @@ import CheckoutSuccess from "./components/CheckoutSuccess";
 import CheckoutFailure from "./components/CheckoutFailure";
 import CheckoutPending from "./components/CheckoutPending";
 import OrderDetail from "./components/OrderDetail";
-
-// New component (🔥 añadido)
+import Contact from "./components/Contact";
 import AboutGenesis from "./components/AboutGenesis";
 
 // Admin components
@@ -123,6 +122,7 @@ function App() {
           <Route path="/checkout-failure" element={<CheckoutFailure />} />
           <Route path="/checkout-pending" element={<CheckoutPending />} />
           <Route path="/order/:id" element={<OrderDetail />} />
+          <Route path="/contacto" element={<Contact />} />
         </Routes>
       </div>
 

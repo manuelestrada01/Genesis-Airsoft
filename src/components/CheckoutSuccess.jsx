@@ -1,22 +1,60 @@
-import React from "react";
-import { useLocation } from "react-router-dom";
+// src/components/CheckoutSuccess.jsx
+import React, { useEffect, useContext } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { CartContext } from "../context/CartContext";
 
 function CheckoutSuccess() {
-  const query = new URLSearchParams(useLocation().search);
+  const { clearCart } = useContext(CartContext);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const query = new URLSearchParams(location.search);
   const paymentId = query.get("payment_id");
   const status = query.get("status");
   const externalReference = query.get("external_reference");
 
+  // 🔥 Limpiar carrito apenas llegamos a esta pantalla
+ useEffect(() => {
+  clearCart();
+  // eslint-disable-next-line
+}, []); // 👈 SOLO una vez, al entrar
+
+
+  const handleGoHome = () => {
+    navigate("/");
+  };
+
   return (
     <div style={{ padding: "40px", textAlign: "center" }}>
       <h2>✅ ¡Pago realizado con éxito!</h2>
-      <p>Gracias por tu compra en <b>Genesis Airsoft</b>.</p>
-      <p>Tu ID de pago es: <b>{paymentId}</b></p>
-      <p>Estado: <b>{status}</b></p>
-      <p>Referencia: <b>{externalReference}</b></p>
-      <a href="/" style={{ textDecoration: "none" }}>
-        <button style={{ marginTop: "20px" }}>Volver al inicio</button>
-      </a>
+      <p>
+        Gracias por tu compra en <b>Genesis Airsoft</b>.
+      </p>
+
+      {paymentId && (
+        <p>
+          Tu ID de pago es: <b>{paymentId}</b>
+        </p>
+      )}
+
+      {status && (
+        <p>
+          Estado: <b>{status}</b>
+        </p>
+      )}
+
+      {externalReference && (
+        <p>
+          Referencia: <b>{externalReference}</b>
+        </p>
+      )}
+
+      <button
+        onClick={handleGoHome}
+        style={{ marginTop: "20px", padding: "10px 20px", cursor: "pointer" }}
+      >
+        Volver al inicio
+      </button>
     </div>
   );
 }
