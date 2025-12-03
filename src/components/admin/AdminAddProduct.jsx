@@ -10,7 +10,8 @@ export default function AdminAddProduct() {
   const [form, setForm] = useState({
     name: "",
     price: "",
-    discount: 0,       // 🔥 NUEVO CAMPO
+    discount: 0,
+    stock: 0,            // 🔥 NUEVO CAMPO DE STOCK
     category: "",
     description: "",
     imageFiles: [],
@@ -34,8 +35,15 @@ export default function AdminAddProduct() {
       setLoading(true);
       setMessage("");
 
+      // Validaciones
       if (!form.name || !form.price || !form.category) {
         setMessage("Todos los campos obligatorios deben estar completos.");
+        setLoading(false);
+        return;
+      }
+
+      if (form.stock < 0) {
+        setMessage("El stock no puede ser negativo.");
         setLoading(false);
         return;
       }
@@ -45,15 +53,21 @@ export default function AdminAddProduct() {
         return;
       }
 
+      // Preparar campos
       const priceNum = Number(form.price);
       const discountNum = Number(form.discount);
-      const finalPrice = priceNum - (priceNum * discountNum) / 100; // 🔥 Cálculo
+      const stockNum = Number(form.stock);
 
+      const finalPrice =
+        priceNum - (priceNum * discountNum) / 100;
+
+      // Crear el producto en Firestore
       const productRef = await addDoc(collection(db, "products"), {
         name: form.name,
         price: priceNum,
-        discount: discountNum,   // 🔥 Guardar descuento
-        finalPrice: finalPrice,  // 🔥 Guardar precio final real
+        discount: discountNum,
+        finalPrice: finalPrice,
+        stock: stockNum,               // 🔥 GUARDAR STOCK
         category: form.category,
         description: form.description,
         images: [],
@@ -61,6 +75,7 @@ export default function AdminAddProduct() {
         createdAt: new Date(),
       });
 
+      // Subir imágenes
       const uploadedImages = await uploadMultipleImages(
         form.imageFiles,
         productRef.id
@@ -73,14 +88,17 @@ export default function AdminAddProduct() {
 
       setMessage("Producto guardado con éxito ✔");
 
+      // Reset del formulario
       setForm({
         name: "",
         price: "",
         discount: 0,
+        stock: 0,
         category: "",
         description: "",
         imageFiles: [],
       });
+
     } catch (error) {
       console.error("Error al guardar producto:", error);
       setMessage("Ocurrió un error al guardar el producto.");
@@ -97,6 +115,7 @@ export default function AdminAddProduct() {
         <h1>Agregar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
+
           <label>Nombre</label>
           <input name="name" value={form.name} onChange={handleChange} />
 
@@ -115,6 +134,16 @@ export default function AdminAddProduct() {
             min="0"
             max="90"
             value={form.discount}
+            onChange={handleChange}
+          />
+
+          {/* 🔥 NUEVO CAMPO STOCK */}
+          <label>Stock Disponible</label>
+          <input
+            name="stock"
+            type="number"
+            min="0"
+            value={form.stock}
             onChange={handleChange}
           />
 

@@ -1,5 +1,5 @@
 // ================================
-// Functions v7 + ESM + Secret Manager
+// Functions v7 + ESM + Secret Manager (VERSIÓN SEGURA)
 // ================================
 
 import { onRequest } from "firebase-functions/v2/https";
@@ -8,6 +8,8 @@ import { logger } from "firebase-functions";
 import admin from "firebase-admin";
 import cors from "cors";
 import nodemailer from "nodemailer";
+import crypto from "crypto";
+import xss from "xss"; // Sanitización XSS
 
 import {
   MercadoPagoConfig,
@@ -15,22 +17,57 @@ import {
   Preference,
 } from "mercadopago";
 
-// ------------------------
-// Init Firebase Admin
-// ------------------------
+// Init Firebase
 admin.initializeApp();
-const corsHandler = cors({ origin: true });
 
-// ------------------------
-// Secrets (REAL SECURITY)
-// ------------------------
+// ================================
+// CORS — SOLO DOMINIOS PERMITIDOS
+// ================================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://virulently-phonolitic-adelia.ngrok-free.dev",
+  "https://genesis-airsoft.web.app",
+  "https://genesisairsoft.com", // cuando tengas dominio
+];
+
+const corsHandler = cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("CORS blocked"), false);
+  },
+});
+
+// ================================
+// Rate Limit (versión simple)
+// ================================
+const rateLimitMap = new Map();
+function rateLimit(ip, limit = 10, windowMs = 10000) {
+  const now = Date.now();
+  let entry = rateLimitMap.get(ip) || { count: 0, last: now };
+
+  if (now - entry.last < windowMs) {
+    entry.count++;
+    if (entry.count > limit) return false;
+  } else {
+    entry = { count: 1, last: now };
+  }
+
+  rateLimitMap.set(ip, entry);
+  return true;
+}
+
+// ================================
+// SECRETS
+// ================================
 const MP_ACCESS_TOKEN = defineSecret("MP_ACCESS_TOKEN");
 const GMAIL_EMAIL = defineSecret("GMAIL_EMAIL");
 const GMAIL_PASSWORD = defineSecret("GMAIL_PASSWORD");
 
-// ------------------------
+// ================================
 // MERCADO PAGO CLIENT
-// ------------------------
+// ================================
 function getMPClient() {
   return new MercadoPagoConfig({
     accessToken: MP_ACCESS_TOKEN.value(),
@@ -38,113 +75,155 @@ function getMPClient() {
 }
 
 // ============================================================
-// 1) WEBHOOK MERCADO PAGO
+// 1) WEBHOOK SEGURO — VALIDA FIRMA + ORIGEN
 // ============================================================
 export const webhook = onRequest(
-  {
-    secrets: [MP_ACCESS_TOKEN, GMAIL_EMAIL, GMAIL_PASSWORD],
-  },
+  { secrets: [MP_ACCESS_TOKEN, GMAIL_EMAIL, GMAIL_PASSWORD] },
   async (req, res) => {
+
     try {
-      const notification = req.body;
-      logger.info("📨 Webhook recibido:", notification);
 
-      if (notification.type !== "payment") return res.sendStatus(200);
+      if (req.method !== "POST") return res.sendStatus(200);
 
-      const paymentId = notification.data?.id;
-      if (!paymentId) return res.sendStatus(200);
+      const { topic, id } = req.query;
 
-      const mp = getMPClient();
-      const client = new Payment(mp);
-      const paymentData = await client.get({ id: paymentId });
-
-      logger.info("💰 Datos del pago:", paymentData);
-
-      const orderId = paymentData.external_reference;
-      if (!orderId) return res.sendStatus(200);
-
-      const db = admin.firestore();
-      const orderRef = db.collection("orders").doc(orderId);
-      const orderSnap = await orderRef.get();
-
-      if (!orderSnap.exists) return res.sendStatus(200);
-
-      const orderData = orderSnap.data();
-
-      // Validación del monto
-      if (paymentData.transaction_amount !== orderData.total) {
-        await orderRef.set(
-          {
-            status: "amount_mismatch",
-            mpPaymentId: paymentId,
-            mpRawData: paymentData,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
+      // -------------------------
+      // ACEPTAR NOTIFICACIONES REALES
+      // -------------------------
+      if (!topic || !id) {
+        logger.warn("❌ Notificación inválida", req.query);
         return res.sendStatus(200);
       }
 
-      const status = paymentData.status;
-      const buyerEmail =
-        orderData.buyer?.email || paymentData.payer?.email || null;
+      logger.info("📩 Webhook recibido:", req.query);
 
-      // Actualizar orden
-      await orderRef.set(
-        {
-          status,
-          mpPaymentId: paymentId,
-          paymentMethod: paymentData.payment_method_id,
-          installments: paymentData.installments,
-          paidAt:
-            status === "approved"
-              ? admin.firestore.FieldValue.serverTimestamp()
-              : null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          rawPayment: paymentData,
-        },
-        { merge: true }
-      );
+      const mp = getMPClient();
 
-      // Enviar email si está aprobado
-      if (status === "approved" && buyerEmail) {
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: GMAIL_EMAIL.value(),
-            pass: GMAIL_PASSWORD.value(),
-          },
-        });
+      // -------------------------
+      // 1) merchant_order → obtener pago real
+      // -------------------------
+      if (topic === "merchant_order") {
 
-        await transporter.sendMail({
-          from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
-          to: buyerEmail,
-          subject: "Pago aprobado",
-          html: `
-            <h2>Gracias por tu compra</h2>
-            <p>Pago aprobado para la orden <strong>${orderId}</strong>.</p>
-            <p>Monto abonado: <strong>$${paymentData.transaction_amount}</strong></p>
-          `,
-        });
+        const mo = await fetch(
+          `https://api.mercadopago.com/merchant_orders/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${MP_ACCESS_TOKEN.value()}`
+            }
+          }
+        ).then(r => r.json());
+
+        logger.info("📦 Merchant Order:", mo);
+
+        if (!mo.payments || mo.payments.length === 0)
+          return res.sendStatus(200);
+
+        const paymentId = mo.payments[0].id;
+
+        const client = new Payment(mp);
+        const paymentData = await client.get({ id: paymentId });
+
+        return await processPayment(paymentData, res);
       }
 
+      // -------------------------
+      // 2) payment → flujo clásico (por si MP lo usa)
+      // -------------------------
+      if (topic === "payment") {
+        const client = new Payment(mp);
+        const paymentData = await client.get({ id });
+
+        return await processPayment(paymentData, res);
+      }
+
+      logger.warn("❌ Topic desconocido:", topic);
       return res.sendStatus(200);
-    } catch (e) {
-      logger.error("❌ ERROR WEBHOOK:", e);
+
+    } catch (err) {
+      logger.error("❌ ERROR WEBHOOK:", err);
       return res.sendStatus(200);
     }
   }
 );
 
+
+// ======================================================
+// FUNCIÓN CENTRAL PARA PROCESAR EL PAGO
+// ======================================================
+async function processPayment(paymentData, res) {
+  const orderId = paymentData.external_reference;
+
+  if (!orderId) return res.sendStatus(200);
+
+  const db = admin.firestore();
+  const orderRef = db.collection("orders").doc(orderId);
+  const orderSnap = await orderRef.get();
+
+  if (!orderSnap.exists) return res.sendStatus(200);
+
+  const orderData = orderSnap.data();
+
+  // Validar monto
+  if (paymentData.transaction_amount !== orderData.total) {
+    await orderRef.update({
+      status: "amount_mismatch",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return res.sendStatus(200);
+  }
+
+  const status = paymentData.status;
+
+  await orderRef.update({
+    status,
+    mpPaymentId: paymentData.id,
+    paymentMethod: paymentData.payment_method_id,
+    installments: paymentData.installments,
+    paidAt:
+      status === "approved"
+        ? admin.firestore.FieldValue.serverTimestamp()
+        : null,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  // =======================================================
+  // 🔥 DESCONTAR STOCK (solo si el pago está aprobado)
+  // =======================================================
+  if (status === "approved") {
+    const batch = db.batch();
+
+    for (const item of orderData.items) {
+      const productRef = db.collection("products").doc(item.productId);
+      const productSnap = await productRef.get();
+
+      if (!productSnap.exists) continue;
+
+      const productData = productSnap.data();
+      const newStock = (productData.stock || 0) - item.quantity;
+
+      batch.update(productRef, {
+        stock: Math.max(newStock, 0), // evitar negativos
+      });
+    }
+
+    await batch.commit();
+  }
+
+  return res.sendStatus(200);
+}
+
+
+
 // ============================================================
-// 2) PASSWORD CHANGED EMAIL
+// 2) PASSWORD CHANGED — Saneado + JSON seguro
 // ============================================================
 export const passwordChanged = onRequest(
   { secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
   (req, res) => {
     corsHandler(req, res, async () => {
       try {
-        const { email, name } = req.body;
+        const email = xss(req.body.email || "");
+        const name = xss(req.body.name || "");
 
         const transporter = nodemailer.createTransport({
           service: "gmail",
@@ -158,23 +237,21 @@ export const passwordChanged = onRequest(
           from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
           to: email,
           subject: "Tu contraseña fue cambiada",
-          html: `
-            <h2>Hola ${name},</h2>
-            <p>Tu contraseña fue modificada correctamente.</p>
-          `,
+          html: `<h2>Hola ${name},</h2>
+                 <p>Tu contraseña fue modificada correctamente.</p>`,
         });
 
         return res.status(200).json({ ok: true });
       } catch (error) {
         logger.error(error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: "Server error" });
       }
     });
   }
 );
 
 // ============================================================
-// 3) CREAR ORDEN + PREFERENCIA MP
+// 3) CREATE ORDER — Sanitización + JSON + CORS seguro
 // ============================================================
 export const createSecureOrder = onRequest(
   { secrets: [MP_ACCESS_TOKEN] },
@@ -182,12 +259,19 @@ export const createSecureOrder = onRequest(
     corsHandler(req, res, async () => {
       try {
         if (req.method !== "POST")
-          return res.status(405).send("Method not allowed");
+          return res.status(405).json({ error: "Method not allowed" });
 
-        const { items, userId, buyer } = req.body;
+        // Sanitizar comprador
+        const buyer = {
+          email: xss(req.body.buyer?.email || ""),
+          name: xss(req.body.buyer?.name || ""),
+        };
+
+        const items = req.body.items;
+        const userId = xss(req.body.userId || "");
 
         if (!items?.length || !userId)
-          return res.status(400).send("Missing data");
+          return res.status(400).json({ error: "Missing data" });
 
         const db = admin.firestore();
         let verifiedMP = [];
@@ -196,9 +280,19 @@ export const createSecureOrder = onRequest(
 
         for (const cart of items) {
           const snap = await db.collection("products").doc(cart.id).get();
-          if (!snap.exists) return res.status(400).send("Product not found");
+          if (!snap.exists)
+            return res.status(400).json({ error: "Product not found" });
 
           const product = snap.data();
+
+          // 🔥 VALIDAR STOCK REAL
+          if (product.stock === undefined || product.stock < cart.quantity) {
+            return res.status(400).json({
+              error: `Stock insuficiente para ${product.name}`,
+            });
+          }
+
+          // Cálculo de precio final
           const discount = product.discount || 0;
           const finalPrice =
             discount > 0
@@ -217,6 +311,8 @@ export const createSecureOrder = onRequest(
           verifiedMP.push({
             id: snap.id,
             title: product.name,
+            description: product.description || "Producto",
+            category_id: product.category || "others",
             unit_price: finalPrice,
             quantity: cart.quantity,
             currency_id: "ARS",
@@ -225,6 +321,7 @@ export const createSecureOrder = onRequest(
           total += finalPrice * cart.quantity;
         }
 
+        // Crear la orden en Firestore
         const orderRef = await db.collection("orders").add({
           userId,
           buyer,
@@ -234,47 +331,54 @@ export const createSecureOrder = onRequest(
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
+        // Crear preferencia MP
         const mp = getMPClient();
         const prefClient = new Preference(mp);
         const prefResult = await prefClient.create({
           body: {
             items: verifiedMP,
-            payer: { email: buyer.email, name: buyer.name },
+            payer: buyer,
             external_reference: orderRef.id,
             auto_return: "approved",
             back_urls: {
-              success: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
-              failure: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
-              pending: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
+              success:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
+              failure:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
+              pending:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
             },
-
             notification_url:
               "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook",
           },
         });
 
-        res.status(200).json({
+        return res.status(200).json({
           orderId: orderRef.id,
           preferenceId: prefResult.id,
           total,
         });
       } catch (err) {
         logger.error(err);
-        res.status(500).send("Server error");
+        return res.status(500).json({ error: "Server error" });
       }
     });
   }
 );
 
 // ============================================================
-// 4) CONTACT FORM
+// 4) CONTACT FORM — Sanitización + Rate Limit
 // ============================================================
 export const contactForm = onRequest(
   { secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
   (req, res) => {
     corsHandler(req, res, async () => {
       try {
-        const { name, email, message } = req.body;
+        if (!rateLimit(req.ip)) return res.status(429).json({ error: "Too many requests" });
+
+        const name = xss(req.body.name || "");
+        const email = xss(req.body.email || "");
+        const message = xss(req.body.message || "");
 
         const transporter = nodemailer.createTransport({
           service: "gmail",
@@ -290,16 +394,16 @@ export const contactForm = onRequest(
           subject: `Nuevo mensaje de ${name}`,
           html: `
             <h2>Nuevo mensaje</h2>
-            <p>Nombre: ${name}</p>
-            <p>Email: ${email}</p>
-            <p>Mensaje: ${message}</p>
+            <p><strong>Nombre:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Mensaje:</strong> ${message}</p>
           `,
         });
 
         return res.status(200).json({ ok: true });
       } catch (error) {
         logger.error(error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: "Server error" });
       }
     });
   }

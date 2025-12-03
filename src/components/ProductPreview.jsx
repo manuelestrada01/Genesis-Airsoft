@@ -61,8 +61,9 @@ const ProductPreview = ({ product, onClose }) => {
             <ItemCount
               product={{
                 ...product,
-                price: Number(finalPrice),
-                image: previewImage, // ✔ SIEMPRE GARANTIZADA
+                price: product.price,          // ← Precio original SIEMPRE
+                finalPrice: Number(finalPrice),// ← Precio con descuento YA CALCULADO
+                image: previewImage,
               }}
               initial={1}
               stock={10}

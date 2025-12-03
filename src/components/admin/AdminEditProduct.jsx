@@ -53,6 +53,7 @@ export default function AdminEditProduct() {
           cover: data.cover || imagesArray[0]?.imageUrl || "",
           discount: data.discount || 0,
           finalPrice: data.finalPrice || data.price,
+          stock: data.stock ?? 0,  // 🔥 STOCK CARGADO
         });
 
         setLoading(false);
@@ -110,10 +111,15 @@ export default function AdminEditProduct() {
   };
 
   // ============================================================
-  // ⭐ 5️⃣ Guardar cambios y recalcular descuento
+  // ⭐ 5️⃣ Guardar cambios — incluye STOCK
   // ============================================================
   const handleSave = async () => {
     if (!product) return;
+
+    if (product.stock < 0) {
+      alert("El stock no puede ser negativo.");
+      return;
+    }
 
     const ok = confirm("¿Guardar cambios?");
     if (!ok) return;
@@ -136,8 +142,10 @@ export default function AdminEditProduct() {
 
       const priceNum = Number(product.price);
       const discountNum = Number(product.discount);
+      const stockNum = Number(product.stock);
+
       const finalPrice =
-        priceNum - (priceNum * discountNum) / 100; // 🔥 cálculo real
+        priceNum - (priceNum * discountNum) / 100;
 
       // Guardar cambios
       await updateDoc(ref, {
@@ -145,6 +153,7 @@ export default function AdminEditProduct() {
         price: priceNum,
         discount: discountNum,
         finalPrice: finalPrice,
+        stock: stockNum,  // 🔥 STOCK GUARDADO
         category: product.category,
         description: product.description,
         images: updatedImages,
@@ -192,6 +201,16 @@ export default function AdminEditProduct() {
             min="0"
             max="90"
             value={product.discount}
+            onChange={handleChange}
+          />
+
+          {/* 🔥 NUEVO CAMPO STOCK */}
+          <label>Stock disponible</label>
+          <input
+            name="stock"
+            type="number"
+            min="0"
+            value={product.stock}
             onChange={handleChange}
           />
 

@@ -1,22 +1,37 @@
+// src/context/CartProvider.jsx
+
 import { useState, useEffect, useContext } from "react";
 import { CartContext } from "./CartContext";
 import AuthContext from "./AuthContext";
 import { db } from "../firebase/config";
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { CheckoutContext } from "./CheckoutContext";
 
 function CartProvider({ children }) {
+
   const { user, loadingUser } = useContext(AuthContext);
   const checkoutContext = useContext(CheckoutContext);
   const resetCheckout = checkoutContext?.resetCheckout;
 
   const [cart, setCart] = useState([]);
   const [loadingCart, setLoadingCart] = useState(true);
-  const [cartLoaded, setCartLoaded] = useState(false); // 👈 Nuevo estado
+  const [cartLoaded, setCartLoaded] = useState(false);
 
-  // Cargar carrito desde Firestore solo cuando el usuario esté disponible
+  // ============================================================
+  // 1) Cargar carrito desde Firestore (PERO NO EN checkout-success)
+  // ============================================================
   useEffect(() => {
     const fetchCart = async () => {
+
+      // ⛔ Solución al BUG: evitar cargar carrito en checkout-success
+      if (window.location.pathname.includes("checkout-success")) {
+        console.log("⛔ Evitando recargar carrito en checkout-success");
+        setCart([]);
+        setLoadingCart(false);
+        return;
+      }
+
+      // Usuario no logueado → carrito vacío
       if (!user) {
         setCart([]);
         setCartLoaded(false);
@@ -27,12 +42,14 @@ function CartProvider({ children }) {
       try {
         const cartRef = doc(db, "carts", user.uid);
         const cartSnap = await getDoc(cartRef);
+
         if (cartSnap.exists()) {
           setCart(cartSnap.data().items || []);
         } else {
           setCart([]);
         }
-        setCartLoaded(true); // 👈 marcamos que ya se cargó
+
+        setCartLoaded(true);
       } catch (error) {
         console.error("❌ Error al cargar carrito:", error);
       } finally {
@@ -43,74 +60,64 @@ function CartProvider({ children }) {
     if (!loadingUser) fetchCart();
   }, [user, loadingUser]);
 
-
-  
-  // Guardar carrito en Firestore solo después de que se cargó desde Firestore
+  // ============================================================
+  // 2) Guardar carrito en Firestore cuando se modifica
+  // ============================================================
   useEffect(() => {
-  const saveCart = async () => {
-    if (user && cartLoaded) {
-
-      // 🚨 DEBUG: detectar qué item tiene undefined
-      cart.forEach((item, index) => {
-        Object.entries(item).forEach(([key, value]) => {
-          if (value === undefined) {
-            console.error(`❌ ERROR: Item ${index} tiene campo ${key} = undefined`);
-          }
-        });
-      });
-
-      try {
-        const cartRef = doc(db, "carts", user.uid);
-        await setDoc(cartRef, { items: cart }, { merge: true });
-      } catch (error) {
-        console.error("❌ Error al guardar carrito:", error);
+    const saveCart = async () => {
+      if (user && cartLoaded) {
+        try {
+          const cartRef = doc(db, "carts", user.uid);
+          await setDoc(cartRef, { items: cart }, { merge: true });
+        } catch (error) {
+          console.error("❌ Error al guardar carrito:", error);
+        }
       }
-    }
+    };
+
+    saveCart();
+  }, [cart, user, cartLoaded]);
+
+  // ============================================================
+  // 3) Agregar producto al carrito
+  // ============================================================
+  const addToCart = (item, quantity) => {
+    const safeItem = {
+      id: item.id || "",
+      name: item.name || "",
+      price: item.price || 0,
+      image: item.image || "/placeholder.jpg",
+      category: item.category || "",
+      description: item.description || "",
+      images: Array.isArray(item.images) ? item.images : [],
+    };
+
+    setCart((prev) => {
+      const existing = prev.find((prod) => prod.id === safeItem.id);
+
+      if (existing) {
+        return prev.map((prod) =>
+          prod.id === safeItem.id
+            ? { ...prod, quantity: prod.quantity + quantity }
+            : prod
+        );
+      }
+
+      return [...prev, { ...safeItem, quantity }];
+    });
+
+    if (resetCheckout) resetCheckout();
   };
 
-  saveCart();
-}, [cart, user, cartLoaded]);
-
-
-  // Agregar item al carrito
-const addToCart = (item, quantity) => {
-
-  // Normalizar item: reemplazar undefined por valores válidos
-  const safeItem = {
-    id: item.id || "",
-    name: item.name || "",
-    price: item.price || 0,
-    image: item.image || "/placeholder.jpg",
-    category: item.category || "",
-    description: item.description || "",
-    images: Array.isArray(item.images) ? item.images : [],
-  };
-
-  setCart((prev) => {
-    const existing = prev.find((prod) => prod.id === safeItem.id);
-
-    if (existing) {
-      return prev.map((prod) =>
-        prod.id === safeItem.id
-          ? { ...prod, quantity: prod.quantity + quantity }
-          : prod
-      );
-    }
-
-    return [...prev, { ...safeItem, quantity }];
-  });
-
-  if (resetCheckout) resetCheckout();
-};
-
-
-
-
-  // Eliminar item
+  // ============================================================
+  // 4) Eliminar item
+  // ============================================================
   const removeFromCart = (id) =>
     setCart((prev) => prev.filter((item) => item.id !== id));
 
-  // Vaciar carrito
+  // ============================================================
+  // 5) Vaciar carrito (FUNCIONA SIEMPRE)
+  // ============================================================
   const clearCart = async () => {
     setCart([]);
 
@@ -124,10 +131,24 @@ const addToCart = (item, quantity) => {
     }
   };
 
-  // Calcular total
+  // ============================================================
+  // 6) Total
+  // ============================================================
   const getTotalPrice = () =>
     cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
+  // ============================================================
+  // 7) Evento opcional si querés sincronizar desde fuera
+  // ============================================================
+  useEffect(() => {
+    const handler = () => setCart((prev) => [...prev]);
+    window.addEventListener("cart-updated", handler);
+    return () => window.removeEventListener("cart-updated", handler);
+  }, []);
+
+  // ============================================================
+  // 8) PROVIDER
+  // ============================================================
   return (
     <CartContext.Provider
       value={{

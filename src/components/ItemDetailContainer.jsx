@@ -9,7 +9,7 @@ import { CartContext } from "../context/CartContext";
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { clearCart, addToCart } = useContext(CartContext);
+  const { clearCart, addToCart } = useContext(CartContext);  // ← ✔ correcto
 
   const [product, setProduct] = useState(null);
   const [mainImage, setMainImage] = useState("");
@@ -32,7 +32,14 @@ const ProductDetail = () => {
             data.image ||
             "";
 
-          setProduct(data);
+          const normalizedProduct = {
+            ...data,
+            image: firstImage,
+            images: data.images || [],
+            stock: data.stock ?? 0  // 🔥 IMPORTANTE
+          };
+
+          setProduct(normalizedProduct);
           setMainImage(firstImage);
         }
       } catch (err) {
@@ -45,11 +52,12 @@ const ProductDetail = () => {
 
   if (!product) return <p>Cargando producto...</p>;
 
+  const outOfStock = product.stock === 0;
+
   const desc = product.description || "";
   const isLong = desc.length > 150;
   const visibleText = showFullDesc ? desc : desc.substring(0, 150);
 
-  // 🔥 Cálculo del precio con descuento
   const discount = product.discount || 0;
   const hasDiscount = discount > 0;
 
@@ -57,45 +65,39 @@ const ProductDetail = () => {
     ? (product.price - product.price * (discount / 100)).toFixed(2)
     : product.price;
 
+  // ================================
   // 🔥 Comprar ahora
-// Comprar ahora con precio con descuento
-    const handleBuyNow = () => {
+  // ================================
+  const handleBuyNow = () => {
+    if (outOfStock) return;
 
-      const discount = product.discount || 0;
-      const hasDiscount = discount > 0;
+    const discount = product.discount || 0;
+    const finalPrice = discount > 0
+      ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+      : product.price;
 
-      // 🔥 Precio real del producto
-      const finalPrice = hasDiscount
-        ? Number((product.price - product.price * (discount / 100)).toFixed(2))
-        : product.price;
-
-      const productToCart = {
-        ...product,
-        price: finalPrice   // ← EL PRECIO QUE ENTRA AL CARRITO
-      };
-
-      clearCart();
-      addToCart(productToCart, quantity);
-      navigate("/checkout");
+    const productToCart = {
+      ...product,
+      price: finalPrice
     };
 
-    const handleAddToCart = () => {
-
-  const discount = product.discount || 0;
-  const hasDiscount = discount > 0;
-
-  const finalPrice = hasDiscount
-    ? Number((product.price - product.price * (discount / 100)).toFixed(2))
-    : product.price;
-
-  const productToCart = {
-    ...product,
-    price: finalPrice
+    clearCart();
+    addToCart(productToCart, quantity);
+    navigate("/checkout");
   };
 
-  addToCart(productToCart, quantity);
-};
+  // ================================
+  // 🔥 Agregar al carrito
+  // ================================
+  const handleAddToCart = () => {
+    if (outOfStock) return;
 
+    const finalPrice = hasDiscount
+      ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+      : product.price;
+
+    addToCart({ ...product, price: finalPrice }, quantity);
+  };
 
   return (
     <div className="detail-layout">
@@ -119,34 +121,30 @@ const ProductDetail = () => {
       {/* IMAGEN PRINCIPAL */}
       <div className="detail-main-img-wrapper">
         {hasDiscount && (
-          <div
-            className="detail-discount-tag"
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "10px",
-              background: "#e60023",
-              color: "white",
-              padding: "6px 10px",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              fontSize: "14px",
-              zIndex: 10
-            }}
-          >
+          <div className="detail-discount-tag">
             -{discount}%
           </div>
         )}
-
         <img src={mainImage} alt={product.name} className="detail-main-img" />
       </div>
 
-      {/* INFORMACIÓN */}
+      {/* INFO */}
       <div className="info-box">
         <h1 className="info-title">{product.name}</h1>
         <p className="info-cat">Categoría: {product.category}</p>
 
-        {/* 🔥 PRECIOS */}
+        {/* 🔥 STOCK */}
+        {outOfStock ? (
+          <p style={{ color: "red", fontWeight: "bold", fontSize: "18px" }}>
+            SIN STOCK DISPONIBLE
+          </p>
+        ) : (
+          <p style={{ color: "green", fontWeight: "bold" }}>
+            Stock disponible: {product.stock}
+          </p>
+        )}
+
+        {/* PRECIOS */}
         <div className="info-price-box">
           {hasDiscount ? (
             <>
@@ -174,14 +172,28 @@ const ProductDetail = () => {
         )}
 
         {/* CANTIDAD */}
-        <div className="info-qty-box">
-          <label>Cantidad *</label>
-          <ItemCount product={product} onQuantityChange={setQuantity} />
-        </div>
+        {!outOfStock && (
+          <div className="info-qty-box">
+            <label>Cantidad *</label>
+            <ItemCount
+              product={product}
+              onQuantityChange={setQuantity}
+              stock={product.stock}
+            />
+          </div>
+        )}
 
-        {/* COMPRA DIRECTA */}
-        <button className="btn-buy" onClick={handleBuyNow}>
-          Realizar compra
+        {/* COMPRA DIRECTa */}
+        <button
+          className="btn-buy"
+          onClick={handleBuyNow}
+          disabled={outOfStock}
+          style={{
+            opacity: outOfStock ? 0.5 : 1,
+            cursor: outOfStock ? "not-allowed" : "pointer"
+          }}
+        >
+          {outOfStock ? "Sin stock" : "Realizar compra"}
         </button>
       </div>
     </div>

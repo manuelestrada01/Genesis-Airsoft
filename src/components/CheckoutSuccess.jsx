@@ -14,10 +14,15 @@ function CheckoutSuccess() {
   const externalReference = query.get("external_reference");
 
   // 🔥 Limpiar carrito apenas llegamos a esta pantalla
- useEffect(() => {
+useEffect(() => {
   clearCart();
-  // eslint-disable-next-line
-}, []); // 👈 SOLO una vez, al entrar
+
+  // 🔥 Forzar re-render global para que todas las pantallas actualicen el carrito
+  setTimeout(() => {
+    window.dispatchEvent(new Event("cart-updated"));
+  }, 100);
+}, []);
+
 
 
   const handleGoHome = () => {
