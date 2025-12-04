@@ -3,19 +3,17 @@ import { Navigate } from "react-router-dom";
 import AuthContext from "../../context/AuthContext";
 
 export default function AdminRoute({ children }) {
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading, isAdmin } = useContext(AuthContext);
 
-  // Mientras firebase revisa login → spinner
+  // Mientras se carga el auth
   if (loading) return <p>Cargando...</p>;
 
-  // Si no hay usuario → llevar al login
+  // No logueado → al login
   if (!user) return <Navigate to="/auth" />;
 
-  // Si no es admin → mandar a inicio
-  const isAdmin = user?.reloadUserInfo?.customAttributes === '{"role":"admin"}';
-
+  // Logueado pero no admin → al home
   if (!isAdmin) return <Navigate to="/" />;
 
-  // Si pasa todo → permitir acceso
+  // Todo OK → mostrar contenido admin
   return children;
 }

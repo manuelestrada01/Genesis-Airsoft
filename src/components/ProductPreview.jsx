@@ -58,16 +58,22 @@ const ProductPreview = ({ product, onClose }) => {
             </div>
 
             {/* ITEM COUNT — 🔥 image siempre incluida */}
-            <ItemCount
-              product={{
-                ...product,
-                price: product.price,          // ← Precio original SIEMPRE
-                finalPrice: Number(finalPrice),// ← Precio con descuento YA CALCULADO
-                image: previewImage,
-              }}
-              initial={1}
-              stock={10}
-            />
+            {/* 🔥 ItemCount con stock real */}
+              <ItemCount
+                product={{
+                  ...product,
+                  price: product.price,
+                  finalPrice: Number(finalPrice),
+                  image: previewImage,
+                }}
+                initial={1}
+                stock={product.stock || 0}
+              />
+
+              {/* 🔥 Mensaje si no hay stock */}
+              {product.stock === 0 && (
+                <p className="no-stock-msg">⚠ Producto sin stock disponible</p>
+              )}
 
             {/* DESCRIPCION */}
             <p className="preview-description">

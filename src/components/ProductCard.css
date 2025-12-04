@@ -241,3 +241,9 @@
   text-decoration: line-through;
   margin-top: 2px;
 }
+
+.add-to-cart.disabled {
+  background: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}

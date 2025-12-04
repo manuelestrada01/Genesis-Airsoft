@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import {
   collection,
   getDocs,
@@ -12,8 +12,26 @@ import {
 import { db, getCategories } from "../firebase/db";
 import ItemList from "./ItemList";
 
+// ================================
+// 🔒 Sanitizar texto de búsqueda
+// ================================
+const sanitize = (text) =>
+  text
+    ?.toString()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .trim() || "";
+
 const ItemListContainer = () => {
   const { categoryId } = useParams();
+  const location = useLocation();
+
+  // ================================
+  // 🔍 CAPTURAR TEXTO DE BÚSQUEDA
+  // ================================
+  const searchQuery = sanitize(
+    new URLSearchParams(location.search).get("query")
+  );
 
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -22,29 +40,23 @@ const ItemListContainer = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [noMoreProducts, setNoMoreProducts] = useState(false);
 
-
-
   // ============================
-  // 🔥 1) Cargar categorías
+  // 1) Cargar categorías
   // ============================
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const cats = await getCategories();
-        setCategories(cats);
-      } catch (error) {
-        console.error("Error al traer categorías:", error);
-      }
-    };
-    fetchCategories();
+    getCategories()
+      .then(setCategories)
+      .catch((e) => console.error("Error al traer categorías:", e));
   }, []);
 
-  // ============================
-  // 🔥 2) Cargar productos iniciales (12)
-  // ============================
+  // ==========================================================
+  // 2) Cargar productos según:
+  //    ✔ categoría
+  //    ✔ búsqueda por texto
+  // ==========================================================
   useEffect(() => {
     loadInitialProducts();
-  }, [categoryId, categories]);
+  }, [categoryId, categories, searchQuery]);
 
   const loadInitialProducts = async () => {
     try {
@@ -53,8 +65,37 @@ const ItemListContainer = () => {
 
       let q;
 
+      // =============================
+      // 🔎 PRIORIDAD 1: BÚSQUEDA
+      // =============================
+      if (searchQuery) {
+        const snap = await getDocs(collection(db, "products"));
+        const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+        const filtered = all.filter((p) => {
+          const name = sanitize(p.name);
+          const cat = sanitize(p.category);
+          const desc = sanitize(p.description);
+
+          return (
+            name.includes(searchQuery) ||
+            cat.includes(searchQuery) ||
+            desc.includes(searchQuery)
+          );
+        });
+
+        // Sin paginación aquí porque Firebase no permite
+        // `where` + búsqueda parcial
+        setProducts(filtered);
+        setNoMoreProducts(true);
+        return;
+      }
+
+      // =======================================
+      // 🔎 PRIORIDAD 2: FILTRO POR CATEGORÍA
+      // =======================================
       if (categoryId) {
-        const exists = categories.some((cat) => cat.name === categoryId);
+        const exists = categories.some((c) => c.name === categoryId);
 
         if (!exists) {
           setProducts([]);
@@ -64,13 +105,14 @@ const ItemListContainer = () => {
         q = query(
           collection(db, "products"),
           where("category", "==", categoryId),
-          orderBy("price", "desc"), // 🔥 CAMBIO CLAVE
+          orderBy("price", "desc"),
           limit(12)
         );
       } else {
+        // HOME normal
         q = query(
           collection(db, "products"),
-          orderBy("price", "desc"), // 🔥 CAMBIO CLAVE
+          orderBy("price", "desc"),
           limit(12)
         );
       }
@@ -83,38 +125,35 @@ const ItemListContainer = () => {
         return;
       }
 
-      const list = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-      setProducts(list);
+      setProducts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLastDoc(snap.docs[snap.docs.length - 1]);
-    } catch (error) {
-      console.error("Error al traer productos:", error);
+    } catch (e) {
+      console.error("Error al traer productos:", e);
     }
   };
 
   // ============================
-  // 🔥 3) Cargar más productos (paginación)
+  // 3) PAGINACIÓN (solo home/categoría)
   // ============================
   const loadMoreProducts = async () => {
-    if (!lastDoc || noMoreProducts) return;
+    if (!lastDoc || noMoreProducts || searchQuery) return;
 
     try {
       setLoadingMore(true);
 
       let q;
-
       if (categoryId) {
         q = query(
           collection(db, "products"),
           where("category", "==", categoryId),
-          orderBy("price", "desc"), // 🔥 CAMBIO CLAVE
+          orderBy("price", "desc"),
           startAfter(lastDoc),
           limit(12)
         );
       } else {
         q = query(
           collection(db, "products"),
-          orderBy("price", "desc"), // 🔥 CAMBIO CLAVE
+          orderBy("price", "desc"),
           startAfter(lastDoc),
           limit(12)
         );
@@ -127,12 +166,10 @@ const ItemListContainer = () => {
         return;
       }
 
-      const more = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-      setProducts((prev) => [...prev, ...more]);
+      setProducts((prev) => [...prev, ...snap.docs.map((d) => ({ id: d.id, ...d.data() }))]);
       setLastDoc(snap.docs[snap.docs.length - 1]);
-    } catch (error) {
-      console.error("Error al cargar más productos:", error);
+    } catch (e) {
+      console.error("Error al cargar más productos:", e);
     } finally {
       setLoadingMore(false);
     }
@@ -140,24 +177,23 @@ const ItemListContainer = () => {
 
   return (
     <div>
+      {/* 🔥 LISTA DE PRODUCTOS */}
       <ItemList products={products} />
 
-      {/* ========================== */}
-      {/* 🔥 BOTÓN "CARGAR MÁS"     */}
-      {/* ========================== */}
-      {!noMoreProducts && products.length > 0 && (
-        <div style={{ textAlign: "center", marginTop: "30px" }}>
+      {/* 🔥 NO HAY PAGINACIÓN CUANDO SE BUSCA */}
+      {!searchQuery && !noMoreProducts && products.length > 0 && (
+        <div style={{ textAlign: "center", marginTop: 30 }}>
           <button
             onClick={loadMoreProducts}
             disabled={loadingMore}
             style={{
               padding: "12px 20px",
               background: "#222",
-              color: "white",
+              color: "#fff",
               border: "none",
-              borderRadius: "6px",
+              borderRadius: 6,
               cursor: "pointer",
-              fontSize: "16px",
+              fontSize: 16,
             }}
           >
             {loadingMore ? "Cargando..." : "Cargar más"}
@@ -165,8 +201,8 @@ const ItemListContainer = () => {
         </div>
       )}
 
-      {noMoreProducts && (
-        <p style={{ textAlign: "center", marginTop: "25px", color: "#777" }}>
+      {noMoreProducts && !searchQuery && (
+        <p style={{ textAlign: "center", marginTop: 25, color: "#777" }}>
           No hay más productos para mostrar.
         </p>
       )}

@@ -10,6 +10,9 @@ import {
 import AdminSidebar from "./AdminSidebar";
 import "./admin.css";
 
+// Utilidad para prevenir XSS
+const sanitizeText = (str) => str.replace(/<[^>]*>?/gm, "").trim();
+
 export default function AdminEditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,10 +23,10 @@ export default function AdminEditProduct() {
   const [newImages, setNewImages] = useState([]);
 
   // ============================================================
-  // ⭐ 1️⃣ Cargar producto existente
+  // 1️⃣ Cargar producto
   // ============================================================
   useEffect(() => {
-    const loadProduct = async () => {
+    const load = async () => {
       try {
         const ref = doc(db, "products", id);
         const snap = await getDoc(ref);
@@ -35,136 +38,127 @@ export default function AdminEditProduct() {
         }
 
         const data = snap.data();
-
-        let imagesArray = [];
-
-        if (data.images && Array.isArray(data.images)) {
-          imagesArray = data.images;
-        } else if (data.imageUrl) {
-          imagesArray = [
-            { imageUrl: data.imageUrl, imagePath: data.imagePath || "" },
-          ];
-        }
+        const imgs = Array.isArray(data.images) ? data.images : [];
 
         setProduct({
-          id: snap.id,
+          id,
           ...data,
-          images: imagesArray,
-          cover: data.cover || imagesArray[0]?.imageUrl || "",
+          images: imgs,
+          cover: data.cover || imgs[0]?.imageUrl || "",
           discount: data.discount || 0,
           finalPrice: data.finalPrice || data.price,
-          stock: data.stock ?? 0,  // 🔥 STOCK CARGADO
+          stock: data.stock ?? 0,
         });
 
         setLoading(false);
-      } catch (err) {
-        console.error("Error cargando producto:", err);
+      } catch (e) {
+        console.error("Error cargando producto:", e);
       }
     };
 
-    loadProduct();
+    load();
   }, [id, navigate]);
 
   // ============================================================
-  // ⭐ 2️⃣ Cambios en inputs
+  // 2️⃣ Inputs
   // ============================================================
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
   // ============================================================
-  // ⭐ 3️⃣ Cargar nuevas imágenes
+  // 3️⃣ Nuevas imágenes
   // ============================================================
   const handleNewImages = (e) => {
-    setNewImages(Array.from(e.target.files));
+    setNewImages([...e.target.files]);
   };
 
   // ============================================================
-  // ⭐ 4️⃣ Eliminar imagen existente
+  // 4️⃣ Eliminar imagen
   // ============================================================
   const handleDeleteImage = async (img) => {
-    const ok = confirm("¿Eliminar esta imagen?");
-    if (!ok) return;
+    if (!img?.imagePath) return;
+
+    if (!confirm("¿Eliminar esta imagen?")) return;
 
     try {
-      if (img.imagePath) await deleteProductImage(img.imagePath);
+      await deleteProductImage(img.imagePath);
 
-      const updatedImages = product.images.filter(
+      const updatedImgs = product.images.filter(
         (i) => i.imagePath !== img.imagePath
       );
 
-      const newCover =
-        updatedImages.length > 0 ? updatedImages[0].imageUrl : "";
+      const newCover = updatedImgs[0]?.imageUrl || "";
 
       await updateDoc(doc(db, "products", product.id), {
-        images: updatedImages,
+        images: updatedImgs,
         cover: newCover,
       });
 
-      setProduct({ ...product, images: updatedImages, cover: newCover });
-
-      alert("Imagen eliminada");
-    } catch (err) {
-      console.error("Error eliminando imagen:", err);
+      setProduct({ ...product, images: updatedImgs, cover: newCover });
+    } catch (e) {
+      console.error("Error eliminando imagen:", e);
       alert("Error al eliminar imagen");
     }
   };
 
   // ============================================================
-  // ⭐ 5️⃣ Guardar cambios — incluye STOCK
+  // 5️⃣ Guardar cambios (incluye sanitización + validación)
   // ============================================================
   const handleSave = async () => {
     if (!product) return;
 
-    if (product.stock < 0) {
-      alert("El stock no puede ser negativo.");
-      return;
-    }
+    // Validación estricta
+    const price = Number(product.price);
+    const discount = Number(product.discount);
+    const stock = Number(product.stock);
 
-    const ok = confirm("¿Guardar cambios?");
-    if (!ok) return;
+    if (!product.name.trim()) return alert("El nombre es obligatorio.");
+    if (!product.category.trim()) return alert("La categoría es obligatoria.");
+    if (isNaN(price) || price <= 0) return alert("Precio inválido.");
+    if (discount < 0 || discount > 90) return alert("Descuento inválido.");
+    if (stock < 0) return alert("El stock no puede ser negativo.");
+
+    if (!confirm("¿Guardar cambios?")) return;
 
     setSaving(true);
 
     try {
       const ref = doc(db, "products", product.id);
 
+      // Cargar imágenes nuevas
       let updatedImages = [...product.images];
 
-      // Subir nuevas imágenes
       if (newImages.length > 0) {
         const uploaded = await uploadMultipleImages(newImages, product.id);
         updatedImages = [...updatedImages, ...uploaded];
       }
 
-      const coverImage =
+      const cover =
         updatedImages.length > 0 ? updatedImages[0].imageUrl : "";
 
-      const priceNum = Number(product.price);
-      const discountNum = Number(product.discount);
-      const stockNum = Number(product.stock);
+      const finalPrice = Number(
+        (price - (price * discount) / 100).toFixed(2)
+      );
 
-      const finalPrice =
-        priceNum - (priceNum * discountNum) / 100;
-
-      // Guardar cambios
+      // Guardar producto seguro
       await updateDoc(ref, {
-        name: product.name,
-        price: priceNum,
-        discount: discountNum,
-        finalPrice: finalPrice,
-        stock: stockNum,  // 🔥 STOCK GUARDADO
-        category: product.category,
-        description: product.description,
+        name: sanitizeText(product.name),
+        price,
+        discount,
+        finalPrice,
+        stock,
+        category: sanitizeText(product.category),
+        description: sanitizeText(product.description),
         images: updatedImages,
-        cover: coverImage,
+        cover,
       });
 
       alert("Producto actualizado ✔");
       navigate("/admin/products");
-    } catch (err) {
-      console.error("Error guardando:", err);
-      alert("Error al guardar el producto");
+    } catch (e) {
+      console.error("Error guardando:", e);
+      alert("No se pudieron guardar los cambios.");
     } finally {
       setSaving(false);
     }
@@ -173,7 +167,7 @@ export default function AdminEditProduct() {
   if (loading) return <p style={{ padding: 20 }}>Cargando producto...</p>;
 
   // ============================================================
-  // ⭐ 6️⃣ Render del formulario
+  // 6️⃣ Render
   // ============================================================
   return (
     <div className="admin-container">
@@ -183,76 +177,40 @@ export default function AdminEditProduct() {
         <h1>Editar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-          <label>Nombre</label>
+          <label>Nombre *</label>
           <input name="name" value={product.name} onChange={handleChange} />
 
-          <label>Precio</label>
-          <input
-            name="price"
-            type="number"
-            value={product.price}
-            onChange={handleChange}
-          />
+          <label>Precio *</label>
+          <input name="price" type="number" value={product.price} onChange={handleChange} />
 
           <label>Descuento (%)</label>
-          <input
-            name="discount"
-            type="number"
-            min="0"
-            max="90"
-            value={product.discount}
-            onChange={handleChange}
-          />
+          <input name="discount" type="number" min="0" max="90" value={product.discount} onChange={handleChange} />
 
-          {/* 🔥 NUEVO CAMPO STOCK */}
-          <label>Stock disponible</label>
-          <input
-            name="stock"
-            type="number"
-            min="0"
-            value={product.stock}
-            onChange={handleChange}
-          />
+          <label>Stock *</label>
+          <input name="stock" type="number" min="0" value={product.stock} onChange={handleChange} />
 
-          <label>Categoría</label>
-          <input
-            name="category"
-            value={product.category}
-            onChange={handleChange}
-          />
+          <label>Categoría *</label>
+          <input name="category" value={product.category} onChange={handleChange} />
 
           <label>Descripción</label>
-          <textarea
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-          ></textarea>
+          <textarea name="description" value={product.description} onChange={handleChange}></textarea>
 
           <label>Imágenes actuales</label>
           <div className="admin-image-grid">
             {product.images.map((img, i) => (
               <div key={i} className="admin-image-box">
                 <img src={img.imageUrl} className="admin-image-preview" />
-                <button
-                  type="button"
-                  className="admin-delete-img"
-                  onClick={() => handleDeleteImage(img)}
-                >
+                <button type="button" onClick={() => handleDeleteImage(img)}>
                   eliminar
                 </button>
               </div>
             ))}
           </div>
 
-          <label>Agregar nuevas imágenes</label>
-          <input type="file" accept="image/*" multiple onChange={handleNewImages} />
+          <label>Nuevas imágenes</label>
+          <input type="file" multiple accept="image/*" onChange={handleNewImages} />
 
-          <button
-            type="button"
-            className="admin-save-btn"
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <button type="button" className="admin-save-btn" onClick={handleSave} disabled={saving}>
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
         </form>

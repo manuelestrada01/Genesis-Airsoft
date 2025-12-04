@@ -21,6 +21,7 @@ import OrderDetail from "./components/OrderDetail";
 import Contact from "./components/Contact";
 import AboutGenesis from "./components/AboutGenesis";
 
+
 // Admin components
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminProducts from "./components/admin/AdminProducts";
@@ -123,6 +124,8 @@ function App() {
           <Route path="/checkout-pending" element={<CheckoutPending />} />
           <Route path="/order/:id" element={<OrderDetail />} />
           <Route path="/contacto" element={<Contact />} />
+          <Route path="/search" element={<ItemListContainer />} />
+
         </Routes>
       </div>
 

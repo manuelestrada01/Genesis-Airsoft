@@ -6,12 +6,16 @@ import { collection, addDoc, updateDoc } from "firebase/firestore";
 import { uploadMultipleImages } from "../../firebase/uploadProductImage";
 import "./admin.css";
 
+// Función simple para prevenir XSS en textos largos
+const sanitizeText = (str) =>
+  str.replace(/<[^>]*>?/gm, "").trim();
+
 export default function AdminAddProduct() {
   const [form, setForm] = useState({
     name: "",
     price: "",
     discount: 0,
-    stock: 0,            // 🔥 NUEVO CAMPO DE STOCK
+    stock: 0,
     category: "",
     description: "",
     imageFiles: [],
@@ -23,53 +27,61 @@ export default function AdminAddProduct() {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
+    // Selección de imágenes
     if (files && files.length > 0) {
-      setForm({ ...form, imageFiles: Array.from(files) });
-    } else {
-      setForm({ ...form, [name]: value });
+      setForm({ ...form, imageFiles: [...files] });
+      return;
     }
+
+    setForm({ ...form, [name]: value });
   };
 
   const handleSave = async () => {
+    setMessage("");
+
+    // Validaciones
+    if (!form.name.trim() || !form.category.trim()) {
+      return setMessage("Nombre y categoría son obligatorios.");
+    }
+
+    const price = Number(form.price);
+    if (isNaN(price) || price <= 0) {
+      return setMessage("El precio debe ser mayor a 0.");
+    }
+
+    const discount = Number(form.discount);
+    if (discount < 0 || discount > 90) {
+      return setMessage("El descuento debe estar entre 0% y 90%.");
+    }
+
+    const stock = Number(form.stock);
+    if (stock < 0) {
+      return setMessage("El stock no puede ser negativo.");
+    }
+
+    if (!form.imageFiles || form.imageFiles.length === 0) {
+      return setMessage("Debes subir al menos 1 imagen.");
+    }
+
+    setLoading(true);
+
     try {
-      setLoading(true);
-      setMessage("");
+      // Sanitizar campos
+      const cleanDescription = sanitizeText(form.description);
 
-      // Validaciones
-      if (!form.name || !form.price || !form.category) {
-        setMessage("Todos los campos obligatorios deben estar completos.");
-        setLoading(false);
-        return;
-      }
+      const finalPrice = Number(
+        (price - (price * discount) / 100).toFixed(2)
+      );
 
-      if (form.stock < 0) {
-        setMessage("El stock no puede ser negativo.");
-        setLoading(false);
-        return;
-      }
-
-      if (!form.imageFiles || form.imageFiles.length === 0) {
-        setMessage("Debes seleccionar al menos una imagen.");
-        return;
-      }
-
-      // Preparar campos
-      const priceNum = Number(form.price);
-      const discountNum = Number(form.discount);
-      const stockNum = Number(form.stock);
-
-      const finalPrice =
-        priceNum - (priceNum * discountNum) / 100;
-
-      // Crear el producto en Firestore
+      // Crear producto base
       const productRef = await addDoc(collection(db, "products"), {
-        name: form.name,
-        price: priceNum,
-        discount: discountNum,
-        finalPrice: finalPrice,
-        stock: stockNum,               // 🔥 GUARDAR STOCK
-        category: form.category,
-        description: form.description,
+        name: sanitizeText(form.name),
+        price,
+        discount,
+        finalPrice,
+        stock,
+        category: sanitizeText(form.category),
+        description: cleanDescription,
         images: [],
         cover: "",
         createdAt: new Date(),
@@ -83,12 +95,12 @@ export default function AdminAddProduct() {
 
       await updateDoc(productRef, {
         images: uploadedImages,
-        cover: uploadedImages[0].imageUrl,
+        cover: uploadedImages[0]?.imageUrl || "",
       });
 
       setMessage("Producto guardado con éxito ✔");
 
-      // Reset del formulario
+      // Reset
       setForm({
         name: "",
         price: "",
@@ -98,9 +110,8 @@ export default function AdminAddProduct() {
         description: "",
         imageFiles: [],
       });
-
     } catch (error) {
-      console.error("Error al guardar producto:", error);
+      console.error("Error guardando producto:", error);
       setMessage("Ocurrió un error al guardar el producto.");
     } finally {
       setLoading(false);
@@ -115,55 +126,26 @@ export default function AdminAddProduct() {
         <h1>Agregar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-
-          <label>Nombre</label>
+          <label>Nombre *</label>
           <input name="name" value={form.name} onChange={handleChange} />
 
-          <label>Precio</label>
-          <input
-            name="price"
-            type="number"
-            value={form.price}
-            onChange={handleChange}
-          />
+          <label>Precio *</label>
+          <input name="price" type="number" value={form.price} onChange={handleChange} />
 
           <label>Descuento (%)</label>
-          <input
-            name="discount"
-            type="number"
-            min="0"
-            max="90"
-            value={form.discount}
-            onChange={handleChange}
-          />
+          <input name="discount" type="number" value={form.discount} min="0" max="90" onChange={handleChange} />
 
-          {/* 🔥 NUEVO CAMPO STOCK */}
-          <label>Stock Disponible</label>
-          <input
-            name="stock"
-            type="number"
-            min="0"
-            value={form.stock}
-            onChange={handleChange}
-          />
+          <label>Stock *</label>
+          <input name="stock" type="number" value={form.stock} min="0" onChange={handleChange} />
 
-          <label>Categoría</label>
+          <label>Categoría *</label>
           <input name="category" value={form.category} onChange={handleChange} />
 
           <label>Descripción</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-          />
+          <textarea name="description" value={form.description} onChange={handleChange} />
 
-          <label>Imágenes</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleChange}
-          />
+          <label>Imágenes *</label>
+          <input type="file" multiple accept="image/*" onChange={handleChange} />
 
           <button type="button" onClick={handleSave} disabled={loading}>
             {loading ? "Guardando..." : "Guardar Producto"}

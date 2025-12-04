@@ -17,24 +17,28 @@ const ProductCard = ({
   imageUrl,
   images,
   cover,
+  stock, // ✅ aseguramos stock
 }) => {
   const [showPreview, setShowPreview] = useState(false);
   const { addToCart } = useContext(CartContext);
 
-  // Imágenes universales
+  // Imagen final a mostrar
   const finalImage =
-    cover || imageUrl || image || images?.[0]?.imageUrl || "";
+    cover || imageUrl || image || images?.[0]?.imageUrl || "/placeholder.jpg";
 
   const handleAddToCart = () => {
+    if (stock === 0) return; // 🔥 seguridad adicional
+
     addToCart(
       {
         id,
         name,
-        price: finalPrice || price, // precio real a cobrar
+        price: finalPrice || price,
         image: finalImage,
         category,
         description,
         images,
+        stock, // pasamos stock al carrito
       },
       1
     );
@@ -46,9 +50,7 @@ const ProductCard = ({
 
         {/* 🔥 BADGE DE DESCUENTO */}
         {discount > 0 && (
-          <div className="discount-badge">
-            -{discount}%
-          </div>
+          <div className="discount-badge">-{discount}%</div>
         )}
 
         {/* Imagen clickeable */}
@@ -61,7 +63,7 @@ const ProductCard = ({
           />
         </Link>
 
-        {/* Botón Quick View */}
+        {/* Quick View */}
         <button className="quick-view-btn" onClick={() => setShowPreview(true)}>
           <FaSearch />
         </button>
@@ -89,9 +91,15 @@ const ProductCard = ({
           </div>
         </div>
 
-        {/* Botón agregar al carrito */}
-        <button className="add-to-cart" onClick={handleAddToCart}>
-          <span className="btn-text">Agregar al carrito</span>
+        {/* 🔥 BOTÓN AGREGAR AL CARRITO CON STOCK VALIDADO */}
+        <button
+          className={`add-to-cart ${stock === 0 ? "disabled" : ""}`}
+          onClick={handleAddToCart}
+          disabled={stock === 0}
+        >
+          <span className="btn-text">
+            {stock === 0 ? "Sin stock" : "Agregar al carrito"}
+          </span>
           <FaShoppingCart className="btn-icon" />
         </button>
       </div>
@@ -104,9 +112,10 @@ const ProductCard = ({
             name,
             price,
             finalPrice,
-            discount,       // 🔥 NECESARIO
+            discount,
             category,
             description,
+            stock,         // ✅ IMPORTANT — pasamos stock
             image: finalImage,
             images,
           }}

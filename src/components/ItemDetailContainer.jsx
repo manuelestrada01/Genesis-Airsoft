@@ -139,8 +139,8 @@ const ProductDetail = () => {
             SIN STOCK DISPONIBLE
           </p>
         ) : (
-          <p style={{ color: "green", fontWeight: "bold" }}>
-            Stock disponible: {product.stock}
+          <p style={{ color: "green", fontWeight: "bold", fontSize: "18px" }}>
+            EN STOCK
           </p>
         )}
 

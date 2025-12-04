@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaUser } from "react-icons/fa";
 import CartWidget from "./CartWidget";
@@ -7,11 +7,15 @@ import AuthContext from "../context/AuthContext";
 import "./NavBar.css";
 
 const NavBarTop = () => {
-  const { user } = useContext(AuthContext);
+  const { user, isAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const handleProfileClick = () => {
-    navigate("/profile");
+  const [search, setSearch] = useState("");
+
+  const handleSearchKey = (e) => {
+    if (e.key === "Enter" && search.trim() !== "") {
+      navigate(`/search?query=${encodeURIComponent(search.trim())}`);
+    }
   };
 
   return (
@@ -25,33 +29,35 @@ const NavBarTop = () => {
           </Link>
         </div>
 
+        {/* 🔥 Búsqueda funcional */}
         <div className="search-container">
           <input
             type="text"
             className="search-bar"
             placeholder="Buscar productos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleSearchKey}
           />
         </div>
 
         <div className="navbar-actions">
           <CartWidget />
 
-          {/* 👇 BOTÓN DE ADMIN SOLO PARA ADMINS */}
-          {user?.role === "admin" && (
+          {isAdmin && (
             <Link to="/admin/products" className="admin-btn">
               Panel Admin
             </Link>
           )}
 
-          {/* Login o perfil */}
           {!user ? (
-            <Link to="/auth" className="login-btn" aria-label="Login / Register">
+            <Link to="/auth" className="login-btn">
               <span className="btn-text">Login / Register</span>
-              <FaUser className="user-icon" aria-hidden="true" />
+              <FaUser className="user-icon" />
             </Link>
           ) : (
-            <button className="login-btn" onClick={handleProfileClick}>
-              <FaUser style={{ marginRight: "8px" }} />
+            <button className="login-btn" onClick={() => navigate("/profile")}>
+              <FaUser style={{ marginRight: 8 }} />
               Mi Perfil
             </button>
           )}
