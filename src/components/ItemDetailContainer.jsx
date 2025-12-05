@@ -9,7 +9,7 @@ import { CartContext } from "../context/CartContext";
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { clearCart, addToCart } = useContext(CartContext);  // ← ✔ correcto
+  const { clearCart, addToCart } = useContext(CartContext);
 
   const [product, setProduct] = useState(null);
   const [mainImage, setMainImage] = useState("");
@@ -22,26 +22,35 @@ const ProductDetail = () => {
         const ref = doc(db, "products", id);
         const snap = await getDoc(ref);
 
-        if (snap.exists()) {
-          const data = { id: snap.id, ...snap.data() };
-
-          const firstImage =
-            data.cover ||
-            data.images?.[0]?.imageUrl ||
-            data.imageUrl ||
-            data.image ||
-            "";
-
-          const normalizedProduct = {
-            ...data,
-            image: firstImage,
-            images: data.images || [],
-            stock: data.stock ?? 0  // 🔥 IMPORTANTE
-          };
-
-          setProduct(normalizedProduct);
-          setMainImage(firstImage);
+        if (!snap.exists()) {
+          navigate("/");
+          return;
         }
+
+        const data = { id: snap.id, ...snap.data() };
+
+        // 🔥 Si está pausado → bloquear acceso
+        if (data.paused) {
+          setProduct({ paused: true });
+          return;
+        }
+
+        const firstImage =
+          data.cover ||
+          data.images?.[0]?.imageUrl ||
+          data.imageUrl ||
+          data.image ||
+          "";
+
+        const normalizedProduct = {
+          ...data,
+          image: firstImage,
+          images: data.images || [],
+          stock: data.stock ?? 0,
+        };
+
+        setProduct(normalizedProduct);
+        setMainImage(firstImage);
       } catch (err) {
         console.error("Error cargando producto:", err);
       }
@@ -49,6 +58,29 @@ const ProductDetail = () => {
 
     fetchProduct();
   }, [id]);
+
+  // ==============================
+  // 🔥 Producto pausado
+  // ==============================
+  if (product?.paused)
+    return (
+      <div style={{ padding: 30, textAlign: "center" }}>
+        <h2>Producto no disponible</h2>
+        <p>Este producto fue temporalmente pausado.</p>
+        <button
+          onClick={() => navigate("/")}
+          style={{
+            marginTop: 20,
+            padding: "10px 20px",
+            background: "#000",
+            color: "#fff",
+            borderRadius: 6,
+          }}
+        >
+          Volver al inicio
+        </button>
+      </div>
+    );
 
   if (!product) return <p>Cargando producto...</p>;
 
@@ -65,20 +97,16 @@ const ProductDetail = () => {
     ? (product.price - product.price * (discount / 100)).toFixed(2)
     : product.price;
 
-  // ================================
-  // 🔥 Comprar ahora
-  // ================================
   const handleBuyNow = () => {
     if (outOfStock) return;
 
-    const discount = product.discount || 0;
-    const finalPrice = discount > 0
+    const finalPriceCalc = hasDiscount
       ? Number((product.price - product.price * (discount / 100)).toFixed(2))
       : product.price;
 
     const productToCart = {
       ...product,
-      price: finalPrice
+      price: finalPriceCalc,
     };
 
     clearCart();
@@ -86,26 +114,21 @@ const ProductDetail = () => {
     navigate("/checkout");
   };
 
-  // ================================
-  // 🔥 Agregar al carrito
-  // ================================
   const handleAddToCart = () => {
     if (outOfStock) return;
 
-    const finalPrice = hasDiscount
+    const finalPriceCalc = hasDiscount
       ? Number((product.price - product.price * (discount / 100)).toFixed(2))
       : product.price;
 
-    addToCart({ ...product, price: finalPrice }, quantity);
+    addToCart({ ...product, price: finalPriceCalc }, quantity);
   };
 
   return (
     <div className="detail-layout">
-
-      {/* MINIATURAS */}
       <div className="detail-thumbs-column">
-        {(product.images?.length ? product.images : [{ imageUrl: mainImage }])
-          .map((img, i) => (
+        {(product.images?.length ? product.images : [{ imageUrl: mainImage }]).map(
+          (img, i) => (
             <img
               key={i}
               src={img.imageUrl}
@@ -115,25 +138,19 @@ const ProductDetail = () => {
               }`}
               onClick={() => setMainImage(img.imageUrl)}
             />
-          ))}
+          )
+        )}
       </div>
 
-      {/* IMAGEN PRINCIPAL */}
       <div className="detail-main-img-wrapper">
-        {hasDiscount && (
-          <div className="detail-discount-tag">
-            -{discount}%
-          </div>
-        )}
+        {hasDiscount && <div className="detail-discount-tag">-{discount}%</div>}
         <img src={mainImage} alt={product.name} className="detail-main-img" />
       </div>
 
-      {/* INFO */}
       <div className="info-box">
         <h1 className="info-title">{product.name}</h1>
         <p className="info-cat">Categoría: {product.category}</p>
 
-        {/* 🔥 STOCK */}
         {outOfStock ? (
           <p style={{ color: "red", fontWeight: "bold", fontSize: "18px" }}>
             SIN STOCK DISPONIBLE
@@ -144,7 +161,6 @@ const ProductDetail = () => {
           </p>
         )}
 
-        {/* PRECIOS */}
         <div className="info-price-box">
           {hasDiscount ? (
             <>
@@ -156,7 +172,6 @@ const ProductDetail = () => {
           )}
         </div>
 
-        {/* DESCRIPCIÓN */}
         <p className="info-short">
           {visibleText}
           {isLong && !showFullDesc ? "..." : ""}
@@ -171,7 +186,6 @@ const ProductDetail = () => {
           </button>
         )}
 
-        {/* CANTIDAD */}
         {!outOfStock && (
           <div className="info-qty-box">
             <label>Cantidad *</label>
@@ -183,15 +197,10 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* COMPRA DIRECTa */}
         <button
           className="btn-buy"
           onClick={handleBuyNow}
           disabled={outOfStock}
-          style={{
-            opacity: outOfStock ? 0.5 : 1,
-            cursor: outOfStock ? "not-allowed" : "pointer"
-          }}
         >
           {outOfStock ? "Sin stock" : "Realizar compra"}
         </button>

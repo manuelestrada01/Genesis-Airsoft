@@ -45,6 +45,7 @@ export default function AdminEditProduct() {
           ...data,
           images: imgs,
           cover: data.cover || imgs[0]?.imageUrl || "",
+          paused: data.paused ?? false, // 🔥 NUEVO
           discount: data.discount || 0,
           finalPrice: data.finalPrice || data.price,
           stock: data.stock ?? 0,
@@ -63,7 +64,12 @@ export default function AdminEditProduct() {
   // 2️⃣ Inputs
   // ============================================================
   const handleChange = (e) => {
-    setProduct({ ...product, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+
+    setProduct({
+      ...product,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   // ============================================================
@@ -103,12 +109,11 @@ export default function AdminEditProduct() {
   };
 
   // ============================================================
-  // 5️⃣ Guardar cambios (incluye sanitización + validación)
+  // 5️⃣ Guardar cambios (validación + sanitización)
   // ============================================================
   const handleSave = async () => {
     if (!product) return;
 
-    // Validación estricta
     const price = Number(product.price);
     const discount = Number(product.discount);
     const stock = Number(product.stock);
@@ -126,7 +131,6 @@ export default function AdminEditProduct() {
     try {
       const ref = doc(db, "products", product.id);
 
-      // Cargar imágenes nuevas
       let updatedImages = [...product.images];
 
       if (newImages.length > 0) {
@@ -141,7 +145,6 @@ export default function AdminEditProduct() {
         (price - (price * discount) / 100).toFixed(2)
       );
 
-      // Guardar producto seguro
       await updateDoc(ref, {
         name: sanitizeText(product.name),
         price,
@@ -152,6 +155,7 @@ export default function AdminEditProduct() {
         description: sanitizeText(product.description),
         images: updatedImages,
         cover,
+        paused: product.paused, // 🔥 NUEVO: guardamos la pausa
       });
 
       alert("Producto actualizado ✔");
@@ -177,6 +181,7 @@ export default function AdminEditProduct() {
         <h1>Editar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
+
           <label>Nombre *</label>
           <input name="name" value={product.name} onChange={handleChange} />
 
@@ -193,7 +198,19 @@ export default function AdminEditProduct() {
           <input name="category" value={product.category} onChange={handleChange} />
 
           <label>Descripción</label>
-          <textarea name="description" value={product.description} onChange={handleChange}></textarea>
+          <textarea name="description" value={product.description} onChange={handleChange} />
+
+          {/* 🔥 NUEVO: CHECKBOX PAUSAR */}
+          <label style={{ marginTop: "20px", fontWeight: "bold" }}>
+            <input
+              type="checkbox"
+              name="paused"
+              checked={product.paused}
+              onChange={handleChange}
+              style={{ marginRight: "10px" }}
+            />
+            Pausar publicación
+          </label>
 
           <label>Imágenes actuales</label>
           <div className="admin-image-grid">
@@ -210,9 +227,15 @@ export default function AdminEditProduct() {
           <label>Nuevas imágenes</label>
           <input type="file" multiple accept="image/*" onChange={handleNewImages} />
 
-          <button type="button" className="admin-save-btn" onClick={handleSave} disabled={saving}>
+          <button
+            type="button"
+            className="admin-save-btn"
+            onClick={handleSave}
+            disabled={saving}
+          >
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
+
         </form>
       </div>
     </div>

@@ -9,13 +9,19 @@ export default function AdminOrderDetail() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Para el tracking number
+  const [tracking, setTracking] = useState("");
+  const [savingTracking, setSavingTracking] = useState(false);
+
   useEffect(() => {
     const loadOrder = async () => {
       const ref = doc(db, "orders", id);
       const snap = await getDoc(ref);
 
       if (snap.exists()) {
-        setOrder({ id: snap.id, ...snap.data() });
+        const data = snap.data();
+        setOrder({ id: snap.id, ...data });
+        setTracking(data.trackingNumber || "");
       }
 
       setLoading(false);
@@ -24,12 +30,33 @@ export default function AdminOrderDetail() {
     loadOrder();
   }, [id]);
 
-  const markAsDispatched = async () => {
-    const confirmSend = window.confirm("¿Marcar este pedido como despachado?");
-    if (!confirmSend) return;
+  const saveTracking = async () => {
+    if (!tracking.trim()) {
+      alert("El número de seguimiento no puede estar vacío.");
+      return;
+    }
 
-    await updateDoc(doc(db, "orders", id), { dispatched: true });
-    setOrder((prev) => ({ ...prev, dispatched: true }));
+    if (!confirm("¿Guardar número de seguimiento en este pedido?")) return;
+
+    setSavingTracking(true);
+
+    try {
+      await updateDoc(doc(db, "orders", id), {
+        trackingNumber: tracking.trim(),
+      });
+
+      setOrder((prev) => ({
+        ...prev,
+        trackingNumber: tracking.trim(),
+      }));
+
+      alert("Número de seguimiento guardado correctamente ✔");
+    } catch (err) {
+      console.error("Error guardando seguimiento:", err);
+      alert("No se pudo guardar el número de seguimiento.");
+    } finally {
+      setSavingTracking(false);
+    }
   };
 
   if (loading) return <p>Cargando pedido...</p>;
@@ -37,11 +64,9 @@ export default function AdminOrderDetail() {
 
   return (
     <div className="admin-content">
-      {/* Número de pedido bien visible */}
       <h1>Pedido #{order.id}</h1>
 
       <h3>Datos del Pedido</h3>
-      <p><strong>Número de pedido:</strong> {order.id}</p>
       <p><strong>Fecha:</strong> {order.createdAt?.toDate().toLocaleString()}</p>
 
       <h3>Cliente</h3>
@@ -50,7 +75,7 @@ export default function AdminOrderDetail() {
       <p><strong>Teléfono:</strong> {order.buyer?.phone}</p>
 
       <h3>Dirección</h3>
-      {order.buyer?.street ? (
+      {order.buyer?.method === "delivery" ? (
         <>
           <p>{order.buyer.street} {order.buyer.number}</p>
           <p>{order.buyer.city}, {order.buyer.province}</p>
@@ -77,11 +102,63 @@ export default function AdminOrderDetail() {
         {order.dispatched ? (
           <span className="admin-dispatched">Despachado</span>
         ) : (
-          <button className="admin-not-dispatched" onClick={markAsDispatched}>
-            Marcar como despachado
-          </button>
+          <span className="admin-not-dispatched">Pendiente</span>
         )}
       </p>
+
+      {/* ======================================= */}
+      {/* 🔥 SEGUIMIENTO VIA CARGO (ADMIN)        */}
+      {/* ======================================= */}
+      <div style={{ marginTop: "30px" }}>
+        <h3>Seguimiento (Via Cargo)</h3>
+
+        <input
+          type="text"
+          placeholder="Ej: 999029504038"
+          value={tracking}
+          onChange={(e) => setTracking(e.target.value)}
+          className="admin-input"
+          style={{
+            padding: "10px",
+            width: "300px",
+            borderRadius: "6px",
+            border: "1px solid #ccc",
+            marginRight: "10px"
+          }}
+        />
+
+        <button
+          onClick={saveTracking}
+          disabled={savingTracking}
+          className="admin-save-btn"
+        >
+          {savingTracking ? "Guardando..." : "Guardar seguimiento"}
+        </button>
+
+        {/* Link directo solo si el tracking existe */}
+        {order.trackingNumber && (
+          <div style={{ marginTop: "15px" }}>
+            <a
+              href={`https://viacargo.com.ar/seguimiento-de-envio/${order.trackingNumber}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-track-link"
+              style={{
+                display: "inline-block",
+                marginTop: "10px",
+                padding: "8px 12px",
+                background: "#0077ff",
+                color: "white",
+                borderRadius: "6px",
+                textDecoration: "none",
+                fontWeight: "bold"
+              }}
+            >
+              Ver seguimiento en Via Cargo
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -5,10 +5,12 @@ import {
   getDocs,
   doc,
   deleteDoc,
+  updateDoc,
   query,
   orderBy,
   limit,
   startAfter,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
 
@@ -23,6 +25,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreAvailable, setMoreAvailable] = useState(true);
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   // ============================================================
   // ⭐ 1️⃣ Cargar primeros 15 productos
@@ -98,22 +101,14 @@ export default function AdminProducts() {
     if (!confirmDelete) return;
 
     try {
-      // Borrar imagen principal (si existiera)
-      if (product.imagePath) {
-        await deleteProductImage(product.imagePath);
-      }
-
-      // Borrar imágenes múltiples
       if (product.images && Array.isArray(product.images)) {
         for (const img of product.images) {
           if (img.imagePath) await deleteProductImage(img.imagePath);
         }
       }
 
-      // Borrar el documento en DB
       await deleteDoc(doc(db, "products", product.id));
 
-      // Actualizar pantalla
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
 
       alert("Producto eliminado correctamente.");
@@ -124,7 +119,64 @@ export default function AdminProducts() {
   };
 
   // ============================================================
-  // ⭐ 4️⃣ Render
+  // ⭐ 4️⃣ Pausar / Activar un solo producto
+  // ============================================================
+  const togglePause = async (product) => {
+    try {
+      const ref = doc(db, "products", product.id);
+      await updateDoc(ref, { paused: !product.paused });
+
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === product.id ? { ...p, paused: !p.paused } : p
+        )
+      );
+    } catch (err) {
+      console.error("❌ Error cambiando estado de pausa:", err);
+      alert("No se pudo actualizar el estado.");
+    }
+  };
+
+  // ============================================================
+  // ⭐ 5️⃣ Pausar o activar TODOS los productos
+  // ============================================================
+  const togglePauseAll = async (pauseValue) => {
+    const confirmMsg = pauseValue
+      ? "¿Seguro que deseas PAUSAR TODAS las publicaciones?"
+      : "¿Seguro que deseas ACTIVAR TODAS las publicaciones?";
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setBulkLoading(true);
+
+      const batch = writeBatch(db);
+      products.forEach((p) => {
+        const ref = doc(db, "products", p.id);
+        batch.update(ref, { paused: pauseValue });
+      });
+
+      await batch.commit();
+
+      setProducts((prev) =>
+        prev.map((p) => ({ ...p, paused: pauseValue }))
+      );
+
+      alert(
+        pauseValue
+          ? "Todas las publicaciones fueron pausadas."
+          : "Todas las publicaciones fueron activadas."
+      );
+    } catch (err) {
+      console.error("❌ Error en pausa masiva:", err);
+      alert("No se pudieron actualizar todas las publicaciones.");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  // ============================================================
+  // ⭐ 6️⃣ Render
   // ============================================================
   if (loading) return <p style={{ padding: 20 }}>Cargando productos...</p>;
 
@@ -139,6 +191,26 @@ export default function AdminProducts() {
           + Agregar Producto
         </Link>
 
+        {/* 🔥 BOTÓN PAUSAR/ACTIVAR TODOS */}
+        <div style={{ margin: "15px 0" }}>
+          <button
+            onClick={() => togglePauseAll(true)}
+            disabled={bulkLoading}
+            className="admin-danger-btn"
+          >
+            Pausar TODOS
+          </button>
+
+          <button
+            onClick={() => togglePauseAll(false)}
+            disabled={bulkLoading}
+            className="admin-ok-btn"
+            style={{ marginLeft: "10px" }}
+          >
+            Activar TODOS
+          </button>
+        </div>
+
         <table className="admin-table">
           <thead>
             <tr>
@@ -147,22 +219,26 @@ export default function AdminProducts() {
               <th>Categoría</th>
               <th>Precio</th>
               <th>Stock</th>
+              <th>Pausado</th>
               <th>Acción</th>
             </tr>
           </thead>
 
           <tbody>
             {products.map((p) => {
-              // 🔥 Tu selector original (no lo tocamos)
               const img =
                 p.cover ||
-                p.imageUrl ||
-                p.image ||
                 p.images?.[0]?.imageUrl ||
+                p.image ||
                 "";
 
               return (
-                <tr key={p.id}>
+                <tr
+                  key={p.id}
+                  style={{
+                    opacity: p.paused ? 0.4 : 1,
+                  }}
+                >
                   <td>
                     <img
                       src={img}
@@ -173,7 +249,6 @@ export default function AdminProducts() {
                         objectFit: "cover",
                         borderRadius: "6px",
                         border: "1px solid #ddd",
-                        background: "#fff",
                       }}
                     />
                   </td>
@@ -181,11 +256,24 @@ export default function AdminProducts() {
                   <td>{p.name}</td>
                   <td>{p.category}</td>
                   <td>${p.price}</td>
-
-                  {/* 🔥 NUEVO: STOCK EN TABLA */}
                   <td>{p.stock ?? 0}</td>
 
                   <td>
+                    {p.paused ? (
+                      <span className="badge-paused">PAUSADO</span>
+                    ) : (
+                      <span className="badge-active">Activo</span>
+                    )}
+                  </td>
+
+                  <td>
+                    <button
+                      className="admin-edit-btn"
+                      onClick={() => togglePause(p)}
+                    >
+                      {p.paused ? "Activar" : "Pausar"}
+                    </button>
+
                     <Link
                       to={`/admin/products/edit/${p.id}`}
                       className="admin-edit-btn"
@@ -206,17 +294,12 @@ export default function AdminProducts() {
           </tbody>
         </table>
 
-        {/* 🔥 BOTÓN CARGAR MÁS */}
         {moreAvailable && (
           <button
             className="admin-load-more"
             onClick={loadMore}
             disabled={loadingMore}
-            style={{
-              marginTop: "20px",
-              padding: "10px 20px",
-              cursor: "pointer",
-            }}
+            style={{ marginTop: "20px" }}
           >
             {loadingMore ? "Cargando..." : "Cargar más productos"}
           </button>

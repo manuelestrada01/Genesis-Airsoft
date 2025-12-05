@@ -18,7 +18,12 @@ const OrderDetail = () => {
     fetchOrder();
   }, [id]);
 
-  if (!order) return <p style={{ textAlign: "center", marginTop: "50px" }}>Cargando pedido...</p>;
+  if (!order)
+    return (
+      <p style={{ textAlign: "center", marginTop: "50px" }}>
+        Cargando pedido...
+      </p>
+    );
 
   const createdDate = order.createdAt?.toDate
     ? order.createdAt.toDate().toLocaleString()
@@ -48,7 +53,9 @@ const OrderDetail = () => {
         <div className="detail-row">
           <span>Estado de pago:</span>
           <span
-            className={`status-badge ${order.status === "approved" ? "approved" : "pending"}`}
+            className={`status-badge ${
+              order.status === "approved" ? "approved" : "pending"
+            }`}
           >
             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
           </span>
@@ -75,13 +82,40 @@ const OrderDetail = () => {
           </div>
         </div>
 
+        {/* =========================== */}
+        {/* 🔥 SEGUIMIENTO VIA CARGO     */}
+        {/* =========================== */}
+        {order.trackingNumber && (
+          <div className="section tracking-section">
+            <h3>Seguimiento del Envío</h3>
+
+            <div className="detail-row">
+              <span>Número de seguimiento:</span>{" "}
+              <strong>{order.trackingNumber}</strong>
+            </div>
+
+            <a
+              href={`https://viacargo.com.ar/seguimiento-de-envio/${order.trackingNumber}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="tracking-btn"
+            >
+              Ver seguimiento en Via Cargo
+            </a>
+          </div>
+        )}
+
         <div className="section">
           <h3>Artículos</h3>
           <ul className="items-list">
             {order.items.map((item, i) => (
               <li key={i} className="item-card">
-                <div><strong>{item.name}</strong></div>
-                <div>{item.quantity} × ${item.price}</div>
+                <div>
+                  <strong>{item.name}</strong>
+                </div>
+                <div>
+                  {item.quantity} × ${item.price}
+                </div>
                 <div>Total: ${(item.quantity * item.price).toFixed(2)}</div>
               </li>
             ))}
@@ -91,17 +125,34 @@ const OrderDetail = () => {
         <div className="section">
           <h3>Datos del comprador</h3>
           <div className="buyer-box">
-            <p><strong>Nombre:</strong> {order.buyer.name}</p>
-            <p><strong>Email:</strong> {order.buyer.email}</p>
-            <p><strong>Teléfono:</strong> {order.buyer.phone}</p>
-            <p><strong>Método:</strong> {order.buyer.method}</p>
+            <p>
+              <strong>Nombre:</strong> {order.buyer.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {order.buyer.email}
+            </p>
+            <p>
+              <strong>Teléfono:</strong> {order.buyer.phone}
+            </p>
+            <p>
+              <strong>Método:</strong> {order.buyer.method}
+            </p>
 
             {order.buyer.method === "delivery" && (
               <>
-                <p><strong>Dirección:</strong> {order.buyer.street} {order.buyer.number}</p>
-                <p><strong>Ciudad:</strong> {order.buyer.city}</p>
-                <p><strong>Provincia:</strong> {order.buyer.province}</p>
-                <p><strong>CP:</strong> {order.buyer.zip}</p>
+                <p>
+                  <strong>Dirección:</strong> {order.buyer.street}{" "}
+                  {order.buyer.number}
+                </p>
+                <p>
+                  <strong>Ciudad:</strong> {order.buyer.city}
+                </p>
+                <p>
+                  <strong>Provincia:</strong> {order.buyer.province}
+                </p>
+                <p>
+                  <strong>CP:</strong> {order.buyer.zip}
+                </p>
               </>
             )}
           </div>

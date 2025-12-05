@@ -16,19 +16,12 @@ import ItemList from "./ItemList";
 // 🔒 Sanitizar texto de búsqueda
 // ================================
 const sanitize = (text) =>
-  text
-    ?.toString()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, "")
-    .trim() || "";
+  text?.toString().toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, "").trim() || "";
 
 const ItemListContainer = () => {
   const { categoryId } = useParams();
   const location = useLocation();
 
-  // ================================
-  // 🔍 CAPTURAR TEXTO DE BÚSQUEDA
-  // ================================
   const searchQuery = sanitize(
     new URLSearchParams(location.search).get("query")
   );
@@ -50,9 +43,7 @@ const ItemListContainer = () => {
   }, []);
 
   // ==========================================================
-  // 2) Cargar productos según:
-  //    ✔ categoría
-  //    ✔ búsqueda por texto
+  // 2) Cargar productos según categoría o búsqueda
   // ==========================================================
   useEffect(() => {
     loadInitialProducts();
@@ -72,7 +63,10 @@ const ItemListContainer = () => {
         const snap = await getDocs(collection(db, "products"));
         const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
+        // 🔥 Filtrar pausados y por texto
         const filtered = all.filter((p) => {
+          if (p.paused) return false;
+
           const name = sanitize(p.name);
           const cat = sanitize(p.category);
           const desc = sanitize(p.description);
@@ -84,8 +78,6 @@ const ItemListContainer = () => {
           );
         });
 
-        // Sin paginación aquí porque Firebase no permite
-        // `where` + búsqueda parcial
         setProducts(filtered);
         setNoMoreProducts(true);
         return;
@@ -105,6 +97,7 @@ const ItemListContainer = () => {
         q = query(
           collection(db, "products"),
           where("category", "==", categoryId),
+          where("paused", "==", false),
           orderBy("price", "desc"),
           limit(12)
         );
@@ -112,6 +105,7 @@ const ItemListContainer = () => {
         // HOME normal
         q = query(
           collection(db, "products"),
+          where("paused", "==", false),
           orderBy("price", "desc"),
           limit(12)
         );
@@ -133,7 +127,7 @@ const ItemListContainer = () => {
   };
 
   // ============================
-  // 3) PAGINACIÓN (solo home/categoría)
+  // 3) PAGINACIÓN
   // ============================
   const loadMoreProducts = async () => {
     if (!lastDoc || noMoreProducts || searchQuery) return;
@@ -146,6 +140,7 @@ const ItemListContainer = () => {
         q = query(
           collection(db, "products"),
           where("category", "==", categoryId),
+          where("paused", "==", false),
           orderBy("price", "desc"),
           startAfter(lastDoc),
           limit(12)
@@ -153,6 +148,7 @@ const ItemListContainer = () => {
       } else {
         q = query(
           collection(db, "products"),
+          where("paused", "==", false),
           orderBy("price", "desc"),
           startAfter(lastDoc),
           limit(12)
@@ -177,10 +173,8 @@ const ItemListContainer = () => {
 
   return (
     <div>
-      {/* 🔥 LISTA DE PRODUCTOS */}
       <ItemList products={products} />
 
-      {/* 🔥 NO HAY PAGINACIÓN CUANDO SE BUSCA */}
       {!searchQuery && !noMoreProducts && products.length > 0 && (
         <div style={{ textAlign: "center", marginTop: 30 }}>
           <button

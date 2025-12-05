@@ -7,8 +7,7 @@ import { uploadMultipleImages } from "../../firebase/uploadProductImage";
 import "./admin.css";
 
 // Función simple para prevenir XSS en textos largos
-const sanitizeText = (str) =>
-  str.replace(/<[^>]*>?/gm, "").trim();
+const sanitizeText = (str) => str.replace(/<[^>]*>?/gm, "").trim();
 
 export default function AdminAddProduct() {
   const [form, setForm] = useState({
@@ -84,6 +83,7 @@ export default function AdminAddProduct() {
         description: cleanDescription,
         images: [],
         cover: "",
+        paused: false, // 🔥 NUEVO - Todas las publicaciones nacen activas
         createdAt: new Date(),
       });
 
@@ -133,10 +133,10 @@ export default function AdminAddProduct() {
           <input name="price" type="number" value={form.price} onChange={handleChange} />
 
           <label>Descuento (%)</label>
-          <input name="discount" type="number" value={form.discount} min="0" max="90" onChange={handleChange} />
+          <input name="discount" type="number" min="0" max="90" value={form.discount} onChange={handleChange} />
 
           <label>Stock *</label>
-          <input name="stock" type="number" value={form.stock} min="0" onChange={handleChange} />
+          <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} />
 
           <label>Categoría *</label>
           <input name="category" value={form.category} onChange={handleChange} />

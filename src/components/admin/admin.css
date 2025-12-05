@@ -152,3 +152,39 @@
   cursor: not-allowed !important;
   opacity: 0.6;
 }
+
+.badge-paused {
+  background: #dc3545;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.badge-active {
+  background: #28a745;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.admin-danger-btn {
+  background: #c62828;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.admin-ok-btn {
+  background: #2e7d32;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
