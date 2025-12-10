@@ -61,6 +61,9 @@ const OrderDetail = () => {
           </span>
         </div>
 
+        {/* =========================== */}
+        {/* 🔥 ESTADO DEL PEDIDO */}
+        {/* =========================== */}
         <div className="section">
           <h3>Estado del Pedido</h3>
 
@@ -83,7 +86,7 @@ const OrderDetail = () => {
         </div>
 
         {/* =========================== */}
-        {/* 🔥 SEGUIMIENTO VIA CARGO     */}
+        {/* 🔥 SEGUIMIENTO VIA CARGO */}
         {/* =========================== */}
         {order.trackingNumber && (
           <div className="section tracking-section">
@@ -105,6 +108,9 @@ const OrderDetail = () => {
           </div>
         )}
 
+        {/* =========================== */}
+        {/* 🔥 ARTÍCULOS */}
+        {/* =========================== */}
         <div className="section">
           <h3>Artículos</h3>
           <ul className="items-list">
@@ -122,6 +128,9 @@ const OrderDetail = () => {
           </ul>
         </div>
 
+        {/* =========================== */}
+        {/* 🔥 DATOS DEL COMPRADOR + DNI */}
+        {/* =========================== */}
         <div className="section">
           <h3>Datos del comprador</h3>
           <div className="buyer-box">
@@ -134,6 +143,12 @@ const OrderDetail = () => {
             <p>
               <strong>Teléfono:</strong> {order.buyer.phone}
             </p>
+
+            {/* 🔥 DNI NUEVO */}
+            <p>
+              <strong>DNI:</strong> {order.buyer.dni}
+            </p>
+
             <p>
               <strong>Método:</strong> {order.buyer.method}
             </p>
@@ -141,8 +156,7 @@ const OrderDetail = () => {
             {order.buyer.method === "delivery" && (
               <>
                 <p>
-                  <strong>Dirección:</strong> {order.buyer.street}{" "}
-                  {order.buyer.number}
+                  <strong>Dirección:</strong> {order.buyer.street} {order.buyer.number}
                 </p>
                 <p>
                   <strong>Ciudad:</strong> {order.buyer.city}

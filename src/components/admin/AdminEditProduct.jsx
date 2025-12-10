@@ -8,10 +8,21 @@ import {
   deleteProductImage,
 } from "../../firebase/uploadProductImage";
 import AdminSidebar from "./AdminSidebar";
+import DOMPurify from "dompurify";
 import "./admin.css";
 
-// Utilidad para prevenir XSS
-const sanitizeText = (str) => str.replace(/<[^>]*>?/gm, "").trim();
+// Sanitizar HTML permitido
+const sanitizeHTML = (html) =>
+  DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    ALLOWED_TAGS: [
+      "b", "strong", "i", "em", "u",
+      "p", "br",
+      "ul", "ol", "li",
+      "h1", "h2", "h3", "h4"
+    ],
+    ALLOWED_ATTR: []
+  });
 
 export default function AdminEditProduct() {
   const { id } = useParams();
@@ -22,9 +33,6 @@ export default function AdminEditProduct() {
   const [product, setProduct] = useState(null);
   const [newImages, setNewImages] = useState([]);
 
-  // ============================================================
-  // 1️⃣ Cargar producto
-  // ============================================================
   useEffect(() => {
     const load = async () => {
       try {
@@ -45,24 +53,18 @@ export default function AdminEditProduct() {
           ...data,
           images: imgs,
           cover: data.cover || imgs[0]?.imageUrl || "",
-          paused: data.paused ?? false, // 🔥 NUEVO
-          discount: data.discount || 0,
-          finalPrice: data.finalPrice || data.price,
-          stock: data.stock ?? 0,
+          paused: data.paused ?? false,
         });
 
         setLoading(false);
-      } catch (e) {
-        console.error("Error cargando producto:", e);
+      } catch (err) {
+        console.error(err);
       }
     };
 
     load();
   }, [id, navigate]);
 
-  // ============================================================
-  // 2️⃣ Inputs
-  // ============================================================
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -72,45 +74,30 @@ export default function AdminEditProduct() {
     });
   };
 
-  // ============================================================
-  // 3️⃣ Nuevas imágenes
-  // ============================================================
   const handleNewImages = (e) => {
     setNewImages([...e.target.files]);
   };
 
-  // ============================================================
-  // 4️⃣ Eliminar imagen
-  // ============================================================
   const handleDeleteImage = async (img) => {
-    if (!img?.imagePath) return;
-
     if (!confirm("¿Eliminar esta imagen?")) return;
 
     try {
       await deleteProductImage(img.imagePath);
 
-      const updatedImgs = product.images.filter(
-        (i) => i.imagePath !== img.imagePath
-      );
-
-      const newCover = updatedImgs[0]?.imageUrl || "";
+      const newList = product.images.filter((i) => i.imagePath !== img.imagePath);
+      const newCover = newList[0]?.imageUrl || "";
 
       await updateDoc(doc(db, "products", product.id), {
-        images: updatedImgs,
+        images: newList,
         cover: newCover,
       });
 
-      setProduct({ ...product, images: updatedImgs, cover: newCover });
-    } catch (e) {
-      console.error("Error eliminando imagen:", e);
-      alert("Error al eliminar imagen");
+      setProduct({ ...product, images: newList, cover: newCover });
+    } catch (err) {
+      alert("No se pudo eliminar la imagen");
     }
   };
 
-  // ============================================================
-  // 5️⃣ Guardar cambios (validación + sanitización)
-  // ============================================================
   const handleSave = async () => {
     if (!product) return;
 
@@ -121,6 +108,7 @@ export default function AdminEditProduct() {
     if (!product.name.trim()) return alert("El nombre es obligatorio.");
     if (!product.category.trim()) return alert("La categoría es obligatoria.");
     if (isNaN(price) || price <= 0) return alert("Precio inválido.");
+
     if (discount < 0 || discount > 90) return alert("Descuento inválido.");
     if (stock < 0) return alert("El stock no puede ser negativo.");
 
@@ -132,47 +120,44 @@ export default function AdminEditProduct() {
       const ref = doc(db, "products", product.id);
 
       let updatedImages = [...product.images];
-
       if (newImages.length > 0) {
         const uploaded = await uploadMultipleImages(newImages, product.id);
         updatedImages = [...updatedImages, ...uploaded];
       }
 
-      const cover =
-        updatedImages.length > 0 ? updatedImages[0].imageUrl : "";
+      const cover = updatedImages[0]?.imageUrl || "";
+
+      const cleanHTML = sanitizeHTML(product.description);
 
       const finalPrice = Number(
         (price - (price * discount) / 100).toFixed(2)
       );
 
       await updateDoc(ref, {
-        name: sanitizeText(product.name),
+        name: product.name.trim(),
         price,
         discount,
         finalPrice,
         stock,
-        category: sanitizeText(product.category),
-        description: sanitizeText(product.description),
+        category: product.category.trim(),
+        description: cleanHTML,
         images: updatedImages,
         cover,
-        paused: product.paused, // 🔥 NUEVO: guardamos la pausa
+        paused: product.paused,
       });
 
       alert("Producto actualizado ✔");
       navigate("/admin/products");
-    } catch (e) {
-      console.error("Error guardando:", e);
+    } catch (err) {
       alert("No se pudieron guardar los cambios.");
+      console.error(err);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <p style={{ padding: 20 }}>Cargando producto...</p>;
+  if (loading) return <p style={{ padding: 20 }}>Cargando...</p>;
 
-  // ============================================================
-  // 6️⃣ Render
-  // ============================================================
   return (
     <div className="admin-container">
       <AdminSidebar />
@@ -181,7 +166,6 @@ export default function AdminEditProduct() {
         <h1>Editar Producto</h1>
 
         <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-
           <label>Nombre *</label>
           <input name="name" value={product.name} onChange={handleChange} />
 
@@ -197,26 +181,27 @@ export default function AdminEditProduct() {
           <label>Categoría *</label>
           <input name="category" value={product.category} onChange={handleChange} />
 
-          <label>Descripción</label>
-          <textarea name="description" value={product.description} onChange={handleChange} />
+          <label>Descripción (HTML permitido)</label>
+          <textarea
+            name="description"
+            value={product.description}
+            onChange={handleChange}
+            style={{ minHeight: "180px" }}
+          />
 
-          {/* 🔥 NUEVO: CHECKBOX PAUSAR */}
-          <label style={{ marginTop: "20px", fontWeight: "bold" }}>
-            <input
-              type="checkbox"
-              name="paused"
-              checked={product.paused}
-              onChange={handleChange}
-              style={{ marginRight: "10px" }}
-            />
-            Pausar publicación
-          </label>
+          <label>Pausar publicación</label>
+          <input
+            type="checkbox"
+            name="paused"
+            checked={product.paused}
+            onChange={handleChange}
+          />
 
           <label>Imágenes actuales</label>
           <div className="admin-image-grid">
             {product.images.map((img, i) => (
               <div key={i} className="admin-image-box">
-                <img src={img.imageUrl} className="admin-image-preview" />
+                <img src={img.imageUrl} className="admin-image-preview" alt="" />
                 <button type="button" onClick={() => handleDeleteImage(img)}>
                   eliminar
                 </button>
@@ -235,7 +220,6 @@ export default function AdminEditProduct() {
           >
             {saving ? "Guardando..." : "Guardar Cambios"}
           </button>
-
         </form>
       </div>
     </div>

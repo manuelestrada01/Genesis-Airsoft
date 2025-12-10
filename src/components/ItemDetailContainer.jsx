@@ -29,7 +29,6 @@ const ProductDetail = () => {
 
         const data = { id: snap.id, ...snap.data() };
 
-        // 🔥 Si está pausado → bloquear acceso
         if (data.paused) {
           setProduct({ paused: true });
           return;
@@ -42,14 +41,12 @@ const ProductDetail = () => {
           data.image ||
           "";
 
-        const normalizedProduct = {
+        setProduct({
           ...data,
           image: firstImage,
           images: data.images || [],
           stock: data.stock ?? 0,
-        };
-
-        setProduct(normalizedProduct);
+        });
         setMainImage(firstImage);
       } catch (err) {
         console.error("Error cargando producto:", err);
@@ -59,9 +56,6 @@ const ProductDetail = () => {
     fetchProduct();
   }, [id]);
 
-  // ==============================
-  // 🔥 Producto pausado
-  // ==============================
   if (product?.paused)
     return (
       <div style={{ padding: 30, textAlign: "center" }}>
@@ -85,11 +79,6 @@ const ProductDetail = () => {
   if (!product) return <p>Cargando producto...</p>;
 
   const outOfStock = product.stock === 0;
-
-  const desc = product.description || "";
-  const isLong = desc.length > 150;
-  const visibleText = showFullDesc ? desc : desc.substring(0, 150);
-
   const discount = product.discount || 0;
   const hasDiscount = discount > 0;
 
@@ -97,89 +86,89 @@ const ProductDetail = () => {
     ? (product.price - product.price * (discount / 100)).toFixed(2)
     : product.price;
 
+  const FULL_DESC = product.description || "";
+
+  // Crear versión recortada del HTML sin romper etiquetas
+  const SHORT_DESC = FULL_DESC.length > 300 ? FULL_DESC.slice(0, 300) + "..." : FULL_DESC;
+
   const handleBuyNow = () => {
     if (outOfStock) return;
 
-    const finalPriceCalc = hasDiscount
-      ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+    const finalCalc = hasDiscount
+      ? Number(finalPrice)
       : product.price;
 
-    const productToCart = {
-      ...product,
-      price: finalPriceCalc,
-    };
-
     clearCart();
-    addToCart(productToCart, quantity);
+    addToCart({ ...product, price: finalCalc }, quantity);
     navigate("/checkout");
   };
 
   const handleAddToCart = () => {
     if (outOfStock) return;
 
-    const finalPriceCalc = hasDiscount
-      ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+    const finalCalc = hasDiscount
+      ? Number(finalPrice)
       : product.price;
 
-    addToCart({ ...product, price: finalPriceCalc }, quantity);
+    addToCart({ ...product, price: finalCalc }, quantity);
   };
 
   return (
-    <div className="detail-layout">
-      <div className="detail-thumbs-column">
+    <div className="detail-container-pro">
+
+      {/* MINIATURAS */}
+      <div className="gallery-thumbs-pro">
         {(product.images?.length ? product.images : [{ imageUrl: mainImage }]).map(
           (img, i) => (
             <img
               key={i}
               src={img.imageUrl}
-              alt="thumb"
-              className={`detail-thumb-img ${
-                mainImage === img.imageUrl ? "active" : ""
-              }`}
+              className={`thumb-pro ${mainImage === img.imageUrl ? "active" : ""}`}
               onClick={() => setMainImage(img.imageUrl)}
+              alt="thumb"
             />
           )
         )}
       </div>
 
-      <div className="detail-main-img-wrapper">
-        {hasDiscount && <div className="detail-discount-tag">-{discount}%</div>}
-        <img src={mainImage} alt={product.name} className="detail-main-img" />
+      {/* IMAGEN PRINCIPAL */}
+      <div className="gallery-main-pro">
+        {hasDiscount && <div className="discount-badge-pro">-{discount}%</div>}
+        <img src={mainImage} alt={product.name} className="main-img-pro" />
       </div>
 
-      <div className="info-box">
-        <h1 className="info-title">{product.name}</h1>
-        <p className="info-cat">Categoría: {product.category}</p>
+      {/* PANEL DE INFO */}
+      <div className="info-panel-pro">
+        <h1 className="title-pro">{product.name}</h1>
+        <p className="category-pro">Categoría: {product.category}</p>
 
-        {outOfStock ? (
-          <p style={{ color: "red", fontWeight: "bold", fontSize: "18px" }}>
-            SIN STOCK DISPONIBLE
-          </p>
-        ) : (
-          <p style={{ color: "green", fontWeight: "bold", fontSize: "18px" }}>
-            EN STOCK
-          </p>
-        )}
+        <span className={`stock-badge-pro ${outOfStock ? "out" : "in"}`}>
+          {outOfStock ? "SIN STOCK" : "EN STOCK"}
+        </span>
 
-        <div className="info-price-box">
+        <div className="price-box-pro">
           {hasDiscount ? (
             <>
-              <p className="info-price-final">${finalPrice}</p>
-              <p className="info-price-original">${product.price}</p>
+              <span className="price-final-pro">${finalPrice}</span>
+              <span className="price-original-pro">${product.price}</span>
             </>
           ) : (
-            <p className="info-price-final">${product.price}</p>
+            <span className="price-final-pro">${product.price}</span>
           )}
         </div>
 
-        <p className="info-short">
-          {visibleText}
-          {isLong && !showFullDesc ? "..." : ""}
-        </p>
+        {/* DESCRIPCIÓN HTML */}
+        <div
+          className="desc-pro html-description"
+          dangerouslySetInnerHTML={{
+            __html: showFullDesc ? FULL_DESC : SHORT_DESC,
+          }}
+        />
 
-        {isLong && (
+        {/* BOTÓN LEER MÁS */}
+        {FULL_DESC.length > 300 && (
           <button
-            className="info-read-more"
+            className="readmore-pro"
             onClick={() => setShowFullDesc(!showFullDesc)}
           >
             {showFullDesc ? "Leer menos" : "Leer más"}
@@ -187,23 +176,21 @@ const ProductDetail = () => {
         )}
 
         {!outOfStock && (
-          <div className="info-qty-box">
-            <label>Cantidad *</label>
-            <ItemCount
-              product={product}
-              onQuantityChange={setQuantity}
-              stock={product.stock}
-            />
+          <div className="qty-box-pro">
+            <label>Cantidad</label>
+            <ItemCount product={product} onQuantityChange={setQuantity} stock={product.stock} />
           </div>
         )}
 
-        <button
-          className="btn-buy"
-          onClick={handleBuyNow}
-          disabled={outOfStock}
-        >
-          {outOfStock ? "Sin stock" : "Realizar compra"}
-        </button>
+        <div className="btns-pro">
+          <button className="btn-add-pro" onClick={handleAddToCart} disabled={outOfStock}>
+            Agregar al carrito
+          </button>
+
+          <button className="btn-buy-pro" onClick={handleBuyNow} disabled={outOfStock}>
+            Comprar ahora
+          </button>
+        </div>
       </div>
     </div>
   );

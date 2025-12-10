@@ -74,6 +74,11 @@ export default function AdminOrderDetail() {
       <p><strong>Email:</strong> {order.buyer?.email}</p>
       <p><strong>Teléfono:</strong> {order.buyer?.phone}</p>
 
+      {/* 🔥 DNI agregado */}
+      {order.buyer?.dni && (
+        <p><strong>DNI:</strong> {order.buyer.dni}</p>
+      )}
+
       <h3>Dirección</h3>
       {order.buyer?.method === "delivery" ? (
         <>
@@ -107,7 +112,7 @@ export default function AdminOrderDetail() {
       </p>
 
       {/* ======================================= */}
-      {/* 🔥 SEGUIMIENTO VIA CARGO (ADMIN)        */}
+      {/* 🔥 SEGUIMIENTO VIA CARGO (ADMIN) */}
       {/* ======================================= */}
       <div style={{ marginTop: "30px" }}>
         <h3>Seguimiento (Via Cargo)</h3>
@@ -135,7 +140,6 @@ export default function AdminOrderDetail() {
           {savingTracking ? "Guardando..." : "Guardar seguimiento"}
         </button>
 
-        {/* Link directo solo si el tracking existe */}
         {order.trackingNumber && (
           <div style={{ marginTop: "15px" }}>
             <a

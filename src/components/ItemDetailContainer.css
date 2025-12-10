@@ -1,192 +1,202 @@
 /* === LAYOUT GENERAL === */
-.detail-layout {
+.detail-container-pro {
   display: grid;
-  grid-template-columns: 120px 1fr 380px; /* antes tenías 450px */
+  grid-template-columns: 120px 1fr 380px;
   gap: 40px;
   margin-top: 150px;
-  padding: 20px 150px; /* nuevo padding horizontal */
+  padding: 20px 150px;
   align-items: flex-start;
   font-family: "Montserrat", sans-serif;
 }
 
-
 /* === MINIATURAS === */
-.detail-thumbs-column {
+.gallery-thumbs-pro {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.detail-thumb-img {
+.thumb-pro {
   width: 100%;
   height: 90px;
   object-fit: cover;
   border-radius: 8px;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: 0.2s;
+  opacity: 0.8;
+  transition: 0.2s ease;
 }
-.detail-thumb-img.active {
+
+.thumb-pro:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.thumb-pro.active {
   border-color: #ff6600;
+  opacity: 1;
 }
 
 /* === IMAGEN PRINCIPAL === */
-.detail-main-img-wrapper {
+.gallery-main-pro {
+  position: relative;
   display: flex;
   justify-content: center;
 }
-.detail-main-img {
+
+.main-img-pro {
   width: 95%;
   max-height: 550px;
   object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
 }
 
-/* === CAJA DE INFORMACIÓN === */
-.info-box {
+.main-img-pro:hover {
+  transform: scale(1.03);
+}
+
+/* DESCUENTO */
+.discount-badge-pro {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #ff3e3e;
+  color: white;
+  padding: 8px 12px;
+  font-weight: bold;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* === INFO PANEL === */
+.info-panel-pro {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  padding: 10px;
+  gap: 18px;
 }
 
-/* TITULO */
-.info-title {
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-/* SKU */
-.info-sku {
-  color: #888;
-  font-size: 13px;
-  margin-top: -5px;
-}
-
-/* PRECIO */
-.info-price {
+.title-pro {
   font-size: 32px;
-  font-weight: bold;
-  color: #ff6600;
-  margin: 15px 0;
+  font-weight: 700;
 }
 
-/* DESCRIPCIÓN */
-.info-short {
+.category-pro {
+  font-size: 14px;
+  color: #777;
+}
+
+.stock-badge-pro {
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.stock-badge-pro.in {
+  background: #dbffe0;
+  color: #008b2a;
+}
+
+.stock-badge-pro.out {
+  background: #ffe0e0;
+  color: #b30000;
+}
+
+/* === PRECIOS === */
+.price-box-pro {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 5px;
+}
+
+.price-final-pro {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.price-original-pro {
+  font-size: 18px;
+  text-decoration: line-through;
+  color: #aaa;
+}
+
+/* === DESCRIPCIÓN === */
+.desc-pro {
   font-size: 15px;
-  line-height: 1.4;
   color: #333;
+  line-height: 1.5;
 }
 
-.info-read-more {
+.readmore-pro {
   background: none;
   border: none;
-  color: #0066cc;
   cursor: pointer;
-  font-size: 14px;
-  text-align: left;
+  color: #ff6600;
+  font-weight: 600;
   padding: 0;
 }
 
-.info-read-more:hover {
-  text-decoration: underline;
-}
-
-/* CANTIDAD */
-.info-qty-box label {
+/* === CANTIDAD === */
+.qty-box-pro label {
   font-weight: 600;
   font-size: 14px;
 }
 
 /* === BOTONES === */
-.info-buttons {
+.btns-pro {
   display: flex;
-  gap: 10px;
-  align-items: center;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* CARRITO */
-.btn-add-cart {
+.btn-add-pro {
   background: #ff6600;
-  color: #fff;
+  color: white;
   border: none;
-  padding: 12px 25px;
-  border-radius: 6px;
+  padding: 14px;
+  font-size: 16px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 15px;
   transition: 0.2s;
 }
-.btn-add-cart:hover {
-  background: #cc5200;
+
+.btn-add-pro:hover {
+  background: #e25700;
 }
 
-/* FAVORITO */
-.btn-fav {
-  width: 45px;
-  height: 45px;
-  border: 2px solid #ccc;
-  background: #fff;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.btn-fav:hover {
-  border-color: #ff6600;
-  color: #ff6600;
-}
-
-/* BOTÓN NEGRO COMPRA */
-.btn-buy {
+.btn-buy-pro {
   background: #000;
   color: white;
+  border: none;
   padding: 14px;
-  border-radius: 6px;
   font-size: 16px;
-  font-weight: 600;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-buy-pro:hover {
+  background: #222;
+}
+
+.html-description ul,
+.html-description ol {
+  margin-left: 20px;
   margin-top: 10px;
 }
-.btn-buy:hover {
-  background: #333;
+
+.html-description li {
+  margin-bottom: 6px;
+  line-height: 1.4;
 }
 
-.info-read-more {
-  background: none;
-  border: none;
-  color: #0066cc;
-  cursor: pointer;
-  font-size: 14px;
-  text-align: left;
-  padding: 0;
-  margin-top: -10px;
-}
-
-.info-read-more:hover {
-  text-decoration: underline;
-}
-
-/* Eliminamos cualquier referencia a btn-add-cart */
-.btn-add-cart {
-  display: none;
-}
-
-/* Precio con descuento */
-.info-price-box {
-  margin: 15px 0;
-}
-
-.info-price-final {
-  font-size: 24px;
-  font-weight: 700;
-  color: #000;
-}
-
-.info-price-original {
-  font-size: 18px;
-  color: #999;
-  text-decoration: line-through;
-  margin-left: 10px;
+.html-description h1,
+.html-description h2,
+.html-description h3 {
+  margin-top: 15px;
 }

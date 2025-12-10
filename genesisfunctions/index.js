@@ -291,9 +291,27 @@ export const createSecureOrder = onRequest(
           return res.status(405).json({ error: "Method not allowed" });
         }
 
+        // ================================================
+        // 🔥 Buyer normalizado (incluye campo DNI)
+        // ================================================
+        const buyerReq = req.body.buyer || {};
+
         const buyer = {
-          email: xss(req.body.buyer?.email || ""),
-          name: xss(req.body.buyer?.name || ""),
+          name: xss(buyerReq.name || ""),
+          email: xss(buyerReq.email || ""),
+          phone: xss(buyerReq.phone || buyerReq.telefono || ""),
+
+          method: xss(buyerReq.method || ""),
+
+          // Dirección — tolera nombres reales del formulario
+          street: xss(buyerReq.street || buyerReq.calle || ""),
+          number: xss(buyerReq.number || buyerReq.altura || ""),
+          city: xss(buyerReq.city || buyerReq.ciudad || ""),
+          province: xss(buyerReq.province || buyerReq.provincia || ""),
+          zip: xss(buyerReq.zip || buyerReq.cp || ""),
+
+          // 🔥 NUEVO: DNI del comprador
+          dni: xss(buyerReq.dni || buyerReq.documento || ""),
         };
 
         const items = req.body.items;
@@ -308,6 +326,9 @@ export const createSecureOrder = onRequest(
         let verifiedMP = [];
         let total = 0;
 
+        // ================================================
+        // 🔥 Validación y construcción segura de items
+        // ================================================
         for (const cart of items) {
           const snap = await db.collection("products").doc(cart.id).get();
 
@@ -326,7 +347,9 @@ export const createSecureOrder = onRequest(
           const discount = product.discount || 0;
           const finalPrice =
             discount > 0
-              ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+              ? Number(
+                  (product.price - product.price * (discount / 100)).toFixed(2)
+                )
               : product.price;
 
           verifiedDB.push({
@@ -347,6 +370,9 @@ export const createSecureOrder = onRequest(
           total += finalPrice * cart.quantity;
         }
 
+        // ================================================
+        // 🔥 Crear documento de orden en Firestore
+        // ================================================
         const orderRef = await db.collection("orders").add({
           userId,
           buyer,
@@ -356,20 +382,27 @@ export const createSecureOrder = onRequest(
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
+        // ================================================
+        // 🔥 Crear preferencia segura de Mercado Pago
+        // ================================================
         const mp = getMPClient();
         const prefClient = new Preference(mp);
 
         const prefResult = await prefClient.create({
           body: {
             items: verifiedMP,
-            payer: buyer,
+            payer: {
+              name: buyer.name,
+              email: buyer.email,
+            },
+
             external_reference: orderRef.id,
             auto_return: "approved",
+
             back_urls: {
               success: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
               failure: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
               pending: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
-
             },
 
             notification_url:
@@ -390,7 +423,6 @@ export const createSecureOrder = onRequest(
     });
   }
 );
-
 
 
 // ======================================================================================

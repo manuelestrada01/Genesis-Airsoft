@@ -4,10 +4,21 @@ import AdminSidebar from "./AdminSidebar";
 import { db } from "../../firebase/config";
 import { collection, addDoc, updateDoc } from "firebase/firestore";
 import { uploadMultipleImages } from "../../firebase/uploadProductImage";
+import DOMPurify from "dompurify";
 import "./admin.css";
 
-// Función simple para prevenir XSS en textos largos
-const sanitizeText = (str) => str.replace(/<[^>]*>?/gm, "").trim();
+// Limpieza segura permitiendo HTML básico
+const sanitizeHTML = (html) =>
+  DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    ALLOWED_TAGS: [
+      "b", "strong", "i", "em", "u",
+      "p", "br",
+      "ul", "ol", "li",
+      "h1", "h2", "h3", "h4"
+    ],
+    ALLOWED_ATTR: []
+  });
 
 export default function AdminAddProduct() {
   const [form, setForm] = useState({
@@ -26,7 +37,6 @@ export default function AdminAddProduct() {
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
-    // Selección de imágenes
     if (files && files.length > 0) {
       setForm({ ...form, imageFiles: [...files] });
       return;
@@ -38,7 +48,6 @@ export default function AdminAddProduct() {
   const handleSave = async () => {
     setMessage("");
 
-    // Validaciones
     if (!form.name.trim() || !form.category.trim()) {
       return setMessage("Nombre y categoría son obligatorios.");
     }
@@ -58,36 +67,33 @@ export default function AdminAddProduct() {
       return setMessage("El stock no puede ser negativo.");
     }
 
-    if (!form.imageFiles || form.imageFiles.length === 0) {
+    if (!form.imageFiles.length) {
       return setMessage("Debes subir al menos 1 imagen.");
     }
 
     setLoading(true);
 
     try {
-      // Sanitizar campos
-      const cleanDescription = sanitizeText(form.description);
+      const cleanHTML = sanitizeHTML(form.description);
 
       const finalPrice = Number(
         (price - (price * discount) / 100).toFixed(2)
       );
 
-      // Crear producto base
       const productRef = await addDoc(collection(db, "products"), {
-        name: sanitizeText(form.name),
+        name: form.name.trim(),
         price,
         discount,
         finalPrice,
         stock,
-        category: sanitizeText(form.category),
-        description: cleanDescription,
+        category: form.category.trim(),
+        description: cleanHTML,
         images: [],
         cover: "",
-        paused: false, // 🔥 NUEVO - Todas las publicaciones nacen activas
+        paused: false,
         createdAt: new Date(),
       });
 
-      // Subir imágenes
       const uploadedImages = await uploadMultipleImages(
         form.imageFiles,
         productRef.id
@@ -100,7 +106,6 @@ export default function AdminAddProduct() {
 
       setMessage("Producto guardado con éxito ✔");
 
-      // Reset
       setForm({
         name: "",
         price: "",
@@ -110,9 +115,9 @@ export default function AdminAddProduct() {
         description: "",
         imageFiles: [],
       });
-    } catch (error) {
-      console.error("Error guardando producto:", error);
-      setMessage("Ocurrió un error al guardar el producto.");
+    } catch (err) {
+      console.error(err);
+      setMessage("Ocurrió un error al guardar.");
     } finally {
       setLoading(false);
     }
@@ -133,7 +138,14 @@ export default function AdminAddProduct() {
           <input name="price" type="number" value={form.price} onChange={handleChange} />
 
           <label>Descuento (%)</label>
-          <input name="discount" type="number" min="0" max="90" value={form.discount} onChange={handleChange} />
+          <input
+            name="discount"
+            type="number"
+            min="0"
+            max="90"
+            value={form.discount}
+            onChange={handleChange}
+          />
 
           <label>Stock *</label>
           <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} />
@@ -141,8 +153,14 @@ export default function AdminAddProduct() {
           <label>Categoría *</label>
           <input name="category" value={form.category} onChange={handleChange} />
 
-          <label>Descripción</label>
-          <textarea name="description" value={form.description} onChange={handleChange} />
+          <label>Descripción (permite bullets y formato)</label>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            placeholder="Pegá aquí la descripción con viñetas o formato..."
+            style={{ minHeight: "180px" }}
+          />
 
           <label>Imágenes *</label>
           <input type="file" multiple accept="image/*" onChange={handleChange} />

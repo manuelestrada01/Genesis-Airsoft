@@ -28,19 +28,23 @@ function Checkout() {
 
   useEffect(() => {
     if (!isLogged) return;
+
     if (!buyer.name && user.displayName) {
       handleBuyerChange({ target: { name: "name", value: user.displayName } });
     }
+
     if (!buyer.email && user.email) {
       handleBuyerChange({ target: { name: "email", value: user.email } });
     }
   }, [isLogged]);
 
+  // 🔥 FORMULARIO + DNI
   const form = useMemo(
     () => ({
       name: buyer.name || "",
       email: buyer.email || "",
       phone: buyer.phone || "",
+      dni: buyer.dni || "",
       method: buyer.method || "delivery",
       street: buyer.street || "",
       number: buyer.number || "",
@@ -54,12 +58,18 @@ function Checkout() {
 
   const onChange = (e) => handleBuyerChange(e);
 
+  // VALIDACIONES
   const validate = () => {
     const next = {};
+
     if (!form.name.trim()) next.name = "Ingresá tu nombre completo.";
-    if (!form.email.trim()) next.email = "Ingresá tu e-mail.";
+    if (!form.email.trim()) next.email = "Ingresá un e-mail.";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "E-mail inválido.";
     if (!form.phone.trim()) next.phone = "Ingresá un teléfono.";
+
+    // 🔥 VALIDACIÓN DNI
+    if (!form.dni.trim()) next.dni = "Ingresá tu DNI.";
+    else if (!/^\d{7,9}$/.test(form.dni)) next.dni = "DNI inválido.";
 
     if (form.method === "delivery") {
       if (!form.street.trim()) next.street = "Calle requerida.";
@@ -73,67 +83,68 @@ function Checkout() {
     return Object.keys(next).length === 0;
   };
 
-  // Cálculo de descuento
   const calculateDiscountedPrice = (price, discount) => {
     return discount ? (price - price * (discount / 100)).toFixed(2) : price;
   };
 
-    const handlePayment = async (e) => {
-      e.preventDefault();
-      if (!validate()) return;
+  const handlePayment = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
 
-      try {
-        setProcessingPayment(true);
+    try {
+      setProcessingPayment(true);
 
-        // 1) Crear orden segura + preferencia MP
-        const response = await fetch(
-          "https://us-central1-genesis-airsoft.cloudfunctions.net/createSecureOrder",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: user.uid,
-              buyer: form,
-              items: cart.map(item => ({
-                id: item.id,
-                quantity: item.quantity
-              }))
-            })
-          }
-        );
-
-        const data = await response.json();
-
-        if (!data.preferenceId) {
-          alert("❌ Error creando la preferencia segura.");
-          return;
+      const response = await fetch(
+        "https://us-central1-genesis-airsoft.cloudfunctions.net/createSecureOrder",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: user.uid,
+            buyer: form, // 🔥 DNI incluido automáticamente
+            items: cart.map((item) => ({
+              id: item.id,
+              quantity: item.quantity,
+            })),
+          }),
         }
+      );
 
-    // 2) Redirigir al checkout de Mercado Pago
-    window.location.href =
-      `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
+      const data = await response.json();
 
-  } catch (err) {
-    console.error("❌ Error en el pago:", err);
-    alert("Ocurrió un error al procesar el pago.");
-  } finally {
-    setProcessingPayment(false);
-  }
-};
+      if (!data.preferenceId) {
+        alert("❌ Error creando la preferencia segura.");
+        return;
+      }
 
-
+      window.location.href =
+        `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
+    } catch (err) {
+      console.error("❌ Error en el pago:", err);
+      alert("Ocurrió un error al procesar el pago.");
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
 
   return (
     <div className="checkout-wrapper">
-      {/* Columna izquierda */}
+      {/* IZQUIERDA */}
       <div className="checkout-left">
         <h2>Detalles de facturación</h2>
+
         <form onSubmit={handlePayment} className="checkout-form">
           <div className="grid-2">
             <Input label="Nombre*" name="name" value={form.name} onChange={onChange} error={errors.name} />
             <Input label="Correo electrónico*" name="email" value={form.email} onChange={onChange} error={errors.email} />
           </div>
-          <Input label="Teléfono*" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
+
+          <div className="grid-2">
+            <Input label="Teléfono*" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
+            {/* 🔥 NUEVO CAMPO DNI */}
+            <Input label="DNI*" name="dni" value={form.dni} onChange={onChange} error={errors.dni} />
+          </div>
+
           <div className="radio-group">
             <label className="radio-label">
               <input type="radio" name="method" value="delivery" checked={form.method === "delivery"} onChange={onChange} />
@@ -171,7 +182,7 @@ function Checkout() {
         </form>
       </div>
 
-      {/* Columna derecha: Resumen */}
+      {/* DERECHA */}
       <div className="checkout-right">
         <h3>Tu pedido</h3>
         <div className="order-summary">
@@ -183,7 +194,10 @@ function Checkout() {
           ))}
           <hr />
           <div className="order-line"><strong>Subtotal</strong><span>${totalPrice.toFixed(2)}</span></div>
-          <div className="order-line"><strong>Envío</strong><span>{form.method === "pickup" ? "Retiro en tienda" : "A cotizar"}</span></div>
+          <div className="order-line">
+            <strong>Envío</strong>
+            <span>{form.method === "pickup" ? "Retiro en tienda" : "A cotizar"}</span>
+          </div>
           <div className="order-line total"><strong>Total</strong><span>${totalPrice.toFixed(2)}</span></div>
         </div>
 
@@ -202,7 +216,7 @@ function Checkout() {
   );
 }
 
-/* === SUBCOMPONENTES === */
+/* SUBCOMPONENTES */
 function Input({ label, error, ...rest }) {
   return (
     <div>
