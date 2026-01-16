@@ -1,130 +1,285 @@
+/* ===========================
+   RESET CLAVE (FIX RECORTES)
+=========================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ===========================
+   LAYOUT
+=========================== */
+
 .checkout-wrapper {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-  max-width: 1100px;
+  gap: 2.5rem;
+  max-width: 1200px;
   margin: 120px auto;
   padding: 20px;
 }
 
 .checkout-left,
 .checkout-right {
-  background: #f9f9f9;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2.2rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-.checkout-right {
-  height: fit-content;
+/* ===========================
+   TITULOS
+=========================== */
+
+.checkout-title {
+  font-size: 1.6rem;
+  margin-bottom: 0.2rem;
 }
 
-.checkout-right h3 {
-  margin-bottom: 1rem;
-  color: #333;
-}
-
-.order-summary {
-  margin-top: 1rem;
-}
-
-.order-item,
-.order-line {
-  display: flex;
-  justify-content: space-between;
+.checkout-subtitle {
   font-size: 0.95rem;
-  padding: 6px 0;
+  color: #666;
+  margin-bottom: 1.8rem;
 }
 
-.order-line.total {
-  font-weight: 700;
-  border-top: 1px solid #ccc;
-  padding-top: 10px;
+/* ===========================
+   SECCIONES
+=========================== */
+
+.checkout-section {
+  border-top: 1px solid #eee;
+  padding-top: 1.4rem;
+  margin-top: 1.4rem;
 }
 
-/* Campos, inputs, botones, etc (igual que antes) */
+.checkout-section h4 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #222;
+}
+
+/* ===========================
+   FORM
+=========================== */
+
 .checkout-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.2rem;
 }
 
-.checkout-label {
-  font-size: 0.9rem;
-  color: #333;
+label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
   display: block;
-  margin-bottom: 6px;
 }
 
-.checkout-input,
-.checkout-select,
-.checkout-textarea {
+/* INPUTS UNIFICADOS (FIX) */
+input,
+select,
+textarea {
   width: 100%;
-  padding: 0.8rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
+  box-sizing: border-box;
+  padding: 0.75rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 0.95rem;
+  font-family: inherit;
   background: #fff;
-  transition: border-color 0.3s;
 }
 
-.checkout-input:focus,
-.checkout-select:focus,
-.checkout-textarea:focus {
+/* FOCUS HACIA ADENTRO (NO SE RECORTA) */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
   border-color: #009ee3;
+  box-shadow: inset 0 0 0 2px rgba(0, 158, 227, 0.18);
 }
 
-.checkout-input.error,
-.checkout-select.error {
+input.error,
+select.error {
   border-color: crimson;
-  background-color: #fff6f6;
+  background: #fff6f6;
 }
 
-.checkout-button {
-  background-color: #009ee3;
-  color: white;
-  border: none;
-  padding: 0.9rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  transition: background 0.3s;
-}
-
-.checkout-button:hover {
-  background-color: #007bbd;
-}
+/* ===========================
+   GRIDS
+=========================== */
 
 .grid-2 {
   display: grid;
-  gap: 1rem;
   grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 
 .grid-3 {
   display: grid;
-  gap: 1rem;
   grid-template-columns: 2fr 1fr 1fr;
+  gap: 1rem;
 }
 
-.radio-group {
+/* ===========================
+   RADIOS PILL
+=========================== */
+
+.radio-group.pills {
   display: flex;
   gap: 1rem;
-  margin-bottom: 0.5rem;
 }
 
-.radio-label {
+.radio-group.pills label {
+  flex: 1;
+  padding: 0.7rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.radio-group.pills label.active {
+  background: #e9f6fd;
+  border-color: #009ee3;
+}
+
+.radio-group input {
+  display: none;
+}
+
+/* ===========================
+   RESUMEN
+=========================== */
+
+.checkout-right h3 {
+  margin-bottom: 1.2rem;
+}
+
+.order-items {
+  margin-bottom: 1rem;
+}
+
+.order-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  padding: 6px 0;
+}
+
+.order-totals {
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.order-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.order-line.total {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ===========================
+   BOTON
+=========================== */
+
+.checkout-button {
+  width: 100%;
+  margin-top: 1.2rem;
+  padding: 0.9rem;
+  border-radius: 12px;
+  background: #009ee3;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
   cursor: pointer;
 }
 
-.pickup-info {
-  background: #f6fff8;
-  border: 1px dashed #b6dfc1;
-  padding: 10px;
-  border-radius: 8px;
+.checkout-button:hover {
+  background: #007bbd;
+}
+
+.checkout-error {
+  color: crimson;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+
+/* ===========================
+   STICKY
+=========================== */
+
+.sticky {
+  position: sticky;
+  top: 120px;
+}
+
+/* ===========================
+   MOBILE
+=========================== */
+
+@media (max-width: 900px) {
+  .checkout-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky {
+    position: static;
+  }
+}
+
+/* ===========================
+   ANIMACION ENVIO / RETIRO
+=========================== */
+
+.delivery-animated {
+  overflow: hidden;
+  transition:
+    max-height 0.4s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.delivery-animated.show {
+  max-height: 2000px; /* FIX: evita recortes */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delivery-animated.hide {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+/* ===========================
+   COMENTARIOS / NOTAS ENVÍO
+=========================== */
+
+.checkout-notes {
+  margin-top: 1rem;
+}
+
+.checkout-notes label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+  color: #333;
+}
+
+.checkout-notes textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.checkout-notes textarea::placeholder {
+  color: #999;
   font-size: 0.9rem;
 }

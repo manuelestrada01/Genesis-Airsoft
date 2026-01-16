@@ -191,7 +191,10 @@ async function processPayment(paymentData, res) {
     return res.sendStatus(200);
   }
 
-  if (paymentData.transaction_amount !== orderData.total) {
+  const expectedAmount =
+    orderData.totalWithShipping ?? orderData.total;
+
+  if (Number(paymentData.transaction_amount) !== Number(expectedAmount)) {
     await orderRef.update({
       status: "amount_mismatch",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -280,7 +283,7 @@ export const passwordChanged = onRequest(
 
 
 // ======================================================================================
-// 4) CREATE ORDER — Sanitización estricta + validación stock + preferencia segura
+// 4) CREATE ORDER — Sanitización estricta + validación stock + envío seguro
 // ======================================================================================
 export const createSecureOrder = onRequest(
   { secrets: [MP_ACCESS_TOKEN] },
@@ -291,27 +294,24 @@ export const createSecureOrder = onRequest(
           return res.status(405).json({ error: "Method not allowed" });
         }
 
-        // ================================================
-        // 🔥 Buyer normalizado (incluye campo DNI)
-        // ================================================
+        // =====================================================
+        // 🔐 Normalizar comprador (incluye DNI)
+        // =====================================================
         const buyerReq = req.body.buyer || {};
 
         const buyer = {
           name: xss(buyerReq.name || ""),
           email: xss(buyerReq.email || ""),
-          phone: xss(buyerReq.phone || buyerReq.telefono || ""),
+          phone: xss(buyerReq.phone || ""),
+          dni: xss(buyerReq.dni || ""),
+          method: xss(buyerReq.method || "delivery"),
 
-          method: xss(buyerReq.method || ""),
-
-          // Dirección — tolera nombres reales del formulario
-          street: xss(buyerReq.street || buyerReq.calle || ""),
-          number: xss(buyerReq.number || buyerReq.altura || ""),
-          city: xss(buyerReq.city || buyerReq.ciudad || ""),
-          province: xss(buyerReq.province || buyerReq.provincia || ""),
-          zip: xss(buyerReq.zip || buyerReq.cp || ""),
-
-          // 🔥 NUEVO: DNI del comprador
-          dni: xss(buyerReq.dni || buyerReq.documento || ""),
+          street: xss(buyerReq.street || ""),
+          number: xss(buyerReq.number || ""),
+          city: xss(buyerReq.city || ""),
+          province: xss(buyerReq.province || ""),
+          zip: xss(buyerReq.zip || ""),
+          notes: xss(buyerReq.notes || "")
         };
 
         const items = req.body.items;
@@ -322,13 +322,14 @@ export const createSecureOrder = onRequest(
         }
 
         const db = admin.firestore();
+
         let verifiedDB = [];
         let verifiedMP = [];
-        let total = 0;
+        let subtotal = 0;
 
-        // ================================================
-        // 🔥 Validación y construcción segura de items
-        // ================================================
+        // =====================================================
+        // 🛒 Validar productos contra Firestore
+        // =====================================================
         for (const cart of items) {
           const snap = await db.collection("products").doc(cart.id).get();
 
@@ -367,30 +368,82 @@ export const createSecureOrder = onRequest(
             currency_id: "ARS",
           });
 
-          total += finalPrice * cart.quantity;
+          subtotal += finalPrice * cart.quantity;
         }
 
-        // ================================================
-        // 🔥 Crear documento de orden en Firestore
-        // ================================================
+        // =====================================================
+        // 🚚 SHIPPING — lógica backend (AUTORITATIVA)
+        // =====================================================
+        const FREE_SHIPPING_FROM = 350000;
+        const SHIPPING_FLAT_FEE = 1;
+
+        let shippingCost = 0;
+        let shippingFree = false;
+        let shippingLabel = "";
+
+        if (buyer.method === "pickup") {
+          shippingCost = 0;
+          shippingFree = true;
+          shippingLabel = "Retiro en tienda";
+        } else {
+          if (subtotal >= FREE_SHIPPING_FROM) {
+            shippingCost = 0;
+            shippingFree = true;
+            shippingLabel = `Envío gratis desde $${FREE_SHIPPING_FROM}`;
+          } else {
+            shippingCost = SHIPPING_FLAT_FEE;
+            shippingFree = false;
+            shippingLabel = "Envío a domicilio";
+          }
+        }
+
+        const totalWithShipping = Number(
+          (subtotal + shippingCost).toFixed(2)
+        );
+
+        // =====================================================
+        // 📦 Crear ORDEN en Firestore
+        // =====================================================
         const orderRef = await db.collection("orders").add({
           userId,
           buyer,
           items: verifiedDB,
-          total,
+
+          subtotal,
+          shipping: {
+            method: buyer.method,
+            cost: shippingCost,
+            free: shippingFree,
+            label: shippingLabel,
+            freeFrom: FREE_SHIPPING_FROM,
+          },
+          totalWithShipping,
+
           status: "pending",
+          dispatched: false,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // ================================================
-        // 🔥 Crear preferencia segura de Mercado Pago
-        // ================================================
+        // =====================================================
+        // 💳 Mercado Pago — agregar envío como ítem si aplica
+        // =====================================================
+        if (buyer.method !== "pickup" && shippingCost > 0) {
+          verifiedMP.push({
+            id: "shipping",
+            title: "Envío",
+            unit_price: shippingCost,
+            quantity: 1,
+            currency_id: "ARS",
+          });
+        }
+
         const mp = getMPClient();
         const prefClient = new Preference(mp);
 
         const prefResult = await prefClient.create({
           body: {
             items: verifiedMP,
+
             payer: {
               name: buyer.name,
               email: buyer.email,
@@ -399,30 +452,46 @@ export const createSecureOrder = onRequest(
             external_reference: orderRef.id,
             auto_return: "approved",
 
+            // ✅ NGROK (TESTING)
             back_urls: {
-              success: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
-              failure: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
-              pending: "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
+              success:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
+              failure:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
+              pending:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
             },
 
+            // 🔥 WEBHOOK REAL (NO NGROK)
             notification_url:
               "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook",
           },
         });
 
+        // =====================================================
+        // ✅ RESPUESTA AL FRONTEND
+        // =====================================================
         return res.status(200).json({
           orderId: orderRef.id,
           preferenceId: prefResult.id,
-          total,
+
+          subtotal,
+          shipping: {
+            cost: shippingCost,
+            free: shippingFree,
+            label: shippingLabel,
+          },
+          totalWithShipping,
         });
 
       } catch (err) {
-        logger.error(err);
+        logger.error("❌ createSecureOrder error:", err);
         return res.status(500).json({ error: "Server error" });
       }
     });
   }
 );
+
 
 
 // ======================================================================================

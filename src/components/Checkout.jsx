@@ -1,8 +1,12 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import { CheckoutContext } from "../context/CheckoutContext";
 import { CartContext } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
 import "./Checkout.css";
+import FreeShippingPopup from "../components/FreeShippingPopup";
+
+const FREE_SHIPPING_FROM = 350000;
+const SHIPPING_COST = 1;
 
 const provincesAR = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes",
@@ -13,32 +17,15 @@ const provincesAR = [
 
 function Checkout() {
   const { cart, totalPrice } = useContext(CartContext);
+  const { buyer, handleBuyerChange, loading, error } = useContext(CheckoutContext);
   const { user } = useContext(AuthContext);
-  const { buyer, handleBuyerChange, completeCheckout, orderId, loading, error, success } =
-    useContext(CheckoutContext);
 
   const [processingPayment, setProcessingPayment] = useState(false);
   const [errors, setErrors] = useState({});
-  const orderIdRef = useRef(orderId);
-  const isLogged = !!user;
 
-  useEffect(() => {
-    orderIdRef.current = orderId;
-  }, [orderId]);
-
-  useEffect(() => {
-    if (!isLogged) return;
-
-    if (!buyer.name && user.displayName) {
-      handleBuyerChange({ target: { name: "name", value: user.displayName } });
-    }
-
-    if (!buyer.email && user.email) {
-      handleBuyerChange({ target: { name: "email", value: user.email } });
-    }
-  }, [isLogged]);
-
-  // 🔥 FORMULARIO + DNI
+  // =========================
+  // FORM NORMALIZADO
+  // =========================
   const form = useMemo(
     () => ({
       name: buyer.name || "",
@@ -58,35 +45,34 @@ function Checkout() {
 
   const onChange = (e) => handleBuyerChange(e);
 
+  // =========================
   // VALIDACIONES
+  // =========================
   const validate = () => {
     const next = {};
 
-    if (!form.name.trim()) next.name = "Ingresá tu nombre completo.";
-    if (!form.email.trim()) next.email = "Ingresá un e-mail.";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "E-mail inválido.";
+    if (!form.name.trim()) next.name = "Ingresá tu nombre.";
+    if (!form.email.trim()) next.email = "Ingresá tu email.";
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = "Email inválido.";
     if (!form.phone.trim()) next.phone = "Ingresá un teléfono.";
-
-    // 🔥 VALIDACIÓN DNI
     if (!form.dni.trim()) next.dni = "Ingresá tu DNI.";
-    else if (!/^\d{7,9}$/.test(form.dni)) next.dni = "DNI inválido.";
+    if (!/^\d{7,9}$/.test(form.dni)) next.dni = "DNI inválido.";
 
     if (form.method === "delivery") {
       if (!form.street.trim()) next.street = "Calle requerida.";
       if (!form.number.trim()) next.number = "Altura requerida.";
       if (!form.city.trim()) next.city = "Ciudad requerida.";
       if (!form.province.trim()) next.province = "Provincia requerida.";
-      if (!form.zip.trim()) next.zip = "Código postal requerido.";
+      if (!form.zip.trim()) next.zip = "CP requerido.";
     }
 
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const calculateDiscountedPrice = (price, discount) => {
-    return discount ? (price - price * (discount / 100)).toFixed(2) : price;
-  };
-
+  // =========================
+  // PAGO
+  // =========================
   const handlePayment = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -94,124 +80,193 @@ function Checkout() {
     try {
       setProcessingPayment(true);
 
-      const response = await fetch(
+      const res = await fetch(
         "https://us-central1-genesis-airsoft.cloudfunctions.net/createSecureOrder",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: user.uid,
-            buyer: form, // 🔥 DNI incluido automáticamente
-            items: cart.map((item) => ({
-              id: item.id,
-              quantity: item.quantity,
+            buyer: form,
+            items: cart.map((i) => ({
+              id: i.id,
+              quantity: i.quantity,
             })),
           }),
         }
       );
 
-      const data = await response.json();
+      const data = await res.json();
 
       if (!data.preferenceId) {
-        alert("❌ Error creando la preferencia segura.");
+        alert("Error creando la preferencia de pago.");
         return;
       }
 
       window.location.href =
         `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
     } catch (err) {
-      console.error("❌ Error en el pago:", err);
-      alert("Ocurrió un error al procesar el pago.");
+      console.error(err);
+      alert("Error al procesar el pago.");
     } finally {
       setProcessingPayment(false);
     }
   };
 
+  // =========================
+  // CALCULOS
+  // =========================
+  const shippingCost =
+    form.method === "delivery" && totalPrice < FREE_SHIPPING_FROM
+      ? SHIPPING_COST
+      : 0;
+
+  const totalFinal = totalPrice + shippingCost;
+
+  // =========================
+  // RENDER
+  // =========================
   return (
     <div className="checkout-wrapper">
-      {/* IZQUIERDA */}
+      {/* COLUMNA IZQUIERDA */}
       <div className="checkout-left">
-        <h2>Detalles de facturación</h2>
+        <h2 className="checkout-title">Finalizar compra</h2>
+        <p className="checkout-subtitle">
+          Completá tus datos para continuar con el pago
+        </p>
 
         <form onSubmit={handlePayment} className="checkout-form">
-          <div className="grid-2">
-            <Input label="Nombre*" name="name" value={form.name} onChange={onChange} error={errors.name} />
-            <Input label="Correo electrónico*" name="email" value={form.email} onChange={onChange} error={errors.email} />
-          </div>
+          <section className="checkout-section">
+            <h4>Datos personales</h4>
 
-          <div className="grid-2">
-            <Input label="Teléfono*" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
-            {/* 🔥 NUEVO CAMPO DNI */}
-            <Input label="DNI*" name="dni" value={form.dni} onChange={onChange} error={errors.dni} />
-          </div>
-
-          <div className="radio-group">
-            <label className="radio-label">
-              <input type="radio" name="method" value="delivery" checked={form.method === "delivery"} onChange={onChange} />
-              Envío a domicilio
-            </label>
-            <label className="radio-label">
-              <input type="radio" name="method" value="pickup" checked={form.method === "pickup"} onChange={onChange} />
-              Retiro en tienda (sin costo)
-            </label>
-          </div>
-
-          {form.method === "delivery" ? (
-            <>
-              <Input label="Calle*" name="street" value={form.street} onChange={onChange} error={errors.street} />
-              <div className="grid-3">
-                <Input label="Altura*" name="number" value={form.number} onChange={onChange} error={errors.number} />
-                <Input label="Ciudad*" name="city" value={form.city} onChange={onChange} error={errors.city} />
-                <Input label="CP*" name="zip" value={form.zip} onChange={onChange} error={errors.zip} />
-              </div>
-              <Select label="Provincia*" name="province" value={form.province} onChange={onChange} options={provincesAR} error={errors.province} />
-            </>
-          ) : (
-            <div className="pickup-info">
-              <strong>Retiro en tienda:</strong> Av. Siempre Viva 123, CABA.
+            <div className="grid-2">
+              <Input label="Nombre*" name="name" value={form.name} onChange={onChange} error={errors.name} />
+              <Input label="Email*" name="email" value={form.email} onChange={onChange} error={errors.email} />
             </div>
-          )}
 
-          <textarea
-            name="notes"
-            className="checkout-textarea"
-            value={form.notes}
-            onChange={onChange}
-            placeholder="Indicaciones adicionales para el envío o retiro"
-          />
+            <div className="grid-2">
+              <Input label="Teléfono*" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
+              <Input label="DNI*" name="dni" value={form.dni} onChange={onChange} error={errors.dni} />
+            </div>
+          </section>
+
+          <section className="checkout-section">
+            <h4>Método de entrega</h4>
+
+            <div className="radio-group pills">
+              <label className={form.method === "delivery" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="method"
+                  value="delivery"
+                  checked={form.method === "delivery"}
+                  onChange={onChange}
+                />
+                Envío a domicilio
+              </label>
+
+              <label className={form.method === "pickup" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="method"
+                  value="pickup"
+                  checked={form.method === "pickup"}
+                  onChange={onChange}
+                />
+                Retiro en tienda
+              </label>
+            </div>
+          </section>
+            <div className={`delivery-animated ${form.method === "delivery" ? "show" : "hide"}`}>
+              <section className="checkout-section">
+                <h4>Dirección de envío</h4>
+
+                <Input
+                  label="Calle*"
+                  name="street"
+                  value={form.street}
+                  onChange={onChange}
+                  error={errors.street}
+                />
+
+                <div className="grid-3">
+                  <Input label="Altura*" name="number" value={form.number} onChange={onChange} error={errors.number} />
+                  <Input label="Ciudad*" name="city" value={form.city} onChange={onChange} error={errors.city} />
+                  <Input label="CP*" name="zip" value={form.zip} onChange={onChange} error={errors.zip} />
+                </div>
+
+                <Select
+                  label="Provincia*"
+                  name="province"
+                  value={form.province}
+                  onChange={onChange}
+                  options={provincesAR}
+                  error={errors.province}
+                />
+                <div className="checkout-notes">
+                  <label>Indicaciones para el envío (opcional)</label>
+                  <textarea
+                    name="notes"
+                    value={form.notes}
+                    onChange={onChange}
+                    placeholder="Ej: tocar timbre, llamar antes de entregar, dejar en portería, etc."
+                    rows={3}
+                  />
+                </div>
+
+              </section>
+            </div>
         </form>
       </div>
 
-      {/* DERECHA */}
-      <div className="checkout-right">
-        <h3>Tu pedido</h3>
-        <div className="order-summary">
-          {cart.map((item) => (
-            <div key={item.name} className="order-item">
-              <span>{item.name} × {item.quantity}</span>
-              <span>${(item.price * item.quantity).toFixed(2)}</span>
+      {/* COLUMNA DERECHA */}
+      <div className="checkout-right sticky">
+        <h3>Resumen del pedido</h3>
+
+        <div className="order-items">
+          {cart.map((i) => (
+            <div key={i.id} className="order-item">
+              <span>{i.name} × {i.quantity}</span>
+              <span>${(i.price * i.quantity).toFixed(2)}</span>
             </div>
           ))}
-          <hr />
-          <div className="order-line"><strong>Subtotal</strong><span>${totalPrice.toFixed(2)}</span></div>
+        </div>
+
+        <div className="order-totals">
           <div className="order-line">
-            <strong>Envío</strong>
-            <span>{form.method === "pickup" ? "Retiro en tienda" : "A cotizar"}</span>
+            <span>Subtotal</span>
+            <span>${totalPrice.toFixed(2)}</span>
           </div>
-          <div className="order-line total"><strong>Total</strong><span>${totalPrice.toFixed(2)}</span></div>
+
+          <div className="order-line">
+            <span>Envío</span>
+            <span>
+              {form.method === "pickup"
+                ? "Retiro en tienda"
+                : shippingCost === 0
+                  ? "Gratis"
+                  : `$${SHIPPING_COST.toLocaleString()}`}
+            </span>
+          </div>
+
+          <div className="order-line total">
+            <span>Total</span>
+            <span>${totalFinal.toFixed(2)}</span>
+          </div>
         </div>
 
         <button
-          type="submit"
-          onClick={handlePayment}
           className="checkout-button"
-          disabled={loading || processingPayment}
+          onClick={handlePayment}
+          disabled={processingPayment || loading}
         >
-          {loading || processingPayment ? "Procesando..." : "Realizar pedido"}
+          {processingPayment ? "Procesando pago..." : "Pagar con Mercado Pago"}
         </button>
 
         {error && <p className="checkout-error">{error}</p>}
       </div>
+
+      <FreeShippingPopup total={totalPrice} method={form.method} />
     </div>
   );
 }
@@ -220,8 +275,8 @@ function Checkout() {
 function Input({ label, error, ...rest }) {
   return (
     <div>
-      <label className="checkout-label">{label}</label>
-      <input {...rest} className={`checkout-input ${error ? "error" : ""}`} />
+      <label>{label}</label>
+      <input {...rest} className={error ? "error" : ""} />
       {error && <span className="checkout-error">{error}</span>}
     </div>
   );
@@ -230,11 +285,11 @@ function Input({ label, error, ...rest }) {
 function Select({ label, options, error, ...rest }) {
   return (
     <div>
-      <label className="checkout-label">{label}</label>
-      <select {...rest} className={`checkout-select ${error ? "error" : ""}`}>
+      <label>{label}</label>
+      <select {...rest} className={error ? "error" : ""}>
         <option value="">Seleccioná…</option>
-        {options.map((op) => (
-          <option key={op} value={op}>{op}</option>
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
         ))}
       </select>
       {error && <span className="checkout-error">{error}</span>}

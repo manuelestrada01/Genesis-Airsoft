@@ -7,28 +7,104 @@ import "./OrderDetail.css";
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrder = async () => {
-      const ref = doc(db, "orders", id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) setOrder(snap.data());
+      try {
+        const ref = doc(db, "orders", id);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) {
+          setOrder(null);
+          setLoading(false);
+          return;
+        }
+
+        const raw = snap.data();
+
+        // ============================
+        // 🔒 NORMALIZACIÓN DEFENSIVA
+        // ============================
+
+        const items = Array.isArray(raw.items) ? raw.items : [];
+
+        // Subtotal real desde items (evita subtotal 0)
+        const subtotal = items.reduce(
+          (acc, i) => acc + Number(i.price || 0) * Number(i.quantity || 0),
+          0
+        );
+
+        const shipping = raw.shipping || {
+          cost: 0,
+          free: true,
+          label:
+            raw.buyer?.method === "pickup"
+              ? "Retiro en tienda"
+              : "Envío",
+        };
+
+        const trackingNumber =
+          raw.trackingNumber ||
+          raw.tracking?.number ||
+          null;
+
+        const totalWithShipping =
+          raw.totalWithShipping ??
+          subtotal + Number(shipping.cost || 0);
+
+        const normalized = {
+          ...raw,
+          items,
+          buyer: raw.buyer || {},
+          shipping,
+          total: subtotal,
+          totalWithShipping,
+          status: raw.status || "pending",
+          dispatched: Boolean(raw.dispatched),
+          trackingNumber,
+        };
+
+        setOrder(normalized);
+      } catch (err) {
+        console.error("❌ Error cargando pedido:", err);
+        setOrder(null);
+      } finally {
+        setLoading(false);
+      }
     };
+
     fetchOrder();
   }, [id]);
 
-  if (!order)
+  // ============================
+  // STATES
+  // ============================
+  if (loading) {
     return (
-      <p style={{ textAlign: "center", marginTop: "50px" }}>
+      <p style={{ textAlign: "center", marginTop: 50 }}>
         Cargando pedido...
       </p>
     );
+  }
+
+  if (!order) {
+    return (
+      <p style={{ textAlign: "center", marginTop: 50 }}>
+        Pedido no encontrado.
+      </p>
+    );
+  }
 
   const createdDate = order.createdAt?.toDate
     ? order.createdAt.toDate().toLocaleString()
     : "Fecha desconocida";
 
+  // ============================
+  // RENDER
+  // ============================
   return (
     <div className="order-detail-container">
       <button className="btn-back" onClick={() => navigate("/profile")}>
@@ -39,15 +115,32 @@ const OrderDetail = () => {
         <h2>Detalle del Pedido</h2>
 
         <div className="detail-row">
-          <span>ID del pedido:</span> <strong>{id}</strong>
+          <span>ID del pedido:</span>
+          <strong>{id}</strong>
         </div>
 
         <div className="detail-row">
-          <span>Fecha:</span> <strong>{createdDate}</strong>
+          <span>Fecha:</span>
+          <strong>{createdDate}</strong>
         </div>
 
         <div className="detail-row">
-          <span>Total:</span> <strong>${order.total.toFixed(2)}</strong>
+          <span>Subtotal:</span>
+          <strong>${order.total.toFixed(2)}</strong>
+        </div>
+
+        <div className="detail-row">
+          <span>Envío:</span>
+          <strong>
+            {order.shipping.free
+              ? order.shipping.label || "Gratis"
+              : `$${Number(order.shipping.cost || 0).toFixed(2)}`}
+          </strong>
+        </div>
+
+        <div className="detail-row">
+          <span>Total:</span>
+          <strong>${order.totalWithShipping.toFixed(2)}</strong>
         </div>
 
         <div className="detail-row">
@@ -57,12 +150,12 @@ const OrderDetail = () => {
               order.status === "approved" ? "approved" : "pending"
             }`}
           >
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            {order.status}
           </span>
         </div>
 
         {/* =========================== */}
-        {/* 🔥 ESTADO DEL PEDIDO */}
+        {/* 📦 ESTADO DEL PEDIDO */}
         {/* =========================== */}
         <div className="section">
           <h3>Estado del Pedido</h3>
@@ -86,14 +179,14 @@ const OrderDetail = () => {
         </div>
 
         {/* =========================== */}
-        {/* 🔥 SEGUIMIENTO VIA CARGO */}
+        {/* 🚚 SEGUIMIENTO VIA CARGO */}
         {/* =========================== */}
-        {order.trackingNumber && (
+        {order.dispatched && order.trackingNumber && (
           <div className="section tracking-section">
             <h3>Seguimiento del Envío</h3>
 
             <div className="detail-row">
-              <span>Número de seguimiento:</span>{" "}
+              <span>Número de seguimiento:</span>
               <strong>{order.trackingNumber}</strong>
             </div>
 
@@ -109,7 +202,7 @@ const OrderDetail = () => {
         )}
 
         {/* =========================== */}
-        {/* 🔥 ARTÍCULOS */}
+        {/* 🧾 ARTÍCULOS */}
         {/* =========================== */}
         <div className="section">
           <h3>Artículos</h3>
@@ -117,56 +210,40 @@ const OrderDetail = () => {
             {order.items.map((item, i) => (
               <li key={i} className="item-card">
                 <div>
-                  <strong>{item.name}</strong>
+                  <strong>{item.name || "Producto"}</strong>
                 </div>
                 <div>
-                  {item.quantity} × ${item.price}
+                  {item.quantity} × ${Number(item.price).toFixed(2)}
                 </div>
-                <div>Total: ${(item.quantity * item.price).toFixed(2)}</div>
+                <div>
+                  Total: ${(item.quantity * item.price).toFixed(2)}
+                </div>
               </li>
             ))}
           </ul>
         </div>
 
         {/* =========================== */}
-        {/* 🔥 DATOS DEL COMPRADOR + DNI */}
+        {/* 👤 DATOS DEL COMPRADOR */}
         {/* =========================== */}
         <div className="section">
           <h3>Datos del comprador</h3>
           <div className="buyer-box">
-            <p>
-              <strong>Nombre:</strong> {order.buyer.name}
-            </p>
-            <p>
-              <strong>Email:</strong> {order.buyer.email}
-            </p>
-            <p>
-              <strong>Teléfono:</strong> {order.buyer.phone}
-            </p>
-
-            {/* 🔥 DNI NUEVO */}
-            <p>
-              <strong>DNI:</strong> {order.buyer.dni}
-            </p>
-
-            <p>
-              <strong>Método:</strong> {order.buyer.method}
-            </p>
+            <p><strong>Nombre:</strong> {order.buyer.name || "—"}</p>
+            <p><strong>Email:</strong> {order.buyer.email || "—"}</p>
+            <p><strong>Teléfono:</strong> {order.buyer.phone || "—"}</p>
+            <p><strong>DNI:</strong> {order.buyer.dni || "—"}</p>
+            <p><strong>Método:</strong> {order.buyer.method || "—"}</p>
 
             {order.buyer.method === "delivery" && (
               <>
                 <p>
-                  <strong>Dirección:</strong> {order.buyer.street} {order.buyer.number}
+                  <strong>Dirección:</strong>{" "}
+                  {order.buyer.street || ""} {order.buyer.number || ""}
                 </p>
-                <p>
-                  <strong>Ciudad:</strong> {order.buyer.city}
-                </p>
-                <p>
-                  <strong>Provincia:</strong> {order.buyer.province}
-                </p>
-                <p>
-                  <strong>CP:</strong> {order.buyer.zip}
-                </p>
+                <p><strong>Ciudad:</strong> {order.buyer.city || "—"}</p>
+                <p><strong>Provincia:</strong> {order.buyer.province || "—"}</p>
+                <p><strong>CP:</strong> {order.buyer.zip || "—"}</p>
               </>
             )}
           </div>

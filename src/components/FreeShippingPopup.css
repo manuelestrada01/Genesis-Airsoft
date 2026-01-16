@@ -1,0 +1,54 @@
+.free-shipping-popup {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  z-index: 999;
+  animation: slideUp 0.3s ease;
+}
+
+.popup-content {
+  background: #111;
+  color: #fff;
+  padding: 18px 22px;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.popup-content h4 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.popup-content p {
+  margin: 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.popup-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.popup-close:hover {
+  color: #fff;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
