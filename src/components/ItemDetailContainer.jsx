@@ -183,10 +183,6 @@ const ProductDetail = () => {
         )}
 
         <div className="btns-pro">
-          <button className="btn-add-pro" onClick={handleAddToCart} disabled={outOfStock}>
-            Agregar al carrito
-          </button>
-
           <button className="btn-buy-pro" onClick={handleBuyNow} disabled={outOfStock}>
             Comprar ahora
           </button>

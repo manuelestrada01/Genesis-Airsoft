@@ -64,6 +64,12 @@ html, body {
   margin-top: 200px;
   padding-bottom: 20px; /* ⬅️ NUEVO: evita la línea blanca al final */
 }
+@media (max-width: 768px) {
+  .app-main {
+    margin-top: 150px;
+  }
+}
+
 
 body {
   overflow-y: auto !important;
@@ -71,6 +77,40 @@ body {
   
 }
 
-.about-wrapper {
-  margin-bottom: 10px; /* ajustá a gusto */
+/* =============================== */
+/* 🚧 ALQUILERES – EN CONSTRUCCIÓN */
+/* =============================== */
+
+.construction-container {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+
+  font-family: "Montserrat", sans-serif;
+  padding: 20px;
+}
+
+.construction-container h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+}
+
+.construction-container p {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .construction-container h1 {
+    font-size: 1.7rem;
+  }
+
+  .construction-container p {
+    font-size: 1rem;
+    color: #aaa;
+  }
 }

@@ -188,3 +188,191 @@
   border-radius: 6px;
   cursor: pointer;
 }
+
+/* ================================= */
+/* 📱 ADMIN – MOBILE FIX REAL */
+/* ================================= */
+
+@media (max-width: 768px) {
+
+  /* Contenedor general */
+  .admin-container {
+    flex-direction: column;
+    margin-top: 120px; /* navbar mobile */
+  }
+
+  /* Sidebar pasa a ser bloque superior */
+  .admin-sidebar {
+    position: relative;      /* 🔥 clave */
+    top: auto;
+    left: auto;
+    width: 100%;
+    min-height: auto;
+    padding: 16px;
+  }
+
+  /* Título */
+  .admin-title {
+    text-align: center;
+    font-size: 20px;
+  }
+
+  /* Menú */
+  .admin-menu {
+    gap: 10px;
+  }
+
+  .admin-link {
+    font-size: 15px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  /* Contenido */
+  .admin-content {
+    margin-left: 0;          /* 🔥 clave */
+    padding: 16px;
+    min-height: auto;
+  }
+
+  /* Tablas scrolleables */
+  .admin-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Botones */
+  .admin-add-btn,
+  .admin-edit-btn,
+  .admin-delete-btn,
+  .admin-filter-btn,
+  .admin-danger-btn,
+  .admin-ok-btn {
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+}
+
+/* ================================= */
+/* 📱 ADMIN – MOBILE TEXT CONTRAST FIX */
+/* ================================= */
+
+@media (max-width: 768px) {
+
+  /* Texto general */
+  .admin-content,
+  .admin-content p,
+  .admin-content span,
+  .admin-content td,
+  .admin-content th {
+    color: #222; /* 🔥 negro suave, legible */
+  }
+
+  /* Títulos */
+  .admin-content h1,
+  .admin-content h2,
+  .admin-content h3,
+  .admin-content h4 {
+    color: #111;
+  }
+
+  /* Subtítulos / metadata */
+  .admin-content small,
+  .admin-content .muted,
+  .admin-content .admin-meta {
+    color: #555;
+  }
+
+  /* Links dentro del contenido */
+  .admin-content a {
+    color: #0078ff;
+  }
+
+  /* Tablas */
+  .admin-table th {
+    color: #111;
+    background: #f5f5f5;
+    font-weight: 700;
+  }
+
+  .admin-table td {
+    color: #222;
+  }
+}
+
+/* ===================================== */
+/* 📱 ADMIN ORDERS – MOBILE CARD LAYOUT */
+/* ===================================== */
+
+@media (max-width: 768px) {
+
+  /* Ocultamos header de tabla */
+  .admin-table thead {
+    display: none;
+  }
+
+  /* Cada fila se vuelve una card */
+  .admin-table tr {
+    display: block;
+    background: #ffffff;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+
+  /* Celdas en vertical */
+  .admin-table td {
+    display: block;
+    width: 100%;
+    padding: 6px 0;
+    border: none;
+    color: #222;
+    font-size: 14px;
+  }
+
+  /* Etiqueta antes del valor */
+  .admin-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Productos */
+  .admin-table td ul {
+    padding-left: 16px;
+    margin: 6px 0;
+  }
+
+  .admin-table td li {
+    font-size: 14px;
+    color: #222;
+  }
+
+  /* Estado */
+  .badge-paused,
+  .badge-active {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+
+  /* Botones */
+  .admin-table button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    font-size: 15px;
+    border-radius: 10px;
+  }
+}
+

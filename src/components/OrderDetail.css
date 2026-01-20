@@ -103,22 +103,106 @@
   border-radius: 8px;
 }
 
-/* Badge unificado */
-.badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 8px;
-  color: white;
-  font-weight: bold;
-  font-size: 0.85rem;
+/* =============================== */
+/* ORDER DETAIL - MOBILE FIX       */
+/* =============================== */
+@media (max-width: 768px) {
+
+  .order-detail-container {
+    padding: 15px;
+    margin-top: 20px;
+  }
+
+  /* Card principal */
+  .order-card-detail {
+    background: #1f1f1f; /* oscuro */
+    color: #eaeaea;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  /* Botón volver */
+  .btn-back {
+    color: #4ea1ff;
+    font-size: 15px;
+    margin-bottom: 15px;
+  }
+
+  /* Filas de info */
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 15px;
+  }
+
+  .detail-row span {
+    color: #bdbdbd;
+    font-weight: 500;
+  }
+
+  .detail-row strong {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  /* Secciones */
+  .section h3 {
+    color: #ffffff;
+    border-left: 4px solid #ff6a00;
+    padding-left: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* Badges */
+  .status-badge.approved {
+    background: #00b853;
+  }
+
+  .status-badge.pending {
+    background: #e0a100;
+  }
+
+  /* Timeline */
+  .timeline {
+    margin-top: 15px;
+  }
+
+  .step p {
+    color: #cfcfcf;
+    font-size: 13px;
+  }
+
+  .circle {
+    background: #444;
+  }
+
+  .step.active .circle {
+    background: #00b853;
+  }
+
+  /* Lista de items */
+  .item-card {
+    background: #2a2a2a;
+    color: #f0f0f0;
+    border-radius: 10px;
+  }
+
+  /* Datos comprador */
+  .buyer-box {
+    background: #2a2a2a;
+    color: #eaeaea;
+    border-radius: 12px;
+  }
+
+  .buyer-box p {
+    color: #e0e0e0;
+    font-size: 14px;
+  }
+
+  .buyer-box strong {
+    color: #ffffff;
+  }
 }
 
-/* Verde aprobado */
-.badge-green {
-  background: #0d8a00; /* mismo color que Approved */
-}
-
-/* Rojo */
-.badge-red {
-  background: #b30000;
-}

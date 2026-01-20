@@ -1,12 +1,25 @@
 /* ===========================
-   RESET CLAVE (FIX RECORTES)
+   RESET CLAVE
 =========================== */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 /* ===========================
-   LAYOUT
+   VARIABLES
+=========================== */
+:root {
+  --accent-yellow: #ffe600;
+  --accent-yellow-hover: #ffef4d;
+  --bg-dark: #1f1f1f;
+  --card-dark: #2a2a2a;
+  --border-dark: #444;
+  --text-main: #ffffff;
+  --text-muted: #bdbdbd;
+}
+
+/* ===========================
+   LAYOUT DESKTOP
 =========================== */
 
 .checkout-wrapper {
@@ -33,6 +46,7 @@
 .checkout-title {
   font-size: 1.6rem;
   margin-bottom: 0.2rem;
+  color: #111;
 }
 
 .checkout-subtitle {
@@ -69,32 +83,31 @@
 
 label {
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 4px;
   display: block;
+  color: #333;
 }
 
-/* INPUTS UNIFICADOS (FIX) */
 input,
 select,
 textarea {
   width: 100%;
-  box-sizing: border-box;
   padding: 0.75rem 0.9rem;
   border-radius: 10px;
   border: 1px solid #ddd;
   font-size: 0.95rem;
   font-family: inherit;
   background: #fff;
+  color: #111;
 }
 
-/* FOCUS HACIA ADENTRO (NO SE RECORTA) */
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: #009ee3;
-  box-shadow: inset 0 0 0 2px rgba(0, 158, 227, 0.18);
+  border-color: var(--accent-yellow);
+  box-shadow: inset 0 0 0 2px rgba(255, 230, 0, 0.25);
 }
 
 input.error,
@@ -120,7 +133,7 @@ select.error {
 }
 
 /* ===========================
-   RADIOS PILL
+   RADIOS (PILLS)
 =========================== */
 
 .radio-group.pills {
@@ -135,12 +148,14 @@ select.error {
   border-radius: 12px;
   text-align: center;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  color: #222;
 }
 
 .radio-group.pills label.active {
-  background: #e9f6fd;
-  border-color: #009ee3;
+  background: rgba(255, 230, 0, 0.2);
+  border-color: var(--accent-yellow);
+  color: #111;
 }
 
 .radio-group input {
@@ -153,6 +168,7 @@ select.error {
 
 .checkout-right h3 {
   margin-bottom: 1.2rem;
+  color: #111;
 }
 
 .order-items {
@@ -164,6 +180,7 @@ select.error {
   justify-content: space-between;
   font-size: 0.9rem;
   padding: 6px 0;
+  color: #333;
 }
 
 .order-totals {
@@ -181,10 +198,11 @@ select.error {
 .order-line.total {
   font-size: 1.1rem;
   font-weight: 700;
+  color: #111;
 }
 
 /* ===========================
-   BOTON
+   BOTON PRINCIPAL
 =========================== */
 
 .checkout-button {
@@ -192,16 +210,17 @@ select.error {
   margin-top: 1.2rem;
   padding: 0.9rem;
   border-radius: 12px;
-  background: #009ee3;
-  color: white;
+  background: var(--accent-yellow);
+  color: #000;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .checkout-button:hover {
-  background: #007bbd;
+  background: var(--accent-yellow-hover);
 }
 
 .checkout-error {
@@ -211,7 +230,7 @@ select.error {
 }
 
 /* ===========================
-   STICKY
+   STICKY DESKTOP
 =========================== */
 
 .sticky {
@@ -220,12 +239,114 @@ select.error {
 }
 
 /* ===========================
-   MOBILE
+   MOBILE / DARK MODE
 =========================== */
 
 @media (max-width: 900px) {
+
+  body {
+    background: var(--bg-dark);
+  }
+
   .checkout-wrapper {
     grid-template-columns: 1fr;
+    margin: 20px 12px;
+    padding: 0;
+    gap: 18px;
+  }
+
+  .checkout-left,
+  .checkout-right {
+    background: var(--card-dark);
+    color: var(--text-main);
+    padding: 20px 16px;
+    border-radius: 18px;
+    box-shadow: none;
+  }
+
+  .checkout-title {
+    font-size: 1.35rem;
+    color: var(--text-main);
+  }
+
+  .checkout-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .checkout-section h4 {
+    color: var(--text-main);
+  }
+
+  label {
+    color: #e0e0e0;
+    font-size: 0.8rem;
+  }
+
+  input,
+  select,
+  textarea {
+    background: #1e1e1e;
+    border: 1px solid var(--border-dark);
+    color: var(--text-main);
+    border-radius: 12px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9a9a9a;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--accent-yellow);
+    box-shadow: inset 0 0 0 2px rgba(255, 230, 0, 0.2);
+  }
+
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .radio-group.pills {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .radio-group.pills label {
+    background: #1e1e1e;
+    border: 1px solid var(--border-dark);
+    color: var(--text-main);
+  }
+
+  .radio-group.pills label.active {
+    background: rgba(255, 230, 0, 0.18);
+    border-color: var(--accent-yellow);
+    color: var(--accent-yellow);
+  }
+
+  .checkout-right h3,
+  .order-item,
+  .order-line {
+    color: #cccccc;
+  }
+
+  .order-line.total {
+    color: var(--text-main);
+  }
+
+  .checkout-button {
+    position: sticky;
+    bottom: 14px;
+    z-index: 20;
+    border-radius: 30px;
+    background: var(--accent-yellow);
+    color: #000;
+  }
+
+  .checkout-button:hover {
+    background: var(--accent-yellow-hover);
   }
 
   .sticky {
@@ -234,19 +355,131 @@ select.error {
 }
 
 /* ===========================
-   ANIMACION ENVIO / RETIRO
+   NOTAS / COMENTARIOS
 =========================== */
 
+.checkout-notes {
+  margin-top: 1rem;
+}
+
+.checkout-notes label {
+  color: inherit;
+}
+
+.checkout-notes textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* =============================== */
+/* 📱 CHECKOUT MOBILE – FIX ESPACIADO */
+/* =============================== */
+@media (max-width: 900px) {
+
+  /* Formulario: anulamos gaps inconsistentes */
+  .checkout-form {
+    gap: 0;
+  }
+
+  /* Cada campo como bloque uniforme */
+  .checkout-form > div,
+  .checkout-form label {
+    display: block;
+    width: 100%;
+  }
+
+  /* Labels con mismo espaciado */
+  .checkout-form label {
+    margin-bottom: 6px;
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: #e0e0e0;
+  }
+
+  /* Primer label sin margen superior */
+  .checkout-form label:first-child {
+    margin-top: 0;
+  }
+
+  /* Inputs TODOS iguales */
+  .checkout-form input,
+  .checkout-form select,
+  .checkout-form textarea {
+    margin-bottom: 16px; /* 🔥 CLAVE */
+    height: 48px;
+  }
+
+  /* Textarea mantiene proporción */
+  .checkout-form textarea {
+    height: auto;
+    min-height: 90px;
+  }
+
+  /* Grids a columna SIN romper espaciado */
+  .grid-2,
+  .grid-3 {
+    display: block;
+  }
+
+  /* Evita márgenes raros de radios */
+  .radio-group {
+    margin-top: 10px;
+  }
+}
+
+/* =============================== */
+/* 🔁 FIX ANIMACIÓN ENVÍO / RETIRO */
+/* =============================== */
+
+@media (max-width: 900px) {
+
+  /* NO forzar display sobre el contenedor animado */
+  .grid-2:not(.delivery-animated),
+  .grid-3:not(.delivery-animated) {
+    display: block;
+  }
+
+  /* Refuerzo de animación */
+  .delivery-animated {
+    overflow: hidden;
+    transition:
+      max-height 0.4s ease,
+      opacity 0.25s ease,
+      transform 0.25s ease;
+    will-change: max-height, opacity, transform;
+  }
+
+  .delivery-animated.show {
+    max-height: 2000px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .delivery-animated.hide {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+}
+
+/* =============================== */
+/* 🔁 FIX ANIMACIÓN ENVÍO / RETIRO */
+/* =============================== */
+
+/* EL CONTENEDOR ANIMADO SIEMPRE BLOCK */
 .delivery-animated {
+  display: block; /* 🔥 CLAVE */
   overflow: hidden;
   transition:
     max-height 0.4s ease,
     opacity 0.25s ease,
     transform 0.25s ease;
+  will-change: max-height, opacity, transform;
 }
 
 .delivery-animated.show {
-  max-height: 2000px; /* FIX: evita recortes */
+  max-height: 2000px;
   opacity: 1;
   transform: translateY(0);
 }
@@ -256,30 +489,4 @@ select.error {
   opacity: 0;
   transform: translateY(-8px);
   pointer-events: none;
-}
-
-/* ===========================
-   COMENTARIOS / NOTAS ENVÍO
-=========================== */
-
-.checkout-notes {
-  margin-top: 1rem;
-}
-
-.checkout-notes label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  margin-bottom: 4px;
-  display: block;
-  color: #333;
-}
-
-.checkout-notes textarea {
-  resize: vertical;
-  min-height: 80px;
-}
-
-.checkout-notes textarea::placeholder {
-  color: #999;
-  font-size: 0.9rem;
 }

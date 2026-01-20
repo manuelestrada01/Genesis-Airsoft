@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import ProductDetail from "./components/ItemDetailContainer";
 import NavBarTop from "./components/NavBarTop";
 import NavBarBottom from "./components/NavBarBottom";
+import MobileNavBar from "./components/MobileNavBar"; // 👈 NUEVO
 import Carousel from "./components/Carousel";
 import Greetting from "./components/greeting";
 import ItemListContainer from "./components/ItemListContainer";
@@ -20,16 +21,19 @@ import CheckoutPending from "./components/CheckoutPending";
 import OrderDetail from "./components/OrderDetail";
 import Contact from "./components/Contact";
 import AboutGenesis from "./components/AboutGenesis";
-
+import AlquileresConstruccion from "./components/AlquileresConstruccion";
 
 // Admin components
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminProducts from "./components/admin/AdminProducts";
 import AdminAddProduct from "./components/admin/AdminAddProduct";
 import AdminEditProduct from "./components/admin/AdminEditProduct";
-import AdminRoute from "./components/admin/AdminRoute"; 
+import AdminRoute from "./components/admin/AdminRoute";
 import AdminOrders from "./components/admin/AdminOrders";
 import AdminOrderDetail from "./components/admin/AdminOrderDetail";
+
+// Hooks
+import useIsMobile from "./hooks/useIsMobile";
 
 import "./App.css";
 
@@ -50,11 +54,13 @@ const Home = () => (
 );
 
 function App() {
+  const isMobile = useIsMobile(); // 👈 detección mobile
+
   return (
     <BrowserRouter>
       <ScrollToTop />
 
-      {/* RUTAS ADMIN – OCULTAN NAVBAR Y FOOTER */}
+      {/* ================= ADMIN ROUTES ================= */}
       <Routes>
         <Route
           path="/admin"
@@ -106,10 +112,17 @@ function App() {
         />
       </Routes>
 
-      {/* RUTAS PÚBLICAS */}
-      <NavBarTop />
-      <NavBarBottom />
+      {/* ================= NAVBARS ================= */}
+      {isMobile ? (
+        <MobileNavBar /> // 👈 SOLO MOBILE
+      ) : (
+        <>
+          <NavBarTop />
+          <NavBarBottom />
+        </>
+      )}
 
+      {/* ================= PUBLIC ROUTES ================= */}
       <div className="app-main">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -125,7 +138,7 @@ function App() {
           <Route path="/order/:id" element={<OrderDetail />} />
           <Route path="/contacto" element={<Contact />} />
           <Route path="/search" element={<ItemListContainer />} />
-
+          <Route path="/alquileres/:zona" element={<AlquileresConstruccion />} />
         </Routes>
       </div>
 

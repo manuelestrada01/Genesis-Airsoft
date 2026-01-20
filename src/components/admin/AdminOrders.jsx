@@ -92,6 +92,20 @@ export default function AdminOrders() {
     );
   };
 
+  /* 💰 Total seguro (fallback incluido) */
+  const getOrderTotal = (order) => {
+    if (order.total) return order.total;
+
+    if (order.items?.length) {
+      return order.items.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0
+      );
+    }
+
+    return 0;
+  };
+
   return (
     <div className="admin-container">
       <AdminSidebar />
@@ -115,15 +129,15 @@ export default function AdminOrders() {
         <table className="admin-table">
           <thead>
             <tr>
-                <th>Fecha</th>
-                <th>Pedido #</th>
-                <th>Cliente</th>
-                <th>Items</th>
-                <th>Total</th>
-                <th>Estado Pago</th>     {/* 👈 ESTA ES LA QUE FALTABA */}
-                <th>Despachado</th>
+              <th>Fecha</th>
+              <th>Pedido #</th>
+              <th>Cliente</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Estado Pago</th>
+              <th>Despachado</th>
             </tr>
-            </thead>
+          </thead>
 
           <tbody>
             {orders.map((o) => (
@@ -155,19 +169,22 @@ export default function AdminOrders() {
                   ))}
                 </td>
 
-                {/* TOTAL */}
-                <td>${o.total}</td>
+                {/* 💰 TOTAL CORREGIDO */}
+                <td>
+                  $
+                  {getOrderTotal(o).toLocaleString("es-AR")}
+                </td>
 
-                {/* 🔥 ESTADO DE PAGO */}
+                {/* ESTADO DE PAGO */}
                 <td>{renderStatusBadge(o.status)}</td>
 
-                {/* 🔥 DESPACHADO */}
+                {/* DESPACHADO */}
                 <td onClick={(e) => e.stopPropagation()}>
                   <button
-                    disabled={o.status !== "approved"} // ❗ Bloqueado si NO está aprobado
+                    disabled={o.status !== "approved"}
                     title={
                       o.status !== "approved"
-                        ? "El pago NO está aprobado. No puedes despachar este pedido."
+                        ? "El pago NO está aprobado."
                         : "Marcar como despachado"
                     }
                     className={

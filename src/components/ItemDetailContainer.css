@@ -33,7 +33,7 @@
 }
 
 .thumb-pro.active {
-  border-color: #ff6600;
+  border-color: #000000;
   opacity: 1;
 }
 
@@ -125,17 +125,57 @@
 }
 
 /* === DESCRIPCIÓN === */
+/* === DESCRIPCIÓN PRODUCTO === */
 .desc-pro {
   font-size: 15px;
-  color: #333;
-  line-height: 1.5;
+  line-height: 1.65;
+  color: #dcdcdc;              /* 🔥 mucho más legible */
 }
+
+/* Párrafos dentro del HTML */
+.desc-pro p {
+  margin-bottom: 14px;
+  color: #dcdcdc;
+}
+
+/* Listas */
+.desc-pro ul,
+.desc-pro ol {
+  margin-left: 18px;
+  margin-bottom: 14px;
+}
+
+.desc-pro li {
+  margin-bottom: 8px;
+  color: #cfcfcf;
+}
+
+/* Títulos dentro de la descripción */
+.desc-pro h1,
+.desc-pro h2,
+.desc-pro h3 {
+  color: #ffffff;
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+/* Enlaces (si vienen del HTML) */
+.desc-pro a {
+  color: #ff6600;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.desc-pro a:hover {
+  text-decoration: underline;
+}
+
 
 .readmore-pro {
   background: none;
   border: none;
   cursor: pointer;
-  color: #ff6600;
+  color: #ffffff;
   font-weight: 600;
   padding: 0;
 }
@@ -153,21 +193,6 @@
   gap: 12px;
 }
 
-.btn-add-pro {
-  background: #ff6600;
-  color: white;
-  border: none;
-  padding: 14px;
-  font-size: 16px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: 0.2s;
-}
-
-.btn-add-pro:hover {
-  background: #e25700;
-}
 
 .btn-buy-pro {
   background: #000;
@@ -200,3 +225,104 @@
 .html-description h3 {
   margin-top: 15px;
 }
+
+/* =============================== */
+/* 📱 ITEM DETAIL – MOBILE FIX */
+/* =============================== */
+@media (max-width: 768px) {
+
+  /* CONTENEDOR GENERAL */
+  .detail-container-pro {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 12px;
+    margin-top: 120px; /* 🔥 reduce espacio muerto arriba */
+  }
+
+  /* MINIATURAS → FILA HORIZONTAL */
+  .gallery-thumbs-pro {
+    order: 2;
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .thumb-pro {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+
+  /* IMAGEN PRINCIPAL */
+  .gallery-main-pro {
+    order: 1;
+    width: 100%;
+  }
+
+  .main-img-pro {
+    width: 100%;
+    max-height: 320px;
+    margin: 0 auto;
+  }
+
+  /* PANEL DE INFO */
+  .info-panel-pro {
+    order: 3;
+    gap: 14px;
+  }
+
+  /* TÍTULO */
+  .title-pro {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+
+  /* PRECIO */
+  .price-final-pro {
+    font-size: 24px;
+  }
+
+  .price-original-pro {
+    font-size: 14px;
+  }
+
+  /* BOTONES */
+  .btns-pro {
+    gap: 10px;
+  }
+
+  .btn-add-pro,
+  .btn-buy-pro {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  /* DESCRIPCIÓN */
+  .desc-pro {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* ================================= */
+/* === DESCRIPCIÓN – AJUSTE DESKTOP === */
+/* ================================= */
+
+@media (min-width: 769px) {
+  .desc-pro {
+    color: #333; /* gris oscuro, buena lectura */
+  }
+
+  .html-description {
+    color: #333;
+  }
+
+  .html-description p,
+  .html-description li {
+    color: #444;
+  }
+}
+

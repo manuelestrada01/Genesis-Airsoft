@@ -247,3 +247,133 @@
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* ================================================= */
+/* 📱 MOBILE – CARDS MÁS CUADRADAS (ESTILO MKCUSTOM) */
+/* ================================================= */
+@media (max-width: 768px) {
+
+  .product-card {
+    padding: 10px;
+    border-radius: 14px;
+    height: auto;                 /* 🔥 clave */
+  }
+
+  /* Imagen cuadrada */
+  .product-img {
+    height: auto;                 /* 🔥 elimina estirado */
+    aspect-ratio: 1 / 1;          /* 🔥 hace la card más cuadrada */
+    object-fit: contain;
+    margin-bottom: 2px;
+  }
+
+  /* Título más compacto */
+  .product-title {
+    font-size: 13px;
+    line-height: 1.2;
+    min-height: 32px;              /* iguala alturas entre cards */
+    margin: 4px 0;
+  }
+
+  /* Categoría más chica */
+  .product-category {
+    font-size: 11px;
+    margin: 2px 0;
+  }
+
+  /* Precio */
+  .product-price,
+  .final-price {
+    font-size: 15px;
+  }
+
+  .old-price {
+    font-size: 12px;
+  }
+
+  /* 🔥 En mobile NO animamos el hover */
+  .product-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .product-card:hover .product-info {
+    transform: none;
+  }
+
+  .product-card:hover .add-to-cart {
+    bottom: -50px;                /* no aparece en mobile */
+  }
+
+  .quick-view-btn {
+    display: none;                /* lupa solo desktop */
+  }
+}
+
+/* ===================================== */
+/* 📱 MOBILE – CARDS MÁS ANCHAS           */
+/* ===================================== */
+@media (max-width: 768px) {
+
+  /* Grid de productos */
+  .product-list {
+    grid-template-columns: repeat(2, 1fr); /* 🔥 siempre 2 por fila */
+    gap: 14px;                              /* 🔥 menos espacio entre cards */
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Card un poco más “cargada” */
+  .product-card {
+    padding: 12px;                          /* más cuerpo */
+    border-radius: 16px;
+  }
+
+  /* Imagen ocupa mejor el ancho */
+  .product-img {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* ===================================== */
+/* 📱 MOBILE – CARDS ANCHAS, SIN AIRE     */
+/* ===================================== */
+@media (max-width: 768px) {
+
+  /* El grid ocupa casi toda la pantalla */
+  .product-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;                 /* 🔥 menos separación */
+    padding-left: 0px;         /* 🔥 casi al borde */
+    padding-right: 0px;
+  }
+
+  /* Card más compacta */
+  .product-card {
+    padding: 4px;              /* 🔥 menos padding interno */
+    border-radius: 14px;
+  }
+
+  /* Imagen MUCHO más protagonista */
+  .product-img {
+    height: 150px;             /* 🔥 antes 180px */
+    margin-bottom: 6px;        /* 🔥 menos aire */
+  }
+
+  /* Texto más compacto */
+  .product-title {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .product-category {
+    font-size: 12px;
+    margin: 2px 0;
+  }
+
+  .price-box {
+    margin-top: 2px;
+  }
+}

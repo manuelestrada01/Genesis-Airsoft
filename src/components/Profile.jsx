@@ -121,10 +121,25 @@ const Profile = () => {
 
     const snapshot = await getDocs(q);
 
-    const docs = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+const docs = snapshot.docs.map((docSnap) => {
+  const data = docSnap.data();
+
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const subtotal = items.reduce(
+    (acc, i) => acc + Number(i.price || 0) * Number(i.quantity || 0),
+    0
+  );
+
+  const shippingCost = Number(data.shipping?.cost || 0);
+
+  return {
+    id: docSnap.id,
+    ...data,
+    total: subtotal + shippingCost,
+  };
+});
+
 
     setOrders(docs);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
@@ -134,30 +149,45 @@ const Profile = () => {
   };
 
   // 🔥 Cargar más pedidos
-  const loadMoreOrders = async () => {
-    if (!lastDoc) return;
+const loadMoreOrders = async () => {
+  if (!lastDoc) return;
 
-    const ordersRef = collection(db, "orders");
+  const ordersRef = collection(db, "orders");
 
-    const q = query(
-      ordersRef,
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc"),
-      startAfter(lastDoc),
-      limit(3)
+  const q = query(
+    ordersRef,
+    where("userId", "==", user.uid),
+    orderBy("createdAt", "desc"),
+    startAfter(lastDoc),
+    limit(3)
+  );
+
+  const snapshot = await getDocs(q);
+
+  const newDocs = snapshot.docs.map((docSnap) => {
+    const data = docSnap.data();
+
+    const items = Array.isArray(data.items) ? data.items : [];
+
+    const subtotal = items.reduce(
+      (acc, i) => acc + Number(i.price || 0) * Number(i.quantity || 0),
+      0
     );
 
-    const snapshot = await getDocs(q);
+    const shippingCost = Number(data.shipping?.cost || 0);
 
-    const newDocs = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    return {
+      id: docSnap.id,
+      ...data,
+      total: subtotal + shippingCost,
+    };
+  });
 
-    setOrders((prev) => [...prev, ...newDocs]);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-    setMoreAvailable(snapshot.docs.length === 3);
-  };
+  setOrders((prev) => [...prev, ...newDocs]);
+  setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+  setMoreAvailable(snapshot.docs.length === 3);
+};
+
 
   useEffect(() => {
     if (!loading && user) loadInitialOrders();

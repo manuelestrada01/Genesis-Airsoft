@@ -1,3 +1,45 @@
+/* ================================= */
+/* === CONTADOR + BOTÓN DESKTOP ==== */
+/* ================================= */
+
+@media (min-width: 769px) {
+
+  .count-row {
+    align-items: stretch; /* fuerza misma altura */
+  }
+
+  .count-box {
+    height: 50px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+  }
+
+  .count-btn {
+    height: 34px;
+    width: 38px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .count-number {
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .count-add-btn {
+    height: 50px;
+    padding: 0 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* === FILA PRINCIPAL: selector + botón === */
 .count-row {
   display: flex;
@@ -48,7 +90,7 @@
 
 /* === BOTÓN AGREGAR === */
 .count-add-btn {
-  background: #ff6a00;
+  background: #000000;
   color: white;
   border: none;
   padding: 12px 22px;
@@ -61,7 +103,7 @@
 }
 
 .count-add-btn:hover {
-  background: #e45e00;
+  background: #000000;
 }
 
 /* === Estado ✔ agregado === */
@@ -81,4 +123,108 @@
 .count-container,
 .count-after {
   display: none;
+}
+
+/* ================================================= */
+/* ============ FIX CONTADOR SOLO MOBILE =========== */
+/* ================================================= */
+
+@media (max-width: 768px) {
+
+  /* Caja del contador */
+  .count-box {
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+  }
+
+  /* Botones + / - */
+  .count-btn {
+    background: #ffffff;
+    border: 1px solid #bbb;
+    color: #222;          /* 🔥 deja de ser blanco */
+    font-size: 20px;
+    font-weight: 600;
+    padding: 8px 16px;
+  }
+
+  .count-btn:hover {
+    background: #eee;
+    color: #000;
+  }
+
+  /* Número */
+  .count-number {
+    color: #000;          /* 🔥 bien visible */
+    font-size: 20px;
+    font-weight: 700;
+    min-width: 40px;
+  }
+}
+
+/* ================================================= */
+/* === CONTADOR Y BOTÓN MISMA ALTURA (SOLO MOBILE) == */
+/* ================================================= */
+
+@media (max-width: 768px) {
+
+  /* Fila completa */
+  .count-row {
+    align-items: stretch; /* 🔥 fuerza misma altura */
+  }
+
+  /* Caja del contador */
+  .count-box {
+    height: 48px;                 /* 🔥 misma altura visual */
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Botones + / - */
+  .count-btn {
+    height: 32px;
+    width: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Número */
+  .count-number {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Botón agregar */
+  .count-add-btn {
+    height: 48px;                 /* 🔥 clave */
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* ================================= */
+/* 🖥️ FIX ALIGN BOTÓN AGREGAR – DESKTOP */
+/* ================================= */
+@media (min-width: 769px) {
+
+  /* La fila ocupa todo el ancho del panel */
+  .count-row {
+    width: 100%;
+  }
+
+  /* Empuja el botón al extremo derecho */
+  .count-add-btn {
+    margin-left: auto;
+  }
+
+  /* Alineación visual perfecta con "Comprar ahora" */
+  .btns-pro {
+    width: 100%;
+  }
 }

@@ -1,3 +1,4 @@
+
 .profile-container {
   max-width: 1000px;
   margin: 80px auto;
@@ -82,7 +83,7 @@
 }
 
 .status-badge.approved {
-  background-color: #00a84f;
+  background-color: green;
 }
 
 .status-badge.pending {
@@ -99,7 +100,7 @@
 }
 
 .dispatch-badge.done {
-  background-color: #00a84f;
+  background-color: green;
 }
 
 .dispatch-badge.not-done {
@@ -190,4 +191,62 @@
 .clickable-order:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* =============================== */
+/* PROFILE - MOBILE DARK MODE FIX  */
+/* =============================== */
+@media (max-width: 768px) {
+
+  /* Fondo general */
+  .profile-container {
+    background: #1e1e1e;
+    padding: 20px 15px 40px;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+
+  /* Títulos */
+  .profile-container h2,
+  .orders-section h3,
+  .settings-section h3 {
+    color: #ffffff;
+  }
+
+  /* Cards de pedidos */
+  .order-card {
+    background: #ffffff;
+    color: #222;
+    border-radius: 14px;
+  }
+
+  /* Labels y valores */
+  .order-label {
+    color: #555;
+  }
+
+  .order-value {
+    color: #111;
+  }
+
+  /* Estado y despachado ya están bien (verde / rojo) */
+
+  /* Sección configuración */
+  .settings-section {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px;
+  }
+
+  .settings-form label {
+    color: #333;
+  }
+
+  /* Botón cargar más */
+  .btn-load-more {
+    background: #000;
+    color: #fff;
+  }
 }

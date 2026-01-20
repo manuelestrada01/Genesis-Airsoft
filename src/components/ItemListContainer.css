@@ -1,10 +1,31 @@
 .product-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 260px));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 30px;
-  justify-content: center; /* centra filas incompletas */
+  padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
   padding-top: 210px;
+  justify-content: center;
+}
+
+/* =============================== */
+/* MOBILE – 2 PRODUCTOS POR FILA   */
+/* =============================== */
+@media (max-width: 768px) {
+
+  .product-list {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;              /* más compacto y prolijo */
+    padding: 12px;
+    padding-top: 170px;     /* acerca el grid a la navbar */
+  }
+
+}
+
+/* 📱 MOBILE – subir cards */
+@media (max-width: 768px) {
+  .product-list {
+    padding-top: 20px; /* 🔥 antes 210px */
+  }
 }
