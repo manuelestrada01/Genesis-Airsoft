@@ -25,10 +25,11 @@ admin.initializeApp();
 // CORS — SOLO DOMINIOS PERMITIDOS
 // ================================
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173", // solo dev
   "https://genesis-airsoft.web.app",
-  "https://genesisairsoft.com",
-  "https://virulently-phonolitic-adelia.ngrok-free.dev", // ⬅️ AGREGA ESTO
+  "https://genesis-airsoft.firebaseapp.com",
+  "https://genesisairsoft.com.ar",
+  "https://www.genesisairsoft.com.ar",
 ];
 
 
@@ -375,7 +376,7 @@ export const createSecureOrder = onRequest(
         // 🚚 SHIPPING — lógica backend (AUTORITATIVA)
         // =====================================================
         const FREE_SHIPPING_FROM = 350000;
-        const SHIPPING_FLAT_FEE = 1;
+        const SHIPPING_FLAT_FEE = 16000;
 
         let shippingCost = 0;
         let shippingFree = false;
@@ -454,12 +455,9 @@ export const createSecureOrder = onRequest(
 
             // ✅ NGROK (TESTING)
             back_urls: {
-              success:
-                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
-              failure:
-                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
-              pending:
-                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
+              success: "https://genesisairsoft.com.ar/checkout-success",
+              failure: "https://genesisairsoft.com.ar/checkout-failure",
+              pending: "https://genesisairsoft.com.ar/checkout-pending",
             },
 
             // 🔥 WEBHOOK REAL (NO NGROK)

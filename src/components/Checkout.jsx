@@ -1,4 +1,5 @@
 import React, { useContext, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckoutContext } from "../context/CheckoutContext";
 import { CartContext } from "../context/CartContext";
 import AuthContext from "../context/AuthContext";
@@ -6,7 +7,7 @@ import "./Checkout.css";
 import FreeShippingPopup from "../components/FreeShippingPopup";
 
 const FREE_SHIPPING_FROM = 350000;
-const SHIPPING_COST = 1;
+const SHIPPING_COST = 16000; // ✅ corregido (antes 1)
 
 const provincesAR = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes",
@@ -16,12 +17,20 @@ const provincesAR = [
 ];
 
 function Checkout() {
+  const navigate = useNavigate();
+
   const { cart, totalPrice } = useContext(CartContext);
   const { buyer, handleBuyerChange, loading, error } = useContext(CheckoutContext);
   const { user } = useContext(AuthContext);
 
   const [processingPayment, setProcessingPayment] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // ✅ NUEVO: método de pago
+  const [paymentMethod, setPaymentMethod] = useState("mercadopago"); // "mercadopago" | "bank_transfer"
+
+  // ✅ NUEVO: para mostrar instrucciones de transferencia sin salir del checkout
+  const [transferInfo, setTransferInfo] = useState(null); // { orderId, instructions, expiresInHours, totalWithShipping, shipping }
 
   // =========================
   // FORM NORMALIZADO
@@ -77,8 +86,15 @@ function Checkout() {
     e.preventDefault();
     if (!validate()) return;
 
+    if (!user?.uid) {
+      alert("Tenés que iniciar sesión para continuar.");
+      navigate("/auth");
+      return;
+    }
+
     try {
       setProcessingPayment(true);
+      setTransferInfo(null);
 
       const res = await fetch(
         "https://us-central1-genesis-airsoft.cloudfunctions.net/createSecureOrder",
@@ -87,6 +103,7 @@ function Checkout() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: user.uid,
+            paymentMethod: paymentMethod, // ✅ NUEVO
             buyer: form,
             items: cart.map((i) => ({
               id: i.id,
@@ -98,13 +115,46 @@ function Checkout() {
 
       const data = await res.json();
 
-      if (!data.preferenceId) {
-        alert("Error creando la preferencia de pago.");
+      if (!res.ok) {
+        alert(data?.error || "Error creando la orden.");
         return;
       }
 
-      window.location.href =
-        `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
+      // =========================
+      // ✅ Mercado Pago (flujo actual)
+      // =========================
+      if (paymentMethod === "mercadopago") {
+        if (!data.preferenceId) {
+          alert("Error creando la preferencia de pago.");
+          return;
+        }
+
+        window.location.href =
+          `https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=${data.preferenceId}`;
+        return;
+      }
+
+      // =========================
+      // ✅ Transferencia (NO redirect)
+      // =========================
+      if (paymentMethod === "bank_transfer") {
+        if (!data.orderId) {
+          alert("No se pudo crear el pedido por transferencia.");
+          return;
+        }
+
+        setTransferInfo({
+          orderId: data.orderId,
+          instructions: data.transferInstructions || null,
+          expiresInHours: data.expiresInHours || 48,
+          totalWithShipping: data.totalWithShipping,
+          shipping: data.shipping,
+          subtotal: data.subtotal,
+        });
+
+        // opcional: scrollear arriba del panel derecho
+        return;
+      }
     } catch (err) {
       console.error(err);
       alert("Error al procesar el pago.");
@@ -114,7 +164,7 @@ function Checkout() {
   };
 
   // =========================
-  // CALCULOS
+  // CALCULOS (preview UI)
   // =========================
   const shippingCost =
     form.method === "delivery" && totalPrice < FREE_SHIPPING_FROM
@@ -122,6 +172,8 @@ function Checkout() {
       : 0;
 
   const totalFinal = totalPrice + shippingCost;
+
+  const isTransfer = paymentMethod === "bank_transfer";
 
   // =========================
   // RENDER
@@ -177,45 +229,87 @@ function Checkout() {
               </label>
             </div>
           </section>
-            <div className={`delivery-animated ${form.method === "delivery" ? "show" : "hide"}`}>
-              <section className="checkout-section">
-                <h4>Dirección de envío</h4>
 
-                <Input
-                  label="Calle*"
-                  name="street"
-                  value={form.street}
-                  onChange={onChange}
-                  error={errors.street}
+          {/* ✅ NUEVO: método de pago */}
+          <section className="checkout-section">
+            <h4>Método de pago</h4>
+
+            <div className="radio-group pills">
+              <label className={paymentMethod === "mercadopago" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="mercadopago"
+                  checked={paymentMethod === "mercadopago"}
+                  onChange={() => {
+                    setPaymentMethod("mercadopago");
+                    setTransferInfo(null);
+                  }}
                 />
+                Mercado Pago
+              </label>
 
-                <div className="grid-3">
-                  <Input label="Altura*" name="number" value={form.number} onChange={onChange} error={errors.number} />
-                  <Input label="Ciudad*" name="city" value={form.city} onChange={onChange} error={errors.city} />
-                  <Input label="CP*" name="zip" value={form.zip} onChange={onChange} error={errors.zip} />
-                </div>
-
-                <Select
-                  label="Provincia*"
-                  name="province"
-                  value={form.province}
-                  onChange={onChange}
-                  options={provincesAR}
-                  error={errors.province}
+              <label className={paymentMethod === "bank_transfer" ? "active" : ""}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="bank_transfer"
+                  checked={paymentMethod === "bank_transfer"}
+                  onChange={() => {
+                    setPaymentMethod("bank_transfer");
+                    setTransferInfo(null);
+                  }}
                 />
-                <div className="checkout-notes">
-                  <label>Indicaciones para el envío (opcional)</label>
-                  <textarea
-                    name="notes"
-                    value={form.notes}
-                    onChange={onChange}
-                    placeholder="Ej: tocar timbre, llamar antes de entregar, dejar en portería, etc."
-                    rows={3}
-                  />
-                </div>
-
-              </section>
+                Transferencia <span style={{ fontWeight: 800 }}>-20%</span>
+              </label>
             </div>
+
+            <p style={{ marginTop: 10, opacity: 0.85, fontSize: 13 }}>
+              {isTransfer
+                ? "El total final por transferencia se calcula en el backend (precio autoritativo)."
+                : "Vas a ser redirigido a Mercado Pago para completar el pago."}
+            </p>
+          </section>
+
+          <div className={`delivery-animated ${form.method === "delivery" ? "show" : "hide"}`}>
+            <section className="checkout-section">
+              <h4>Dirección de envío</h4>
+
+              <Input
+                label="Calle*"
+                name="street"
+                value={form.street}
+                onChange={onChange}
+                error={errors.street}
+              />
+
+              <div className="grid-3">
+                <Input label="Altura*" name="number" value={form.number} onChange={onChange} error={errors.number} />
+                <Input label="Ciudad*" name="city" value={form.city} onChange={onChange} error={errors.city} />
+                <Input label="CP*" name="zip" value={form.zip} onChange={onChange} error={errors.zip} />
+              </div>
+
+              <Select
+                label="Provincia*"
+                name="province"
+                value={form.province}
+                onChange={onChange}
+                options={provincesAR}
+                error={errors.province}
+              />
+
+              <div className="checkout-notes">
+                <label>Indicaciones para el envío (opcional)</label>
+                <textarea
+                  name="notes"
+                  value={form.notes}
+                  onChange={onChange}
+                  placeholder="Ej: tocar timbre, llamar antes de entregar, dejar en portería, etc."
+                  rows={3}
+                />
+              </div>
+            </section>
+          </div>
         </form>
       </div>
 
@@ -245,23 +339,66 @@ function Checkout() {
                 ? "Retiro en tienda"
                 : shippingCost === 0
                   ? "Gratis"
-                  : `$${SHIPPING_COST.toLocaleString()}`}
+                  : `$${SHIPPING_COST.toLocaleString("es-AR")}`}
             </span>
           </div>
 
           <div className="order-line total">
-            <span>Total</span>
+            <span>Total (estimado)</span>
             <span>${totalFinal.toFixed(2)}</span>
           </div>
+
+          {transferInfo?.totalWithShipping != null && (
+            <div className="order-line total" style={{ marginTop: 6 }}>
+              <span>Total (backend)</span>
+              <span>${Number(transferInfo.totalWithShipping).toFixed(2)}</span>
+            </div>
+          )}
         </div>
 
+        {/* ✅ Botón principal */}
         <button
           className="checkout-button"
           onClick={handlePayment}
           disabled={processingPayment || loading}
         >
-          {processingPayment ? "Procesando pago..." : "Pagar con Mercado Pago"}
+          {processingPayment
+            ? "Procesando..."
+            : paymentMethod === "mercadopago"
+              ? "Pagar con Mercado Pago"
+              : "Crear pedido por transferencia"}
         </button>
+
+        {/* ✅ Panel de transferencia */}
+        {paymentMethod === "bank_transfer" && transferInfo?.orderId && (
+          <div style={{ marginTop: 14, padding: 14, border: "1px solid #ddd", borderRadius: 10 }}>
+            <h4 style={{ marginTop: 0 }}>Instrucciones de transferencia</h4>
+
+            <p style={{ margin: "8px 0" }}>
+              <strong>Pedido:</strong> {transferInfo.orderId}
+            </p>
+
+            <p style={{ margin: "8px 0" }}>
+              Tenés <strong>{transferInfo.expiresInHours} horas</strong> para transferir y luego subir el comprobante.
+            </p>
+
+            <div style={{ fontSize: 14, lineHeight: 1.6 }}>
+              <div><strong>Banco:</strong> {transferInfo.instructions?.bank || "—"}</div>
+              <div><strong>Alias:</strong> {transferInfo.instructions?.alias || "—"}</div>
+              <div><strong>CVU:</strong> {transferInfo.instructions?.cvu || "—"}</div>
+              <div><strong>Titular:</strong> {transferInfo.instructions?.holder || "—"}</div>
+            </div>
+
+            <button
+              type="button"
+              style={{ marginTop: 12, width: "100%" }}
+              className="checkout-button"
+              onClick={() => navigate(`/order/${transferInfo.orderId}`)}
+            >
+              Ir al detalle del pedido
+            </button>
+          </div>
+        )}
 
         {error && <p className="checkout-error">{error}</p>}
       </div>
