@@ -6,6 +6,14 @@ import "./ItemDetailContainer.css";
 import ItemCount from "./ItemCount";
 import { CartContext } from "../context/CartContext";
 
+const TRANSFER_DISCOUNT = 0.2; // -20%
+
+const formatARS = (value) =>
+  Number(value || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,8 +62,11 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, navigate]);
 
+  // =========================
+  // EARLY STATES
+  // =========================
   if (product?.paused)
     return (
       <div style={{ padding: 30, textAlign: "center" }}>
@@ -78,44 +89,44 @@ const ProductDetail = () => {
 
   if (!product) return <p>Cargando producto...</p>;
 
-  const outOfStock = product.stock === 0;
-  const discount = product.discount || 0;
+  // =========================
+  // CALCULOS (sin hooks)
+  // =========================
+  const outOfStock = Number(product.stock || 0) === 0;
+
+  const discount = Number(product.discount || 0);
   const hasDiscount = discount > 0;
 
-  const finalPrice = hasDiscount
-    ? (product.price - product.price * (discount / 100)).toFixed(2)
-    : product.price;
+  const basePrice = Number(product.price || 0);
+
+  const finalPriceNumber = hasDiscount
+    ? Number((basePrice - basePrice * (discount / 100)).toFixed(2))
+    : basePrice;
+
+  const transferPriceNumber = Number(
+    (finalPriceNumber * (1 - TRANSFER_DISCOUNT)).toFixed(2)
+  );
 
   const FULL_DESC = product.description || "";
-
-  // Crear versión recortada del HTML sin romper etiquetas
-  const SHORT_DESC = FULL_DESC.length > 300 ? FULL_DESC.slice(0, 300) + "..." : FULL_DESC;
+  const SHORT_DESC =
+    FULL_DESC.length > 300 ? FULL_DESC.slice(0, 300) + "..." : FULL_DESC;
 
   const handleBuyNow = () => {
     if (outOfStock) return;
 
-    const finalCalc = hasDiscount
-      ? Number(finalPrice)
-      : product.price;
-
     clearCart();
-    addToCart({ ...product, price: finalCalc }, quantity);
+    addToCart({ ...product, price: finalPriceNumber }, quantity);
     navigate("/checkout");
   };
 
   const handleAddToCart = () => {
     if (outOfStock) return;
 
-    const finalCalc = hasDiscount
-      ? Number(finalPrice)
-      : product.price;
-
-    addToCart({ ...product, price: finalCalc }, quantity);
+    addToCart({ ...product, price: finalPriceNumber }, quantity);
   };
 
   return (
     <div className="detail-container-pro">
-
       {/* MINIATURAS */}
       <div className="gallery-thumbs-pro">
         {(product.images?.length ? product.images : [{ imageUrl: mainImage }]).map(
@@ -149,13 +160,34 @@ const ProductDetail = () => {
         <div className="price-box-pro">
           {hasDiscount ? (
             <>
-              <span className="price-final-pro">${finalPrice}</span>
-              <span className="price-original-pro">${product.price}</span>
+              <span className="price-final-pro">${formatARS(finalPriceNumber)}</span>
+              <span className="price-original-pro">${formatARS(basePrice)}</span>
             </>
           ) : (
-            <span className="price-final-pro">${product.price}</span>
+            <span className="price-final-pro">${formatARS(basePrice)}</span>
           )}
         </div>
+
+        {/* ✅ NUEVO: precio por transferencia (INFO) */}
+        {!outOfStock && (
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 14,
+              opacity: 0.9,
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ fontWeight: 800 }}>Transferencia (-20%):</span>
+            <span style={{ fontWeight: 900 }}>${formatARS(transferPriceNumber)}</span>
+            <span style={{ fontSize: 12, opacity: 0.75 }}>
+              (se confirma en checkout)
+            </span>
+          </div>
+        )}
 
         {/* DESCRIPCIÓN HTML */}
         <div
@@ -178,7 +210,11 @@ const ProductDetail = () => {
         {!outOfStock && (
           <div className="qty-box-pro">
             <label>Cantidad</label>
-            <ItemCount product={product} onQuantityChange={setQuantity} stock={product.stock} />
+            <ItemCount
+              product={product}
+              onQuantityChange={setQuantity}
+              stock={product.stock}
+            />
           </div>
         )}
 
@@ -186,6 +222,11 @@ const ProductDetail = () => {
           <button className="btn-buy-pro" onClick={handleBuyNow} disabled={outOfStock}>
             Comprar ahora
           </button>
+
+          {/* Si lo usás, dejé la función lista */}
+          {/* <button className="btn-cart-pro" onClick={handleAddToCart} disabled={outOfStock}>
+            Agregar al carrito
+          </button> */}
         </div>
       </div>
     </div>
