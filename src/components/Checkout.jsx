@@ -7,7 +7,7 @@ import "./Checkout.css";
 import FreeShippingPopup from "../components/FreeShippingPopup";
 
 const FREE_SHIPPING_FROM = 350000;
-const SHIPPING_COST = 16000; // ✅ corregido (antes 1)
+const SHIPPING_COST = 16000;
 
 const provincesAR = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes",
@@ -26,11 +26,12 @@ function Checkout() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // ✅ NUEVO: método de pago
-  const [paymentMethod, setPaymentMethod] = useState("mercadopago"); // "mercadopago" | "bank_transfer"
+  // ✅ método de pago EXACTO que espera el backend:
+  // "mercadopago" | "bank_transfer"
+  const [paymentMethod, setPaymentMethod] = useState("mercadopago");
 
-  // ✅ NUEVO: para mostrar instrucciones de transferencia sin salir del checkout
-  const [transferInfo, setTransferInfo] = useState(null); // { orderId, instructions, expiresInHours, totalWithShipping, shipping }
+  // (opcional) para mostrar datos si querés antes de redirigir
+  const [transferInfo, setTransferInfo] = useState(null);
 
   // =========================
   // FORM NORMALIZADO
@@ -80,10 +81,28 @@ function Checkout() {
   };
 
   // =========================
+  // CALCULOS (preview UI)
+  // =========================
+  const shippingCostPreview =
+    form.method === "delivery" && totalPrice < FREE_SHIPPING_FROM ? SHIPPING_COST : 0;
+
+  const totalFinalPreview = totalPrice + shippingCostPreview;
+
+  // ⚠️ Estimado transferencia: el backend aplica -20% sobre precios ya validados
+  // y la condición de envío gratis puede variar (porque el subtotal cambia).
+  // Igual lo mostramos como "estimado".
+  const transferSubtotalEstimate = Number((totalPrice * 0.8).toFixed(2));
+  const transferShippingEstimate =
+    form.method === "delivery" && transferSubtotalEstimate < FREE_SHIPPING_FROM ? SHIPPING_COST : 0;
+  const transferTotalEstimate = transferSubtotalEstimate + transferShippingEstimate;
+
+  const isTransfer = paymentMethod === "bank_transfer";
+
+  // =========================
   // PAGO
   // =========================
   const handlePayment = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
     if (!validate()) return;
 
     if (!user?.uid) {
@@ -103,7 +122,7 @@ function Checkout() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: user.uid,
-            paymentMethod: paymentMethod, // ✅ NUEVO
+            paymentMethod, // ✅ CLAVE: "bank_transfer" para activar -20%
             buyer: form,
             items: cart.map((i) => ({
               id: i.id,
@@ -120,9 +139,7 @@ function Checkout() {
         return;
       }
 
-      // =========================
-      // ✅ Mercado Pago (flujo actual)
-      // =========================
+      // ✅ Mercado Pago
       if (paymentMethod === "mercadopago") {
         if (!data.preferenceId) {
           alert("Error creando la preferencia de pago.");
@@ -134,15 +151,14 @@ function Checkout() {
         return;
       }
 
-      // =========================
-      // ✅ Transferencia (NO redirect)
-      // =========================
+      // ✅ Transferencia: REDIRIGIR AL PEDIDO DIRECTO (como pediste)
       if (paymentMethod === "bank_transfer") {
         if (!data.orderId) {
           alert("No se pudo crear el pedido por transferencia.");
           return;
         }
 
+        // guardo info por si querés mostrar algo rápido
         setTransferInfo({
           orderId: data.orderId,
           instructions: data.transferInstructions || null,
@@ -152,7 +168,7 @@ function Checkout() {
           subtotal: data.subtotal,
         });
 
-        // opcional: scrollear arriba del panel derecho
+        navigate(`/order/${data.orderId}`); // ✅ REDIRECT inmediato
         return;
       }
     } catch (err) {
@@ -162,18 +178,6 @@ function Checkout() {
       setProcessingPayment(false);
     }
   };
-
-  // =========================
-  // CALCULOS (preview UI)
-  // =========================
-  const shippingCost =
-    form.method === "delivery" && totalPrice < FREE_SHIPPING_FROM
-      ? SHIPPING_COST
-      : 0;
-
-  const totalFinal = totalPrice + shippingCost;
-
-  const isTransfer = paymentMethod === "bank_transfer";
 
   // =========================
   // RENDER
@@ -230,7 +234,7 @@ function Checkout() {
             </div>
           </section>
 
-          {/* ✅ NUEVO: método de pago */}
+          {/* ✅ Método de pago */}
           <section className="checkout-section">
             <h4>Método de pago</h4>
 
@@ -266,7 +270,7 @@ function Checkout() {
 
             <p style={{ marginTop: 10, opacity: 0.85, fontSize: 13 }}>
               {isTransfer
-                ? "El total final por transferencia se calcula en el backend (precio autoritativo)."
+                ? "El total final por transferencia lo calcula el backend (precio autoritativo)."
                 : "Vas a ser redirigido a Mercado Pago para completar el pago."}
             </p>
           </section>
@@ -337,22 +341,27 @@ function Checkout() {
             <span>
               {form.method === "pickup"
                 ? "Retiro en tienda"
-                : shippingCost === 0
+                : shippingCostPreview === 0
                   ? "Gratis"
                   : `$${SHIPPING_COST.toLocaleString("es-AR")}`}
             </span>
           </div>
 
-          <div className="order-line total">
-            <span>Total (estimado)</span>
-            <span>${totalFinal.toFixed(2)}</span>
-          </div>
-
-          {transferInfo?.totalWithShipping != null && (
-            <div className="order-line total" style={{ marginTop: 6 }}>
-              <span>Total (backend)</span>
-              <span>${Number(transferInfo.totalWithShipping).toFixed(2)}</span>
+          {!isTransfer ? (
+            <div className="order-line total">
+              <span>Total (estimado)</span>
+              <span>${totalFinalPreview.toFixed(2)}</span>
             </div>
+          ) : (
+            <>
+              <div className="order-line total">
+                <span>Total (estimado transferencia)</span>
+                <span>${transferTotalEstimate.toFixed(2)}</span>
+              </div>
+              <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
+                *Estimado: el backend valida precios/stock y puede ajustar envío gratis según el subtotal final.
+              </div>
+            </>
           )}
         </div>
 
@@ -368,37 +377,6 @@ function Checkout() {
               ? "Pagar con Mercado Pago"
               : "Crear pedido por transferencia"}
         </button>
-
-        {/* ✅ Panel de transferencia */}
-        {paymentMethod === "bank_transfer" && transferInfo?.orderId && (
-          <div style={{ marginTop: 14, padding: 14, border: "1px solid #ddd", borderRadius: 10 }}>
-            <h4 style={{ marginTop: 0 }}>Instrucciones de transferencia</h4>
-
-            <p style={{ margin: "8px 0" }}>
-              <strong>Pedido:</strong> {transferInfo.orderId}
-            </p>
-
-            <p style={{ margin: "8px 0" }}>
-              Tenés <strong>{transferInfo.expiresInHours} horas</strong> para transferir y luego subir el comprobante.
-            </p>
-
-            <div style={{ fontSize: 14, lineHeight: 1.6 }}>
-              <div><strong>Banco:</strong> {transferInfo.instructions?.bank || "—"}</div>
-              <div><strong>Alias:</strong> {transferInfo.instructions?.alias || "—"}</div>
-              <div><strong>CVU:</strong> {transferInfo.instructions?.cvu || "—"}</div>
-              <div><strong>Titular:</strong> {transferInfo.instructions?.holder || "—"}</div>
-            </div>
-
-            <button
-              type="button"
-              style={{ marginTop: 12, width: "100%" }}
-              className="checkout-button"
-              onClick={() => navigate(`/order/${transferInfo.orderId}`)}
-            >
-              Ir al detalle del pedido
-            </button>
-          </div>
-        )}
 
         {error && <p className="checkout-error">{error}</p>}
       </div>

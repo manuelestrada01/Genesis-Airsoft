@@ -8,7 +8,7 @@ import { logger } from "firebase-functions";
 import admin from "firebase-admin";
 import cors from "cors";
 import nodemailer from "nodemailer";
-import xss from "xss"; // Sanitización XSS
+import xss from "xss";
 
 import {
   MercadoPagoConfig,
@@ -20,18 +20,15 @@ import {
 // Init Firebase
 admin.initializeApp();
 
-
 // ================================
 // CORS — SOLO DOMINIOS PERMITIDOS
 // ================================
 const allowedOrigins = [
-  "http://localhost:5173", // solo dev
+  "http://localhost:5173",
   "https://genesis-airsoft.web.app",
-  "https://genesis-airsoft.firebaseapp.com",
-  "https://genesisairsoft.com.ar",
-  "https://www.genesisairsoft.com.ar",
+  "https://genesisairsoft.com",
+  "https://virulently-phonolitic-adelia.ngrok-free.dev", // ⬅️ NGROK TEST (HARDCODED)
 ];
-
 
 const corsHandler = cors({
   origin: (origin, callback) => {
@@ -42,14 +39,12 @@ const corsHandler = cors({
   },
 });
 
-
 // ================================
 // SECRETS
 // ================================
 const MP_ACCESS_TOKEN = defineSecret("MP_ACCESS_TOKEN");
 const GMAIL_EMAIL = defineSecret("GMAIL_EMAIL");
 const GMAIL_PASSWORD = defineSecret("GMAIL_PASSWORD");
-
 
 // ================================
 // MERCADO PAGO CLIENT
@@ -60,16 +55,28 @@ function getMPClient() {
   });
 }
 
+// ================================
+// HELPERS
+// ================================
+function nowServerTs() {
+  return admin.firestore.FieldValue.serverTimestamp();
+}
+
+function addHoursDate(hours) {
+  const d = new Date();
+  d.setHours(d.getHours() + hours);
+  return d;
+}
 
 // ======================================================================================
 // ✔ FUNCIÓN PARA ENVIAR EMAIL DE CONFIRMACIÓN DE COMPRA
 // ======================================================================================
 async function sendOrderConfirmationEmail(orderData) {
-  const email = xss(orderData.buyer.email || "");
-  const name = xss(orderData.buyer.name || "");
-  const orderId = orderData.id;
-  const items = orderData.items;
-  const total = orderData.total;
+  const email = xss(orderData?.buyer?.email || "");
+  const name = xss(orderData?.buyer?.name || "");
+  const orderId = orderData?.id;
+  const items = Array.isArray(orderData?.items) ? orderData.items : [];
+  const total = Number(orderData?.total || 0);
 
   if (!email) {
     logger.warn("⚠ La orden no tiene email, no se envía confirmación");
@@ -87,7 +94,9 @@ async function sendOrderConfirmationEmail(orderData) {
   const itemsHtml = items
     .map(
       (i) =>
-        `<li>${xss(i.name)} × ${i.quantity} — $${i.price}</li>`
+        `<li>${xss(i.name || "")} × ${Number(i.quantity || 0)} — $${Number(
+          i.price || 0
+        ).toFixed(2)}</li>`
     )
     .join("");
 
@@ -101,7 +110,7 @@ async function sendOrderConfirmationEmail(orderData) {
 
       <h3>Detalles del pedido</h3>
       <p><strong>ID:</strong> ${orderId}</p>
-      <p><strong>Total:</strong> $${total}</p>
+      <p><strong>Total:</strong> $${total.toFixed(2)}</p>
 
       <h3>Productos:</h3>
       <ul>${itemsHtml}</ul>
@@ -113,15 +122,12 @@ async function sendOrderConfirmationEmail(orderData) {
   logger.info("📧 Email de confirmación enviado correctamente");
 }
 
-
-
 // ======================================================================================
 // 1) WEBHOOK SEGURO — SOLO FEED v2
 // ======================================================================================
 export const webhook = onRequest(
   { secrets: [MP_ACCESS_TOKEN, GMAIL_EMAIL, GMAIL_PASSWORD] },
   async (req, res) => {
-
     try {
       if (req.method !== "POST") return res.sendStatus(200);
 
@@ -163,7 +169,6 @@ export const webhook = onRequest(
       }
 
       return res.sendStatus(200);
-
     } catch (err) {
       logger.error("❌ ERROR EN WEBHOOK:", err);
       return res.sendStatus(200);
@@ -171,34 +176,37 @@ export const webhook = onRequest(
   }
 );
 
-
 // ======================================================================================
 // 2) PROCESAMIENTO SEGURO DE PAGO + EMAIL SOLO EN APROBADOS
 // ======================================================================================
 async function processPayment(paymentData, res) {
   const orderId = paymentData.external_reference;
-
   if (!orderId) return res.sendStatus(200);
 
   const db = admin.firestore();
   const orderRef = db.collection("orders").doc(orderId);
   const orderSnap = await orderRef.get();
-
   if (!orderSnap.exists) return res.sendStatus(200);
 
   const orderData = orderSnap.data();
+
+  // ✅ Si es transferencia, ignorar webhook (seguridad)
+  if (orderData.paymentType && orderData.paymentType === "bank_transfer") {
+    logger.warn("⚠ Webhook para orden de transferencia (ignorando):", { orderId });
+    return res.sendStatus(200);
+  }
 
   if (orderData.status === "approved") {
     return res.sendStatus(200);
   }
 
   const expectedAmount =
-    orderData.totalWithShipping ?? orderData.total;
+    orderData.totalWithShipping ?? orderData.total ?? 0;
 
   if (Number(paymentData.transaction_amount) !== Number(expectedAmount)) {
     await orderRef.update({
       status: "amount_mismatch",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: nowServerTs(),
     });
     return res.sendStatus(200);
   }
@@ -210,15 +218,15 @@ async function processPayment(paymentData, res) {
     mpPaymentId: paymentData.id,
     paymentMethod: paymentData.payment_method_id,
     installments: paymentData.installments,
-    paidAt: status === "approved" ? admin.firestore.FieldValue.serverTimestamp() : null,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    paidAt: status === "approved" ? nowServerTs() : null,
+    updatedAt: nowServerTs(),
   });
 
   // 🔥 DESCONTAR STOCK SI SE APROBÓ
   if (status === "approved") {
     const batch = db.batch();
 
-    for (const item of orderData.items) {
+    for (const item of orderData.items || []) {
       const productRef = db.collection("products").doc(item.productId);
       const productSnap = await productRef.get();
       if (!productSnap.exists) continue;
@@ -232,19 +240,16 @@ async function processPayment(paymentData, res) {
     await batch.commit();
     logger.info("🟢 Stock descontado correctamente");
 
-    // 🔥 ENVIAR EMAIL DE CONFIRMACIÓN
     await sendOrderConfirmationEmail({
       id: orderId,
       buyer: orderData.buyer,
       items: orderData.items,
-      total: orderData.total,
+      total: orderData.totalWithShipping ?? orderData.total,
     });
   }
 
   return res.sendStatus(200);
 }
-
-
 
 // ======================================================================================
 // 3) PASSWORD CHANGED — Seguro y sanitizado
@@ -282,9 +287,8 @@ export const passwordChanged = onRequest(
   }
 );
 
-
 // ======================================================================================
-// 4) CREATE ORDER — Sanitización estricta + validación stock + envío seguro
+// 4) CREATE ORDER — MP o Transferencia (-20% backend) + 48h vencimiento
 // ======================================================================================
 export const createSecureOrder = onRequest(
   { secrets: [MP_ACCESS_TOKEN] },
@@ -294,6 +298,11 @@ export const createSecureOrder = onRequest(
         if (req.method !== "POST") {
           return res.status(405).json({ error: "Method not allowed" });
         }
+
+        // ✅ Método de pago desde frontend
+        const paymentMethodRaw = xss(req.body.paymentMethod || "mercadopago");
+        const paymentType =
+          paymentMethodRaw === "bank_transfer" ? "bank_transfer" : "mercadopago";
 
         // =====================================================
         // 🔐 Normalizar comprador (incluye DNI)
@@ -312,7 +321,7 @@ export const createSecureOrder = onRequest(
           city: xss(buyerReq.city || ""),
           province: xss(buyerReq.province || ""),
           zip: xss(buyerReq.zip || ""),
-          notes: xss(buyerReq.notes || "")
+          notes: xss(buyerReq.notes || ""),
         };
 
         const items = req.body.items;
@@ -329,7 +338,7 @@ export const createSecureOrder = onRequest(
         let subtotal = 0;
 
         // =====================================================
-        // 🛒 Validar productos contra Firestore
+        // 🛒 Validar productos contra Firestore (autoridad backend)
         // =====================================================
         for (const cart of items) {
           const snap = await db.collection("products").doc(cart.id).get();
@@ -346,37 +355,44 @@ export const createSecureOrder = onRequest(
             });
           }
 
-          const discount = product.discount || 0;
-          const finalPrice =
+          // Precio base (con descuento por producto si existe)
+          const discount = Number(product.discount || 0);
+          const basePrice =
             discount > 0
-              ? Number(
-                  (product.price - product.price * (discount / 100)).toFixed(2)
-                )
-              : product.price;
+              ? Number((product.price - product.price * (discount / 100)).toFixed(2))
+              : Number(product.price);
+
+          // ✅ Transferencia: -20% global (backend)
+          const finalUnitPrice =
+            paymentType === "bank_transfer"
+              ? Number((basePrice * 0.8).toFixed(2))
+              : basePrice;
 
           verifiedDB.push({
             productId: snap.id,
             name: product.name,
             quantity: cart.quantity,
-            price: finalPrice,
+            price: finalUnitPrice,
+            basePrice, // auditoría
           });
 
+          // MP sólo importa si paymentType = mercadopago (igual lo armamos)
           verifiedMP.push({
             id: snap.id,
             title: product.name,
-            unit_price: finalPrice,
+            unit_price: finalUnitPrice,
             quantity: cart.quantity,
             currency_id: "ARS",
           });
 
-          subtotal += finalPrice * cart.quantity;
+          subtotal += finalUnitPrice * cart.quantity;
         }
 
         // =====================================================
         // 🚚 SHIPPING — lógica backend (AUTORITATIVA)
         // =====================================================
         const FREE_SHIPPING_FROM = 350000;
-        const SHIPPING_FLAT_FEE = 16000;
+        const SHIPPING_FLAT_FEE = 16000; // ✅ IGUAL QUE FRONT
 
         let shippingCost = 0;
         let shippingFree = false;
@@ -398,14 +414,12 @@ export const createSecureOrder = onRequest(
           }
         }
 
-        const totalWithShipping = Number(
-          (subtotal + shippingCost).toFixed(2)
-        );
+        const totalWithShipping = Number((subtotal + shippingCost).toFixed(2));
 
         // =====================================================
-        // 📦 Crear ORDEN en Firestore
+        // 📦 Orden base (común)
         // =====================================================
-        const orderRef = await db.collection("orders").add({
+        const commonOrder = {
           userId,
           buyer,
           items: verifiedDB,
@@ -420,14 +434,61 @@ export const createSecureOrder = onRequest(
           },
           totalWithShipping,
 
-          status: "pending",
+          paymentType, // "mercadopago" | "bank_transfer"
           dispatched: false,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+          createdAt: nowServerTs(),
+          updatedAt: nowServerTs(),
+        };
 
         // =====================================================
-        // 💳 Mercado Pago — agregar envío como ítem si aplica
+        // 🏦 Transferencia: crear orden y devolver instrucciones
         // =====================================================
+        if (paymentType === "bank_transfer") {
+          const EXPIRES_IN_HOURS = 48;
+
+          const orderRef = await db.collection("orders").add({
+            ...commonOrder,
+            status: "pending_transfer",
+            expiresAt: addHoursDate(EXPIRES_IN_HOURS),
+            transfer: {
+              bank: "Mercado Pago",
+              alias: "genesisairsoft",
+              cvu: "0000003100071602640499",
+              holder: "Manuel Santiago Estrada",
+            },
+          });
+
+          return res.status(200).json({
+            orderId: orderRef.id,
+            paymentType: "bank_transfer",
+            expiresInHours: EXPIRES_IN_HOURS,
+
+            subtotal,
+            shipping: {
+              cost: shippingCost,
+              free: shippingFree,
+              label: shippingLabel,
+            },
+            totalWithShipping,
+
+            transferInstructions: {
+              bank: "Mercado Pago",
+              alias: "genesisairsoft",
+              cvu: "0000003100071602640499",
+              holder: "Manuel Santiago Estrada",
+            },
+          });
+        }
+
+        // =====================================================
+        // 💳 Mercado Pago (flujo actual)
+        // =====================================================
+        const orderRef = await db.collection("orders").add({
+          ...commonOrder,
+          status: "pending",
+        });
+
+        // Agregar envío como ítem si aplica
         if (buyer.method !== "pickup" && shippingCost > 0) {
           verifiedMP.push({
             id: "shipping",
@@ -444,35 +505,34 @@ export const createSecureOrder = onRequest(
         const prefResult = await prefClient.create({
           body: {
             items: verifiedMP,
-
             payer: {
               name: buyer.name,
               email: buyer.email,
             },
-
             external_reference: orderRef.id,
             auto_return: "approved",
 
-            // ✅ NGROK (TESTING)
+            // ✅ NGROK (TESTING) — EXACTO COMO TU VERSIÓN
             back_urls: {
-              success: "https://genesisairsoft.com.ar/checkout-success",
-              failure: "https://genesisairsoft.com.ar/checkout-failure",
-              pending: "https://genesisairsoft.com.ar/checkout-pending",
+              success:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
+              failure:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
+              pending:
+                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
             },
 
-            // 🔥 WEBHOOK REAL (NO NGROK)
+            // 🔥 WEBHOOK REAL
             notification_url:
               "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook",
           },
         });
 
-        // =====================================================
-        // ✅ RESPUESTA AL FRONTEND
-        // =====================================================
         return res.status(200).json({
           orderId: orderRef.id,
           preferenceId: prefResult.id,
 
+          paymentType: "mercadopago",
           subtotal,
           shipping: {
             cost: shippingCost,
@@ -481,7 +541,6 @@ export const createSecureOrder = onRequest(
           },
           totalWithShipping,
         });
-
       } catch (err) {
         logger.error("❌ createSecureOrder error:", err);
         return res.status(500).json({ error: "Server error" });
@@ -489,8 +548,6 @@ export const createSecureOrder = onRequest(
     });
   }
 );
-
-
 
 // ======================================================================================
 // 5) CONTACT FORM — Sanitización + Rate Limit simple
