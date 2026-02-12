@@ -151,7 +151,14 @@ export default function AdminAddProduct() {
           <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} />
 
           <label>Categoría *</label>
-          <input name="category" value={form.category} onChange={handleChange} />
+          <select name="category" value={form.category} onChange={handleChange}>
+            <option value="">Seleccioná…</option>
+            <option value="Insumos">Insumos</option>
+            <option value="Marcadoras AEG">Marcadoras AEG</option>
+            <option value="Accesorios">Accesorios</option>
+            <option value="Indumentaria">Indumentaria</option>
+            <option value="Marcadoras GBB">Marcadoras GBB</option>
+          </select>
 
           <label>Descripción (permite bullets y formato)</label>
           <textarea

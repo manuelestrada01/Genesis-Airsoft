@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckoutContext } from "../context/CheckoutContext";
 import { CartContext } from "../context/CartContext";
@@ -7,7 +7,7 @@ import "./Checkout.css";
 import FreeShippingPopup from "../components/FreeShippingPopup";
 
 const FREE_SHIPPING_FROM = 350000;
-const SHIPPING_COST = 16000;
+const SHIPPING_COST = 10;
 
 const provincesAR = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes",
@@ -26,11 +26,8 @@ function Checkout() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // ✅ método de pago EXACTO que espera el backend:
   // "mercadopago" | "bank_transfer"
   const [paymentMethod, setPaymentMethod] = useState("mercadopago");
-
-  // (opcional) para mostrar datos si querés antes de redirigir
   const [transferInfo, setTransferInfo] = useState(null);
 
   // =========================
@@ -39,7 +36,8 @@ function Checkout() {
   const form = useMemo(
     () => ({
       name: buyer.name || "",
-      email: buyer.email || "",
+      // ✅ Si hay user.email, forzamos ese email sí o sí
+      email: (user?.email || buyer.email || "").trim(),
       phone: buyer.phone || "",
       dni: buyer.dni || "",
       method: buyer.method || "delivery",
@@ -50,10 +48,28 @@ function Checkout() {
       zip: buyer.zip || "",
       notes: buyer.notes || "",
     }),
-    [buyer]
+    [buyer, user?.email]
   );
 
-  const onChange = (e) => handleBuyerChange(e);
+  // ✅ Cada vez que cambia el user.email, lo sincronizamos en el buyer del context
+  // para que no quede un email “viejo” en el estado global.
+  useEffect(() => {
+    if (!user?.email) return;
+    const current = (buyer?.email || "").trim();
+    if (current !== user.email.trim()) {
+      // simulamos un event para tu handleBuyerChange existente
+      handleBuyerChange({
+        target: { name: "email", value: user.email.trim() },
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]);
+
+  const onChange = (e) => {
+    // ✅ Si está logueado, no dejamos que cambie el email ni aunque intenten
+    if (e?.target?.name === "email" && user?.email) return;
+    handleBuyerChange(e);
+  };
 
   // =========================
   // VALIDACIONES
@@ -88,9 +104,6 @@ function Checkout() {
 
   const totalFinalPreview = totalPrice + shippingCostPreview;
 
-  // ⚠️ Estimado transferencia: el backend aplica -20% sobre precios ya validados
-  // y la condición de envío gratis puede variar (porque el subtotal cambia).
-  // Igual lo mostramos como "estimado".
   const transferSubtotalEstimate = Number((totalPrice * 0.8).toFixed(2));
   const transferShippingEstimate =
     form.method === "delivery" && transferSubtotalEstimate < FREE_SHIPPING_FROM ? SHIPPING_COST : 0;
@@ -122,7 +135,8 @@ function Checkout() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             userId: user.uid,
-            paymentMethod, // ✅ CLAVE: "bank_transfer" para activar -20%
+            paymentMethod,
+            // ✅ enviamos el form “ya forzado” con user.email si corresponde
             buyer: form,
             items: cart.map((i) => ({
               id: i.id,
@@ -139,7 +153,6 @@ function Checkout() {
         return;
       }
 
-      // ✅ Mercado Pago
       if (paymentMethod === "mercadopago") {
         if (!data.preferenceId) {
           alert("Error creando la preferencia de pago.");
@@ -151,14 +164,12 @@ function Checkout() {
         return;
       }
 
-      // ✅ Transferencia: REDIRIGIR AL PEDIDO DIRECTO (como pediste)
       if (paymentMethod === "bank_transfer") {
         if (!data.orderId) {
           alert("No se pudo crear el pedido por transferencia.");
           return;
         }
 
-        // guardo info por si querés mostrar algo rápido
         setTransferInfo({
           orderId: data.orderId,
           instructions: data.transferInstructions || null,
@@ -168,7 +179,7 @@ function Checkout() {
           subtotal: data.subtotal,
         });
 
-        navigate(`/order/${data.orderId}`); // ✅ REDIRECT inmediato
+        navigate(`/order/${data.orderId}`);
         return;
       }
     } catch (err) {
@@ -184,7 +195,6 @@ function Checkout() {
   // =========================
   return (
     <div className="checkout-wrapper">
-      {/* COLUMNA IZQUIERDA */}
       <div className="checkout-left">
         <h2 className="checkout-title">Finalizar compra</h2>
         <p className="checkout-subtitle">
@@ -196,14 +206,49 @@ function Checkout() {
             <h4>Datos personales</h4>
 
             <div className="grid-2">
-              <Input label="Nombre*" name="name" value={form.name} onChange={onChange} error={errors.name} />
-              <Input label="Email*" name="email" value={form.email} onChange={onChange} error={errors.email} />
+              <Input
+                label="Nombre*"
+                name="name"
+                value={form.name}
+                onChange={onChange}
+                error={errors.name}
+              />
+
+              {/* ✅ Email bloqueado si está logueado */}
+              <Input
+                label="Email*"
+                name="email"
+                value={form.email}
+                onChange={onChange}
+                error={errors.email}
+                disabled={!!user?.email}
+                readOnly={!!user?.email}
+              />
             </div>
 
             <div className="grid-2">
-              <Input label="Teléfono*" name="phone" value={form.phone} onChange={onChange} error={errors.phone} />
-              <Input label="DNI*" name="dni" value={form.dni} onChange={onChange} error={errors.dni} />
+              <Input
+                label="Teléfono*"
+                name="phone"
+                value={form.phone}
+                onChange={onChange}
+                error={errors.phone}
+              />
+              <Input
+                label="DNI*"
+                name="dni"
+                value={form.dni}
+                onChange={onChange}
+                error={errors.dni}
+              />
             </div>
+
+            {/* Opcional: mini nota (no cambia estética salvo un texto) */}
+            {user?.email && (
+              <p style={{ marginTop: 10, opacity: 0.75, fontSize: 12 }}>
+                El email está vinculado a tu cuenta: <strong>{user.email}</strong>
+              </p>
+            )}
           </section>
 
           <section className="checkout-section">
@@ -234,7 +279,6 @@ function Checkout() {
             </div>
           </section>
 
-          {/* ✅ Método de pago */}
           <section className="checkout-section">
             <h4>Método de pago</h4>
 
@@ -270,7 +314,7 @@ function Checkout() {
 
             <p style={{ marginTop: 10, opacity: 0.85, fontSize: 13 }}>
               {isTransfer
-                ? "El total final por transferencia lo calcula el backend (precio autoritativo)."
+                ? "Vas a ser redirigido a los detalles de la orden juntos con las instrucciones para el pago."
                 : "Vas a ser redirigido a Mercado Pago para completar el pago."}
             </p>
           </section>
@@ -288,9 +332,27 @@ function Checkout() {
               />
 
               <div className="grid-3">
-                <Input label="Altura*" name="number" value={form.number} onChange={onChange} error={errors.number} />
-                <Input label="Ciudad*" name="city" value={form.city} onChange={onChange} error={errors.city} />
-                <Input label="CP*" name="zip" value={form.zip} onChange={onChange} error={errors.zip} />
+                <Input
+                  label="Altura*"
+                  name="number"
+                  value={form.number}
+                  onChange={onChange}
+                  error={errors.number}
+                />
+                <Input
+                  label="Ciudad*"
+                  name="city"
+                  value={form.city}
+                  onChange={onChange}
+                  error={errors.city}
+                />
+                <Input
+                  label="CP*"
+                  name="zip"
+                  value={form.zip}
+                  onChange={onChange}
+                  error={errors.zip}
+                />
               </div>
 
               <Select
@@ -317,7 +379,6 @@ function Checkout() {
         </form>
       </div>
 
-      {/* COLUMNA DERECHA */}
       <div className="checkout-right sticky">
         <h3>Resumen del pedido</h3>
 
@@ -355,17 +416,16 @@ function Checkout() {
           ) : (
             <>
               <div className="order-line total">
-                <span>Total (estimado transferencia)</span>
+                <span>Total (Transferencia Bancaria)</span>
                 <span>${transferTotalEstimate.toFixed(2)}</span>
               </div>
               <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
-                *Estimado: el backend valida precios/stock y puede ajustar envío gratis según el subtotal final.
+                *Estimado: Una vez realizada la orden por transferencia usted tiene un maximo de 48 horas para abonar antes de la caida de la orden.
               </div>
             </>
           )}
         </div>
 
-        {/* ✅ Botón principal */}
         <button
           className="checkout-button"
           onClick={handlePayment}
@@ -386,7 +446,6 @@ function Checkout() {
   );
 }
 
-/* SUBCOMPONENTES */
 function Input({ label, error, ...rest }) {
   return (
     <div>

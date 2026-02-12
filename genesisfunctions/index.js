@@ -392,7 +392,7 @@ export const createSecureOrder = onRequest(
         // 🚚 SHIPPING — lógica backend (AUTORITATIVA)
         // =====================================================
         const FREE_SHIPPING_FROM = 350000;
-        const SHIPPING_FLAT_FEE = 16000; // ✅ IGUAL QUE FRONT
+        const SHIPPING_FLAT_FEE = 10; // ✅ IGUAL QUE FRONT
 
         let shippingCost = 0;
         let shippingFree = false;
