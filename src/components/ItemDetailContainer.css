@@ -326,3 +326,31 @@
   }
 }
 
+/* =========================================
+   FIX PUNTUAL: color de título y precio
+   - Mobile (<=768): blanco (fondo oscuro)
+   - Desktop (>768): negro (fondo blanco)
+   ========================================= */
+
+/* Desktop por defecto */
+.detail-container-pro .title-pro,
+.detail-container-pro .price-final-pro,
+.detail-container-pro .price-original-pro {
+  color: #111 !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .detail-container-pro .title-pro,
+  .detail-container-pro .price-final-pro,
+  .detail-container-pro .price-original-pro {
+    color: #fff !important;
+  }
+}
+
+/* ✅ SOLO MOBILE: el botón "Leer más" debe verse blanco */
+@media (max-width: 768px) {
+  .detail-container-pro .readmore-pro {
+    color: #fff !important;
+  }
+}

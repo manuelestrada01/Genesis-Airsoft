@@ -1,5 +1,5 @@
 // ================================
-// Functions v7 + ESM + Secret Manager (VERSIÓN SEGURA)
+// Functions v7 + ESM + Secret Manager (PROD)
 // ================================
 
 import { onRequest } from "firebase-functions/v2/https";
@@ -21,13 +21,21 @@ import {
 admin.initializeApp();
 
 // ================================
+// PROD URLS (✅ sin ngrok)
+// ================================
+const PROD_BASE_URL = "https://genesisairsoft.com.ar"; // ✅ tu dominio productivo
+const WEBHOOK_URL =
+  "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook";
+
+// ================================
 // CORS — SOLO DOMINIOS PERMITIDOS
 // ================================
 const allowedOrigins = [
-  "http://localhost:5173",
+  "http://localhost:5173", // dev
   "https://genesis-airsoft.web.app",
-  "https://genesisairsoft.com",
-  "https://virulently-phonolitic-adelia.ngrok-free.dev", // ⬅️ NGROK TEST (HARDCODED)
+  "https://genesis-airsoft.firebaseapp.com",
+  "https://genesisairsoft.com.ar",
+  "https://www.genesisairsoft.com.ar",
 ];
 
 const corsHandler = cors({
@@ -191,17 +199,14 @@ async function processPayment(paymentData, res) {
   const orderData = orderSnap.data();
 
   // ✅ Si es transferencia, ignorar webhook (seguridad)
-  if (orderData.paymentType && orderData.paymentType === "bank_transfer") {
+  if (orderData.paymentType === "bank_transfer") {
     logger.warn("⚠ Webhook para orden de transferencia (ignorando):", { orderId });
     return res.sendStatus(200);
   }
 
-  if (orderData.status === "approved") {
-    return res.sendStatus(200);
-  }
+  if (orderData.status === "approved") return res.sendStatus(200);
 
-  const expectedAmount =
-    orderData.totalWithShipping ?? orderData.total ?? 0;
+  const expectedAmount = orderData.totalWithShipping ?? orderData.total ?? 0;
 
   if (Number(paymentData.transaction_amount) !== Number(expectedAmount)) {
     await orderRef.update({
@@ -233,7 +238,6 @@ async function processPayment(paymentData, res) {
 
       const productData = productSnap.data();
       const newStock = Math.max((productData.stock || 0) - item.quantity, 0);
-
       batch.update(productRef, { stock: newStock });
     }
 
@@ -304,11 +308,7 @@ export const createSecureOrder = onRequest(
         const paymentType =
           paymentMethodRaw === "bank_transfer" ? "bank_transfer" : "mercadopago";
 
-        // =====================================================
-        // 🔐 Normalizar comprador (incluye DNI)
-        // =====================================================
         const buyerReq = req.body.buyer || {};
-
         const buyer = {
           name: xss(buyerReq.name || ""),
           email: xss(buyerReq.email || ""),
@@ -337,15 +337,9 @@ export const createSecureOrder = onRequest(
         let verifiedMP = [];
         let subtotal = 0;
 
-        // =====================================================
-        // 🛒 Validar productos contra Firestore (autoridad backend)
-        // =====================================================
         for (const cart of items) {
           const snap = await db.collection("products").doc(cart.id).get();
-
-          if (!snap.exists) {
-            return res.status(400).json({ error: "Product not found" });
-          }
+          if (!snap.exists) return res.status(400).json({ error: "Product not found" });
 
           const product = snap.data();
 
@@ -376,7 +370,6 @@ export const createSecureOrder = onRequest(
             basePrice, // auditoría
           });
 
-          // MP sólo importa si paymentType = mercadopago (igual lo armamos)
           verifiedMP.push({
             id: snap.id,
             title: product.name,
@@ -388,11 +381,9 @@ export const createSecureOrder = onRequest(
           subtotal += finalUnitPrice * cart.quantity;
         }
 
-        // =====================================================
         // 🚚 SHIPPING — lógica backend (AUTORITATIVA)
-        // =====================================================
         const FREE_SHIPPING_FROM = 350000;
-        const SHIPPING_FLAT_FEE = 10; // ✅ IGUAL QUE FRONT
+        const SHIPPING_FLAT_FEE = 16000; // ✅ PROD real
 
         let shippingCost = 0;
         let shippingFree = false;
@@ -416,9 +407,6 @@ export const createSecureOrder = onRequest(
 
         const totalWithShipping = Number((subtotal + shippingCost).toFixed(2));
 
-        // =====================================================
-        // 📦 Orden base (común)
-        // =====================================================
         const commonOrder = {
           userId,
           buyer,
@@ -440,9 +428,7 @@ export const createSecureOrder = onRequest(
           updatedAt: nowServerTs(),
         };
 
-        // =====================================================
-        // 🏦 Transferencia: crear orden y devolver instrucciones
-        // =====================================================
+        // 🏦 Transferencia
         if (paymentType === "bank_transfer") {
           const EXPIRES_IN_HOURS = 48;
 
@@ -464,11 +450,7 @@ export const createSecureOrder = onRequest(
             expiresInHours: EXPIRES_IN_HOURS,
 
             subtotal,
-            shipping: {
-              cost: shippingCost,
-              free: shippingFree,
-              label: shippingLabel,
-            },
+            shipping: { cost: shippingCost, free: shippingFree, label: shippingLabel },
             totalWithShipping,
 
             transferInstructions: {
@@ -480,15 +462,12 @@ export const createSecureOrder = onRequest(
           });
         }
 
-        // =====================================================
-        // 💳 Mercado Pago (flujo actual)
-        // =====================================================
+        // 💳 Mercado Pago
         const orderRef = await db.collection("orders").add({
           ...commonOrder,
           status: "pending",
         });
 
-        // Agregar envío como ítem si aplica
         if (buyer.method !== "pickup" && shippingCost > 0) {
           verifiedMP.push({
             id: "shipping",
@@ -505,26 +484,19 @@ export const createSecureOrder = onRequest(
         const prefResult = await prefClient.create({
           body: {
             items: verifiedMP,
-            payer: {
-              name: buyer.name,
-              email: buyer.email,
-            },
+            payer: { name: buyer.name, email: buyer.email },
             external_reference: orderRef.id,
             auto_return: "approved",
 
-            // ✅ NGROK (TESTING) — EXACTO COMO TU VERSIÓN
+            // ✅ PROD (sin ngrok)
             back_urls: {
-              success:
-                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-success",
-              failure:
-                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-failure",
-              pending:
-                "https://virulently-phonolitic-adelia.ngrok-free.dev/checkout-pending",
+              success: `${PROD_BASE_URL}/checkout-success`,
+              failure: `${PROD_BASE_URL}/checkout-failure`,
+              pending: `${PROD_BASE_URL}/checkout-pending`,
             },
 
-            // 🔥 WEBHOOK REAL
-            notification_url:
-              "https://us-central1-genesis-airsoft.cloudfunctions.net/webhook",
+            // ✅ webhook
+            notification_url: WEBHOOK_URL,
           },
         });
 
@@ -534,11 +506,7 @@ export const createSecureOrder = onRequest(
 
           paymentType: "mercadopago",
           subtotal,
-          shipping: {
-            cost: shippingCost,
-            free: shippingFree,
-            label: shippingLabel,
-          },
+          shipping: { cost: shippingCost, free: shippingFree, label: shippingLabel },
           totalWithShipping,
         });
       } catch (err) {
@@ -563,10 +531,7 @@ export const contactForm = onRequest(
 
         const transporter = nodemailer.createTransport({
           service: "gmail",
-          auth: {
-            user: GMAIL_EMAIL.value(),
-            pass: GMAIL_PASSWORD.value(),
-          },
+          auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
         });
 
         await transporter.sendMail({

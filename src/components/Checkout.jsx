@@ -7,7 +7,7 @@ import "./Checkout.css";
 import FreeShippingPopup from "../components/FreeShippingPopup";
 
 const FREE_SHIPPING_FROM = 350000;
-const SHIPPING_COST = 10;
+const SHIPPING_COST = 16000;
 
 const provincesAR = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes",
