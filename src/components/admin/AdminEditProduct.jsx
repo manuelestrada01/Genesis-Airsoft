@@ -179,7 +179,16 @@ export default function AdminEditProduct() {
           <input name="stock" type="number" min="0" value={product.stock} onChange={handleChange} />
 
           <label>Categoría *</label>
-          <input name="category" value={product.category} onChange={handleChange} />
+            <select name="category" value={product.category || ""} onChange={handleChange}>
+              <option value="">Seleccioná…</option>
+              <option value="Insumos">Insumos</option>
+              <option value="Marcadoras AEG">Marcadoras AEG</option>
+              <option value="Accesorios">Accesorios</option>
+              <option value="Indumentaria">Indumentaria</option>
+              <option value="Marcadoras GBB">Marcadoras GBB</option>
+              <option value="Magazines">Magazines</option>
+            </select>
+
 
           <label>Descripción (HTML permitido)</label>
           <textarea

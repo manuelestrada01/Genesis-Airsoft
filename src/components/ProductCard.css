@@ -377,3 +377,47 @@
     margin-top: 2px;
   }
 }
+
+/* ================================
+   ✅ DESKTOP: cards parejas
+   ================================ */
+
+/* La card se comporta como columna */
+.product-card{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Imagen siempre ocupa la misma “zona” */
+.product-img{
+  flex: 0 0 180px;     /* misma altura que ya usás */
+}
+
+/* El bloque info ocupa el resto */
+.product-info{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* ✅ Reservar altura para 2 líneas de título (DESKTOP) */
+.product-title{
+  line-height: 1.2;
+  min-height: calc(1.2em * 2);  /* 2 líneas */
+  margin: 6px 0 0;
+  
+  /* opcional pro: clamp 2 líneas */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Si querés que el precio siempre quede alineado abajo dentro de la card */
+.price-box{
+  margin-top: auto;
+  padding-bottom: 8px; /* deja aire para que el hover no lo tape */
+}
+

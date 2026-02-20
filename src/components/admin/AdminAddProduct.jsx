@@ -158,6 +158,7 @@ export default function AdminAddProduct() {
             <option value="Accesorios">Accesorios</option>
             <option value="Indumentaria">Indumentaria</option>
             <option value="Marcadoras GBB">Marcadoras GBB</option>
+            <option value="Marcadoras GBB">Magazines</option>
           </select>
 
           <label>Descripción (permite bullets y formato)</label>

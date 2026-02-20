@@ -92,7 +92,7 @@ export default function AdminOrders() {
     );
   };
 
-  /* 💰 Total seguro (fallback incluido) */
+  /* 💰 Total seguro */
   const getOrderTotal = (order) => {
     if (order.total) return order.total;
 
@@ -126,7 +126,7 @@ export default function AdminOrders() {
           </button>
         </div>
 
-        <table className="admin-table">
+        <table className="admin-table admin-orders-table">
           <thead>
             <tr>
               <th>Fecha</th>
@@ -148,20 +148,22 @@ export default function AdminOrders() {
                 style={{ cursor: "pointer" }}
               >
                 {/* FECHA */}
-                <td>{o.createdAt?.toDate().toLocaleString()}</td>
+                <td data-label="Fecha">
+                  {o.createdAt?.toDate().toLocaleString()}
+                </td>
 
                 {/* ID */}
-                <td>{o.id}</td>
+                <td data-label="Pedido #">{o.id}</td>
 
                 {/* CLIENTE */}
-                <td>
+                <td data-label="Cliente">
                   {o.buyer?.name}
                   <br />
                   <small>{o.buyer?.email}</small>
                 </td>
 
                 {/* ITEMS */}
-                <td>
+                <td data-label="Items">
                   {o.items?.map((it, i) => (
                     <div key={i}>
                       • {it.name} × {it.quantity}
@@ -169,17 +171,21 @@ export default function AdminOrders() {
                   ))}
                 </td>
 
-                {/* 💰 TOTAL CORREGIDO */}
-                <td>
-                  $
-                  {getOrderTotal(o).toLocaleString("es-AR")}
+                {/* TOTAL */}
+                <td data-label="Total">
+                  ${getOrderTotal(o).toLocaleString("es-AR")}
                 </td>
 
                 {/* ESTADO DE PAGO */}
-                <td>{renderStatusBadge(o.status)}</td>
+                <td data-label="Estado Pago">
+                  {renderStatusBadge(o.status)}
+                </td>
 
                 {/* DESPACHADO */}
-                <td onClick={(e) => e.stopPropagation()}>
+                <td
+                  data-label="Despachado"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     disabled={o.status !== "approved"}
                     title={

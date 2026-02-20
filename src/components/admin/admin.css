@@ -399,3 +399,49 @@
     height: 280px;
   }
 }
+
+/* ===================================== */
+/* ✅ ADMIN ORDERS – DESKTOP HARD RESET   */
+/* (Evita que CSS global rompa la tabla) */
+/* ===================================== */
+
+.admin-orders-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  table-layout: fixed !important;   /* clave: evita que un texto largo rompa el layout */
+}
+
+/* Fuerza comportamiento real de tabla */
+.admin-orders-table thead { display: table-header-group !important; }
+.admin-orders-table tbody { display: table-row-group !important; }
+.admin-orders-table tr    { display: table-row !important; }
+.admin-orders-table th,
+.admin-orders-table td {
+  display: table-cell !important;
+  vertical-align: top !important;
+  text-align: left !important;
+  white-space: normal !important;   /* permite que el texto baje de línea */
+  word-break: break-word !important;/* rompe IDs largos */
+}
+
+/* Anchos controlados (ajustables) */
+.admin-orders-table th:nth-child(1),
+.admin-orders-table td:nth-child(1) { width: 170px !important; } /* Fecha */
+
+.admin-orders-table th:nth-child(2),
+.admin-orders-table td:nth-child(2) { width: 260px !important; } /* Pedido */
+
+.admin-orders-table th:nth-child(3),
+.admin-orders-table td:nth-child(3) { width: 220px !important; } /* Cliente */
+
+.admin-orders-table th:nth-child(4),
+.admin-orders-table td:nth-child(4) { width: 320px !important; } /* Items */
+
+.admin-orders-table th:nth-child(5),
+.admin-orders-table td:nth-child(5) { width: 120px !important; } /* Total */
+
+.admin-orders-table th:nth-child(6),
+.admin-orders-table td:nth-child(6) { width: 140px !important; } /* Estado Pago */
+
+.admin-orders-table th:nth-child(7),
+.admin-orders-table td:nth-child(7) { width: 160px !important; } /* Despachado */

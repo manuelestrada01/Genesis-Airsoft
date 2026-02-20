@@ -195,7 +195,7 @@ const ItemListContainer = () => {
         </div>
       )}
 
-      {noMoreProducts && !searchQuery && (
+      {noMoreProducts && !searchQuery && products.length > 0 && (
         <p style={{ textAlign: "center", marginTop: 25, color: "#777" }}>
           No hay más productos para mostrar.
         </p>

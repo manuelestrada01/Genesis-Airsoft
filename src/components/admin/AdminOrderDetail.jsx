@@ -118,8 +118,6 @@ export default function AdminOrderDetail() {
   const detectedProof = useMemo(() => {
     if (!order) return null;
 
-    // Variantes posibles (por si fuiste cambiando estructura):
-    // 1) order.transferProofs: [{ path, url, name, contentType }]
     const tpList = Array.isArray(order.transferProofs)
       ? order.transferProofs
       : Array.isArray(order.transfer_proofs)
@@ -136,7 +134,6 @@ export default function AdminOrderDetail() {
       };
     }
 
-    // 2) order.transferProof: { path/url/... }
     const tpObj = order.transferProof || order.transfer_proof || null;
     if (tpObj) {
       return {
@@ -147,7 +144,6 @@ export default function AdminOrderDetail() {
       };
     }
 
-    // 3) order.transfer (lo que ya tenés): { proofPath, proofUrl, ... }
     const t = order.transfer || null;
     if (t) {
       return {
@@ -158,7 +154,6 @@ export default function AdminOrderDetail() {
       };
     }
 
-    // 4) campos sueltos
     return {
       path: order.proofPath || order.transferProofPath || "",
       url: order.proofUrl || order.transferProofUrl || "",
@@ -180,7 +175,6 @@ export default function AdminOrderDetail() {
       setProofUrl("");
       setProofMeta(null);
 
-      // Si ya viene URL guardada, usala
       if (url) {
         setProofUrl(url);
         setProofMeta({
@@ -191,7 +185,6 @@ export default function AdminOrderDetail() {
         return;
       }
 
-      // Si hay path, sacamos downloadURL desde Storage
       if (!path) return;
 
       try {
@@ -265,9 +258,7 @@ export default function AdminOrderDetail() {
     }
 
     if (!proofUrl) {
-      const ok = confirm(
-        "No se detectó comprobante (URL). ¿Querés aprobar igual?"
-      );
+      const ok = confirm("No se detectó comprobante (URL). ¿Querés aprobar igual?");
       if (!ok) return;
     }
 
@@ -280,7 +271,6 @@ export default function AdminOrderDetail() {
         status: "approved",
         paidAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        // opcional pero útil para auditoría:
         transferApprovedAt: serverTimestamp(),
       });
 
@@ -299,10 +289,10 @@ export default function AdminOrderDetail() {
   };
 
   // ==========================================
-  // UI
+  // UI helpers
   // ==========================================
-  if (loading) return <p>Cargando pedido...</p>;
-  if (!order) return <p>Pedido no encontrado.</p>;
+  if (loading) return <p style={{ padding: 20 }}>Cargando pedido...</p>;
+  if (!order) return <p style={{ padding: 20 }}>Pedido no encontrado.</p>;
 
   const createdAtLabel = order.createdAt?.toDate
     ? order.createdAt.toDate().toLocaleString()
@@ -312,255 +302,444 @@ export default function AdminOrderDetail() {
     ? order.expiresAt.toDate().toLocaleString()
     : null;
 
-  const statusLabel = order.status || "pending";
+  const statusLabel = String(order.status || "pending");
 
   const showTransferBlock =
-    String(order.status || "").includes("transfer") ||
+    statusLabel.includes("transfer") ||
     order.paymentType === "bank_transfer" ||
     order.paymentMethod === "bank_transfer" ||
     !!order.transfer;
 
-  // Estilos solo para achicar preview sin tocar tu estética global
-  const previewWrapStyle = {
-    marginTop: 10,
-    border: "1px solid #ddd",
-    borderRadius: 10,
-    overflow: "hidden",
-    background: "#f8f8f8",
+  const isApproved = statusLabel === "approved";
+
+  const statusPillStyle = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "6px 10px",
+    borderRadius: 999,
+    fontWeight: 800,
+    fontSize: 12,
+    letterSpacing: 0.4,
+    color: "#fff",
+    background:
+      statusLabel === "approved"
+        ? "#16a34a"
+        : statusLabel === "pending" || statusLabel.includes("transfer")
+        ? "#f59e0b"
+        : statusLabel === "rejected"
+        ? "#dc2626"
+        : "#64748b",
   };
 
-  const iframeStyle = {
-    width: "100%",
-    height: 380, // ✅ más chico
-    border: "none",
-    display: "block",
+  const cardStyle = {
+    background: "#fff",
+    border: "1px solid #e5e7eb",
+    borderRadius: 14,
+    padding: 16,
+    boxShadow: "0 6px 22px rgba(0,0,0,0.06)",
   };
 
-  const btnStyle = {
+  const sectionTitleStyle = {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 900,
+    color: "#111827",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  };
+
+  const fieldRow = {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 16,
+    padding: "8px 0",
+    borderBottom: "1px solid #f1f5f9",
+  };
+
+  const labelStyle = { color: "#475569", fontWeight: 700, fontSize: 13 };
+  const valueStyle = { color: "#0f172a", fontWeight: 700, fontSize: 13, textAlign: "right" };
+
+  const primaryBtn = (disabled) => ({
     padding: "10px 14px",
-    borderRadius: 8,
-    border: "1px solid #ccc",
-    background: "white",
+    borderRadius: 10,
+    border: "1px solid #0f172a",
+    background: "#0f172a",
+    color: "#fff",
+    cursor: disabled ? "not-allowed" : "pointer",
+    fontWeight: 900,
+    opacity: disabled ? 0.6 : 1,
+  });
+
+  const ghostBtn = {
+    padding: "10px 14px",
+    borderRadius: 10,
+    border: "1px solid #cbd5e1",
+    background: "#fff",
+    color: "#0f172a",
     cursor: "pointer",
-    fontWeight: 700,
+    fontWeight: 900,
   };
+
+  const gridWrap = {
+    display: "grid",
+    gridTemplateColumns: "1.2fr 0.8fr",
+    gap: 16,
+    alignItems: "start",
+  };
+
+  const rightStack = { display: "grid", gap: 16 };
+
+  const itemsTableWrap = {
+    width: "100%",
+    overflowX: "auto",
+    border: "1px solid #e5e7eb",
+    borderRadius: 12,
+  };
+
+  const itemsTable = {
+    width: "100%",
+    borderCollapse: "collapse",
+  };
+
+  const th = {
+    textAlign: "left",
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    color: "#334155",
+    background: "#f8fafc",
+    padding: "10px 12px",
+    borderBottom: "1px solid #e5e7eb",
+    whiteSpace: "nowrap",
+  };
+
+  const td = {
+    padding: "10px 12px",
+    borderBottom: "1px solid #f1f5f9",
+    fontSize: 13,
+    color: "#0f172a",
+    verticalAlign: "top",
+  };
+
+  const money = (n) => Number(n || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
-    <div className="admin-content">
-      <h1>Pedido #{order.id}</h1>
+    <div
+        className="admin-content"
+        style={{ background: "#f8fafc", paddingTop: 220 }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 34, fontWeight: 900, color: "#0f172a" }}>
+            Pedido <span style={{ color: "#64748b" }}>#{order.id}</span>
+          </h1>
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={statusPillStyle}>{statusLabel.toUpperCase()}</span>
+            <span style={{ color: "#475569", fontWeight: 700, fontSize: 13 }}>
+              Fecha: <span style={{ color: "#0f172a" }}>{createdAtLabel}</span>
+            </span>
+            <span style={{ color: "#475569", fontWeight: 700, fontSize: 13 }}>
+              Envío:{" "}
+              <span style={{ color: "#0f172a" }}>
+                {order.buyer?.method === "pickup" ? "Retiro en tienda" : "Delivery"}
+              </span>
+            </span>
+          </div>
+        </div>
 
-      <h3>Datos del Pedido</h3>
-      <p>
-        <strong>Fecha:</strong> {createdAtLabel}
-      </p>
-
-      <h3>Cliente</h3>
-      <p>
-        <strong>Nombre:</strong> {order.buyer?.name || "—"}
-      </p>
-      <p>
-        <strong>Email:</strong> {order.buyer?.email || "—"}
-      </p>
-      <p>
-        <strong>Teléfono:</strong> {order.buyer?.phone || "—"}
-      </p>
-      {order.buyer?.dni && (
-        <p>
-          <strong>DNI:</strong> {order.buyer.dni}
-        </p>
-      )}
-
-      <h3>Dirección</h3>
-      {order.buyer?.method === "delivery" ? (
-        <>
-          <p>
-            {order.buyer.street} {order.buyer.number}
-          </p>
-          <p>
-            {order.buyer.city}, {order.buyer.province}
-          </p>
-          <p>CP: {order.buyer.zip}</p>
-        </>
-      ) : (
-        <p>
-          <i>Retiro en tienda</i>
-        </p>
-      )}
-
-      <h3>Comentario del envío</h3>
-      <p style={{ whiteSpace: "pre-wrap" }}>
-        {buyerNotes.trim() ? buyerNotes : "—"}
-      </p>
-
-      <h3>Estado</h3>
-      <p>
-        <strong>Pago:</strong>{" "}
-        <span style={{ fontWeight: 800 }}>{statusLabel}</span>
-      </p>
-
-      {/* ============================= */}
-      {/* ✅ BLOQUE TRANSFERENCIA */}
-      {/* ============================= */}
-      {showTransferBlock && (
-        <>
-          <h3>Comprobante</h3>
-
-          {expiresAtLabel && (
-            <p>
-              <strong>Vence:</strong> {expiresAtLabel}
-            </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {/* CTA transferencia */}
+          {showTransferBlock && !isApproved && (
+            <button
+              onClick={approveTransfer}
+              disabled={approving}
+              style={primaryBtn(approving)}
+              title="Aprobar la transferencia y marcar como aprobado"
+            >
+              {approving ? "Aprobando..." : "Aprobar transferencia"}
+            </button>
           )}
+        </div>
+      </div>
 
-          {/* Datos transferencia si existen */}
-          {order.transfer && (
-            <div style={{ marginBottom: 10 }}>
-              <p>
-                <strong>Banco:</strong> {order.transfer.bank || "—"}
-              </p>
-              <p>
-                <strong>Alias:</strong> {order.transfer.alias || "—"}
-              </p>
-              <p>
-                <strong>CVU:</strong> {order.transfer.cvu || "—"}
-              </p>
-              <p>
-                <strong>Titular:</strong> {order.transfer.holder || "—"}
-              </p>
+      <div style={{ height: 16 }} />
+
+      {/* Layout */}
+      <div style={gridWrap}>
+        {/* Left column */}
+        <div style={{ display: "grid", gap: 16 }}>
+          {/* Cliente + Dirección */}
+          <div style={cardStyle}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "center" }}>
+              <h3 style={sectionTitleStyle}>Cliente y entrega</h3>
+              <span
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: 999,
+                  fontWeight: 900,
+                  fontSize: 12,
+                  background: order.dispatched ? "#16a34a" : "#ef4444",
+                  color: "#fff",
+                }}
+              >
+                {order.dispatched ? "DESPACHADO" : "PENDIENTE"}
+              </span>
+            </div>
+
+            <div style={{ marginTop: 12 }}>
+              <div style={fieldRow}>
+                <div style={labelStyle}>Nombre</div>
+                <div style={valueStyle}>{order.buyer?.name || "—"}</div>
+              </div>
+              <div style={fieldRow}>
+                <div style={labelStyle}>Email</div>
+                <div style={valueStyle}>{order.buyer?.email || "—"}</div>
+              </div>
+              <div style={fieldRow}>
+                <div style={labelStyle}>Teléfono</div>
+                <div style={valueStyle}>{order.buyer?.phone || "—"}</div>
+              </div>
+              {order.buyer?.dni && (
+                <div style={fieldRow}>
+                  <div style={labelStyle}>DNI</div>
+                  <div style={valueStyle}>{order.buyer?.dni}</div>
+                </div>
+              )}
+
+              <div style={{ height: 10 }} />
+
+              <div style={{ fontWeight: 900, color: "#0f172a", marginBottom: 6 }}>Dirección</div>
+              {order.buyer?.method === "delivery" ? (
+                <div style={{ color: "#334155", fontWeight: 700, lineHeight: 1.5 }}>
+                  <div>
+                    {order.buyer.street} {order.buyer.number}
+                  </div>
+                  <div>
+                    {order.buyer.city}, {order.buyer.province} (CP {order.buyer.zip})
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: "#334155", fontWeight: 700 }}>
+                  <i>Retiro en tienda</i>
+                </div>
+              )}
+
+              <div style={{ height: 12 }} />
+
+              <div style={{ fontWeight: 900, color: "#0f172a", marginBottom: 6 }}>Comentario del envío</div>
+              <div style={{ whiteSpace: "pre-wrap", color: "#334155", fontWeight: 700 }}>
+                {buyerNotes.trim() ? buyerNotes : "—"}
+              </div>
+            </div>
+          </div>
+
+          {/* Items */}
+          <div style={cardStyle}>
+            <h3 style={sectionTitleStyle}>Items</h3>
+            <div style={{ height: 12 }} />
+
+            <div style={itemsTableWrap}>
+              <table style={itemsTable}>
+                <thead>
+                  <tr>
+                    <th style={th}>Producto</th>
+                    <th style={{ ...th, width: 90, textAlign: "right" }}>Cant.</th>
+                    <th style={{ ...th, width: 140, textAlign: "right" }}>Unit.</th>
+                    <th style={{ ...th, width: 160, textAlign: "right" }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.items.map((item, i) => {
+                    const q = Number(item.quantity || 0);
+                    const p = Number(item.price || 0);
+                    const line = q * p;
+
+                    return (
+                      <tr key={i}>
+                        <td style={td}>
+                          <div style={{ fontWeight: 900 }}>{item.name || "Producto"}</div>
+                          {item.productId && (
+                            <div style={{ color: "#64748b", fontWeight: 700, fontSize: 12 }}>
+                              ID: {item.productId}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ ...td, textAlign: "right", fontWeight: 900 }}>{q}</td>
+                        <td style={{ ...td, textAlign: "right" }}>${money(p)}</td>
+                        <td style={{ ...td, textAlign: "right", fontWeight: 900 }}>${money(line)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div style={rightStack}>
+          {/* Totales */}
+          <div style={cardStyle}>
+            <h3 style={sectionTitleStyle}>Totales</h3>
+            <div style={{ marginTop: 12 }}>
+              <div style={fieldRow}>
+                <div style={labelStyle}>Subtotal</div>
+                <div style={valueStyle}>${money(computedSubtotal)}</div>
+              </div>
+
+              <div style={fieldRow}>
+                <div style={labelStyle}>Envío</div>
+                <div style={valueStyle}>
+                  {order.buyer?.method === "pickup"
+                    ? "Retiro en tienda"
+                    : shippingCost === 0
+                    ? "Gratis"
+                    : `$${money(shippingCost)}`}
+                </div>
+              </div>
+
+              <div style={{ ...fieldRow, borderBottom: "none", paddingBottom: 0 }}>
+                <div style={{ ...labelStyle, fontSize: 14 }}>Total final</div>
+                <div style={{ ...valueStyle, fontSize: 16 }}>${money(computedTotalFinal)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Transferencia */}
+          {showTransferBlock && (
+            <div style={cardStyle}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
+                <h3 style={sectionTitleStyle}>Transferencia</h3>
+                {expiresAtLabel && (
+                  <span style={{ color: "#475569", fontWeight: 900, fontSize: 12 }}>
+                    Vence: <span style={{ color: "#0f172a" }}>{expiresAtLabel}</span>
+                  </span>
+                )}
+              </div>
+
+              {order.transfer && (
+                <div style={{ marginTop: 12, color: "#334155", fontWeight: 800, fontSize: 13, lineHeight: 1.6 }}>
+                  <div><b>Banco:</b> {order.transfer.bank || "—"}</div>
+                  <div><b>Alias:</b> {order.transfer.alias || "—"}</div>
+                  <div><b>CVU:</b> {order.transfer.cvu || "—"}</div>
+                  <div><b>Titular:</b> {order.transfer.holder || "—"}</div>
+                </div>
+              )}
+
+              <div style={{ height: 12 }} />
+
+              {loadingProof ? (
+                <p style={{ margin: 0, color: "#475569", fontWeight: 800 }}>Cargando comprobante...</p>
+              ) : proofUrl ? (
+                <>
+                  <a
+                    href={proofUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-block",
+                      fontWeight: 900,
+                      color: "#0f172a",
+                      textDecoration: "underline",
+                      marginBottom: 10,
+                    }}
+                  >
+                    Ver comprobante {proofMeta?.name ? `(${proofMeta.name})` : ""}
+                  </a>
+
+                  <div
+                    style={{
+                      border: "1px solid #e5e7eb",
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      background: "#f8fafc",
+                    }}
+                  >
+                    <iframe
+                      src={proofUrl}
+                      title="Comprobante de transferencia"
+                      style={{ width: "100%", height: 320, border: "none", display: "block" }}
+                    />
+                  </div>
+
+                  <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    {!isApproved && (
+                      <button onClick={approveTransfer} disabled={approving} style={primaryBtn(approving)}>
+                        {approving ? "Aprobando..." : "Aprobar transferencia"}
+                      </button>
+                    )}
+                    <a href={proofUrl} target="_blank" rel="noopener noreferrer" style={ghostBtn}>
+                      Abrir en nueva pestaña
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <p style={{ margin: 0, color: "#475569", fontWeight: 800 }}>
+                  No hay comprobante cargado todavía.
+                </p>
+              )}
             </div>
           )}
 
-          {loadingProof ? (
-            <p>Cargando comprobante...</p>
-          ) : proofUrl ? (
-            <>
-              <p style={{ marginBottom: 8 }}>
-                <strong>Archivo:</strong>{" "}
-                <a href={proofUrl} target="_blank" rel="noopener noreferrer">
-                  Ver archivo {proofMeta?.name ? `(${proofMeta.name})` : ""}
-                </a>
-              </p>
+          {/* Seguimiento */}
+          <div style={cardStyle}>
+            <h3 style={sectionTitleStyle}>Seguimiento (Via Cargo)</h3>
+            <div style={{ height: 12 }} />
 
-              {/* ✅ Preview más chica */}
-              <div style={previewWrapStyle}>
-                <iframe
-                  src={proofUrl}
-                  title="Comprobante de transferencia"
-                  style={iframeStyle}
-                />
-              </div>
+            <input
+              type="text"
+              placeholder="Ej: 999029504038"
+              value={tracking}
+              onChange={(e) => setTracking(e.target.value)}
+              style={{
+                padding: "10px 12px",
+                width: "100%",
+                borderRadius: 10,
+                border: "1px solid #cbd5e1",
+                fontWeight: 800,
+                outline: "none",
+              }}
+            />
 
-              {/* ✅ Aprobar */}
-              <div style={{ marginTop: 12 }}>
-                <button
-                  onClick={approveTransfer}
-                  disabled={approving || order.status === "approved"}
+            <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button onClick={saveTracking} disabled={savingTracking} style={primaryBtn(savingTracking)}>
+                {savingTracking ? "Guardando..." : "Guardar seguimiento"}
+              </button>
+
+              {order.trackingNumber && (
+                <a
+                  href={`https://viacargo.com.ar/seguimiento-de-envio/${order.trackingNumber}/`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
-                    ...btnStyle,
-                    opacity: approving || order.status === "approved" ? 0.6 : 1,
+                    ...ghostBtn,
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {order.status === "approved"
-                    ? "Transferencia aprobada"
-                    : approving
-                    ? "Aprobando..."
-                    : "Aprobar transferencia"}
-                </button>
+                  Ver en Via Cargo
+                </a>
+              )}
+            </div>
+
+            {order.trackingNumber && (
+              <div style={{ marginTop: 10, color: "#475569", fontWeight: 800, fontSize: 13 }}>
+                Guardado: <span style={{ color: "#0f172a" }}>{order.trackingNumber}</span>
               </div>
-            </>
-          ) : (
-            <p style={{ opacity: 0.8 }}>
-              No hay comprobante cargado todavía.
-            </p>
-          )}
-        </>
-      )}
-
-      <h3>Items</h3>
-      <ul>
-        {order.items.map((item, i) => (
-          <li key={i}>
-            {item.name || "Producto"} — {Number(item.quantity || 0)} × $
-            {Number(item.price || 0)} = $
-            {(Number(item.quantity || 0) * Number(item.price || 0)).toFixed(2)}
-          </li>
-        ))}
-      </ul>
-
-      <h3>Totales</h3>
-      <p>
-        <strong>Subtotal:</strong> ${computedSubtotal.toFixed(2)}
-      </p>
-      <p>
-        <strong>Envío:</strong>{" "}
-        {order.buyer?.method === "pickup"
-          ? "Retiro en tienda"
-          : shippingCost === 0
-          ? "Gratis"
-          : `$${shippingCost.toFixed(2)}`}
-      </p>
-      <p>
-        <strong>Total final:</strong> ${computedTotalFinal.toFixed(2)}
-      </p>
-
-      <h3>Despacho</h3>
-      <p>
-        {order.dispatched ? (
-          <span className="admin-dispatched">Despachado</span>
-        ) : (
-          <span className="admin-not-dispatched">Pendiente</span>
-        )}
-      </p>
-
-      {/* Via Cargo */}
-      <div style={{ marginTop: "30px" }}>
-        <h3>Seguimiento (Via Cargo)</h3>
-
-        <input
-          type="text"
-          placeholder="Ej: 999029504038"
-          value={tracking}
-          onChange={(e) => setTracking(e.target.value)}
-          className="admin-input"
-          style={{
-            padding: "10px",
-            width: "300px",
-            borderRadius: "6px",
-            border: "1px solid #ccc",
-            marginRight: "10px",
-          }}
-        />
-
-        <button
-          onClick={saveTracking}
-          disabled={savingTracking}
-          className="admin-save-btn"
-        >
-          {savingTracking ? "Guardando..." : "Guardar seguimiento"}
-        </button>
-
-        {order.trackingNumber && (
-          <div style={{ marginTop: "15px" }}>
-            <a
-              href={`https://viacargo.com.ar/seguimiento-de-envio/${order.trackingNumber}/`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="admin-track-link"
-              style={{
-                display: "inline-block",
-                marginTop: "10px",
-                padding: "8px 12px",
-                background: "#0077ff",
-                color: "white",
-                borderRadius: "6px",
-                textDecoration: "none",
-                fontWeight: "bold",
-              }}
-            >
-              Ver seguimiento en Via Cargo
-            </a>
+            )}
           </div>
-        )}
+        </div>
       </div>
+
+      {/* Responsive tweak simple */}
+      <style>{`
+        @media (max-width: 980px){
+          .admin-content { padding: 16px !important; }
+        }
+      `}</style>
     </div>
   );
 }
