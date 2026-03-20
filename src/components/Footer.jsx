@@ -14,6 +14,7 @@ const Footer = () => {
       {/* Parte inferior con copyright */}
       <div className="footer-bottom">
         <p>Copyright ©️ 2023. Todos los derechos reservados.</p>
+        <p className="footer-powered">Powered by Manuel Estrada</p>
       </div>
     </footer>
   );
