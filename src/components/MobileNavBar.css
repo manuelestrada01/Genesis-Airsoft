@@ -102,20 +102,3 @@
   background: #2a2a2a;
 }
 
-/* ============================= */
-/* 🔐 ADMIN – MOBILE DESTACADO */
-/* ============================= */
-
-.mnav-admin-item {
-  margin-top: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: #ffe600;
-  color: #000 !important;
-  font-weight: 800;
-  text-align: center;
-}
-
-.mnav-admin-item:hover {
-  background: #ffef4d;
-}

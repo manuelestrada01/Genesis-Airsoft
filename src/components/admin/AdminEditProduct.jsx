@@ -1,6 +1,6 @@
 // AdminEditProduct.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import {
@@ -127,7 +127,13 @@ export default function AdminEditProduct() {
 
       const cover = updatedImages[0]?.imageUrl || "";
 
-      const cleanHTML = sanitizeHTML(product.description);
+      const cleanHTML = sanitizeHTML(
+        product.description
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n")
+          .replace(/\s*[\u00B7\u2022\u2027\u2219\u22C5\u25CF\u25AA\u25E6]\s*/g, "\n• ")
+          .replace(/\n/g, "<br>")
+      );
 
       const finalPrice = Number(
         (price - (price * discount) / 100).toFixed(2)
@@ -163,72 +169,167 @@ export default function AdminEditProduct() {
       <AdminSidebar />
 
       <div className="admin-content">
-        <h1>Editar Producto</h1>
+        <div className="af-header">
+          <Link to="/admin/products" className="af-back-link">← Volver</Link>
+          <h1 className="af-page-title">Editar Producto</h1>
+        </div>
 
-        <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-          <label>Nombre *</label>
-          <input name="name" value={product.name} onChange={handleChange} />
+        <form className="af-form" onSubmit={(e) => e.preventDefault()}>
 
-          <label>Precio *</label>
-          <input name="price" type="number" value={product.price} onChange={handleChange} />
-
-          <label>Descuento (%)</label>
-          <input name="discount" type="number" min="0" max="90" value={product.discount} onChange={handleChange} />
-
-          <label>Stock *</label>
-          <input name="stock" type="number" min="0" value={product.stock} onChange={handleChange} />
-
-          <label>Categoría *</label>
-            <select name="category" value={product.category || ""} onChange={handleChange}>
-              <option value="">Seleccioná…</option>
-              <option value="Insumos">Insumos</option>
-              <option value="Marcadoras AEG">Marcadoras AEG</option>
-              <option value="Accesorios">Accesorios</option>
-              <option value="Indumentaria">Indumentaria</option>
-              <option value="Marcadoras GBB">Marcadoras GBB</option>
-              <option value="Magazines">Magazines</option>
-            </select>
-
-
-          <label>Descripción (HTML permitido)</label>
-          <textarea
-            name="description"
-            value={product.description}
-            onChange={handleChange}
-            style={{ minHeight: "180px" }}
-          />
-
-          <label>Pausar publicación</label>
-          <input
-            type="checkbox"
-            name="paused"
-            checked={product.paused}
-            onChange={handleChange}
-          />
-
-          <label>Imágenes actuales</label>
-          <div className="admin-image-grid">
-            {product.images.map((img, i) => (
-              <div key={i} className="admin-image-box">
-                <img src={img.imageUrl} className="admin-image-preview" alt="" />
-                <button type="button" onClick={() => handleDeleteImage(img)}>
-                  eliminar
-                </button>
-              </div>
-            ))}
+          {/* Nombre */}
+          <div className="af-field">
+            <label className="af-label">Nombre *</label>
+            <input
+              className="af-input"
+              name="name"
+              value={product.name}
+              onChange={handleChange}
+            />
           </div>
 
-          <label>Nuevas imágenes</label>
-          <input type="file" multiple accept="image/*" onChange={handleNewImages} />
+          {/* Precio + Descuento */}
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Precio *</label>
+              <input
+                className="af-input"
+                name="price"
+                type="number"
+                value={product.price}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="af-field">
+              <label className="af-label">Descuento (%)</label>
+              <input
+                className="af-input"
+                name="discount"
+                type="number"
+                min="0"
+                max="90"
+                value={product.discount}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-          <button
-            type="button"
-            className="admin-save-btn"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? "Guardando..." : "Guardar Cambios"}
-          </button>
+          {/* Stock + Categoría */}
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Stock *</label>
+              <input
+                className="af-input"
+                name="stock"
+                type="number"
+                min="0"
+                value={product.stock}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="af-field">
+              <label className="af-label">Categoría *</label>
+              <select
+                className="af-select"
+                name="category"
+                value={product.category || ""}
+                onChange={handleChange}
+              >
+                <option value="">Seleccioná…</option>
+                <option value="Insumos">Insumos</option>
+                <option value="Marcadoras AEG">Marcadoras AEG</option>
+                <option value="Accesorios">Accesorios</option>
+                <option value="Indumentaria">Indumentaria</option>
+                <option value="Marcadoras GBB">Marcadoras GBB</option>
+                <option value="Magazines">Magazines</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Descripción */}
+          <div className="af-field">
+            <label className="af-label">Descripción (HTML permitido)</label>
+            <textarea
+              className="af-textarea"
+              name="description"
+              value={product.description}
+              onChange={handleChange}
+            />
+          </div>
+
+          <hr className="af-divider" />
+
+          {/* Estado de publicación */}
+          <div className="af-field">
+            <label className="af-label">Estado de publicación</label>
+            <div className="af-toggle-row">
+              <div className="af-toggle-label-group">
+                <span className="af-toggle-title">Pausar publicación</span>
+                <span className="af-toggle-hint">
+                  {product.paused
+                    ? "El producto está oculto en la tienda"
+                    : "El producto está visible en la tienda"}
+                </span>
+              </div>
+              <input
+                className="af-toggle-checkbox"
+                type="checkbox"
+                name="paused"
+                checked={product.paused}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <hr className="af-divider" />
+
+          {/* Imágenes actuales */}
+          <div className="af-field">
+            <label className="af-label">Imágenes actuales</label>
+            <div className="af-img-grid">
+              {product.images.map((img, i) => (
+                <div key={i} className="af-img-box">
+                  <img src={img.imageUrl} className="af-img-preview" alt="" />
+                  <button
+                    type="button"
+                    className="af-img-delete"
+                    onClick={() => handleDeleteImage(img)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Nuevas imágenes */}
+          <div className="af-field">
+            <label className="af-label">Agregar nuevas imágenes</label>
+            <div className="af-file-zone">
+              <span className="af-file-zone-icon">📎</span>
+              <span className="af-file-zone-text">
+                Arrastrá o seleccioná imágenes
+              </span>
+              <input
+                className="af-file-input"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleNewImages}
+              />
+            </div>
+          </div>
+
+          <div className="af-actions">
+            <button
+              className="af-save-btn"
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Guardando..." : "Guardar Cambios"}
+            </button>
+          </div>
+
         </form>
       </div>
     </div>

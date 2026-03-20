@@ -74,7 +74,13 @@ export default function AdminAddProduct() {
     setLoading(true);
 
     try {
-      const cleanHTML = sanitizeHTML(form.description);
+      const cleanHTML = sanitizeHTML(
+        form.description
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n")
+          .replace(/\s*[\u00B7\u2022\u2027\u2219\u22C5\u25CF\u25AA\u25E6]\s*/g, "\n• ")
+          .replace(/\n/g, "<br>")
+      );
 
       const finalPrice = Number(
         (price - (price * discount) / 100).toFixed(2)
@@ -128,56 +134,130 @@ export default function AdminAddProduct() {
       <AdminSidebar />
 
       <div className="admin-content">
-        <h1>Agregar Producto</h1>
+        <div className="af-header">
+          <h1 className="af-page-title">Agregar Producto</h1>
+        </div>
 
-        <form className="admin-form" onSubmit={(e) => e.preventDefault()}>
-          <label>Nombre *</label>
-          <input name="name" value={form.name} onChange={handleChange} />
+        <form className="af-form" onSubmit={(e) => e.preventDefault()}>
 
-          <label>Precio *</label>
-          <input name="price" type="number" value={form.price} onChange={handleChange} />
+          {/* Nombre */}
+          <div className="af-field">
+            <label className="af-label">Nombre *</label>
+            <input
+              className="af-input"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+            />
+          </div>
 
-          <label>Descuento (%)</label>
-          <input
-            name="discount"
-            type="number"
-            min="0"
-            max="90"
-            value={form.discount}
-            onChange={handleChange}
-          />
+          {/* Precio + Descuento */}
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Precio *</label>
+              <input
+                className="af-input"
+                name="price"
+                type="number"
+                value={form.price}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="af-field">
+              <label className="af-label">Descuento (%)</label>
+              <input
+                className="af-input"
+                name="discount"
+                type="number"
+                min="0"
+                max="90"
+                value={form.discount}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-          <label>Stock *</label>
-          <input name="stock" type="number" min="0" value={form.stock} onChange={handleChange} />
+          {/* Stock + Categoría */}
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Stock *</label>
+              <input
+                className="af-input"
+                name="stock"
+                type="number"
+                min="0"
+                value={form.stock}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="af-field">
+              <label className="af-label">Categoría *</label>
+              <select
+                className="af-select"
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+              >
+                <option value="">Seleccioná…</option>
+                <option value="Insumos">Insumos</option>
+                <option value="Marcadoras AEG">Marcadoras AEG</option>
+                <option value="Accesorios">Accesorios</option>
+                <option value="Indumentaria">Indumentaria</option>
+                <option value="Marcadoras GBB">Marcadoras GBB</option>
+                <option value="Magazines">Magazines</option>
+              </select>
+            </div>
+          </div>
 
-          <label>Categoría *</label>
-          <select name="category" value={form.category} onChange={handleChange}>
-            <option value="">Seleccioná…</option>
-            <option value="Insumos">Insumos</option>
-            <option value="Marcadoras AEG">Marcadoras AEG</option>
-            <option value="Accesorios">Accesorios</option>
-            <option value="Indumentaria">Indumentaria</option>
-            <option value="Marcadoras GBB">Marcadoras GBB</option>
-            <option value="Marcadoras GBB">Magazines</option>
-          </select>
+          {/* Descripción */}
+          <div className="af-field">
+            <label className="af-label">Descripción (permite bullets y formato)</label>
+            <textarea
+              className="af-textarea"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Pegá aquí la descripción con viñetas o formato..."
+            />
+          </div>
 
-          <label>Descripción (permite bullets y formato)</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Pegá aquí la descripción con viñetas o formato..."
-            style={{ minHeight: "180px" }}
-          />
+          <hr className="af-divider" />
 
-          <label>Imágenes *</label>
-          <input type="file" multiple accept="image/*" onChange={handleChange} />
+          {/* Imágenes */}
+          <div className="af-field">
+            <label className="af-label">Imágenes *</label>
+            <div className="af-file-zone">
+              <span className="af-file-zone-icon">📎</span>
+              <span className="af-file-zone-text">
+                Arrastrá o seleccioná imágenes
+              </span>
+              <input
+                className="af-file-input"
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-          <button type="button" onClick={handleSave} disabled={loading}>
-            {loading ? "Guardando..." : "Guardar Producto"}
-          </button>
+          <div className="af-actions">
+            <button
+              className="af-save-btn"
+              type="button"
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? "Guardando..." : "Guardar Producto"}
+            </button>
 
-          {message && <p className="admin-msg">{message}</p>}
+            {message && (
+              <p className={`af-msg ${message === "Producto guardado con éxito ✔" ? "af-msg--success" : "af-msg--error"}`}>
+                {message}
+              </p>
+            )}
+          </div>
+
         </form>
       </div>
     </div>

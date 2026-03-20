@@ -8,8 +8,6 @@ import {
   updateDoc,
   query,
   orderBy,
-  limit,
-  startAfter,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
@@ -21,21 +19,24 @@ import { deleteProductImage } from "../../firebase/uploadProductImage";
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
-  const [lastDoc, setLastDoc] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [moreAvailable, setMoreAvailable] = useState(true);
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredProducts = products.filter(
+    (p) =>
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // ============================================================
-  // ⭐ 1️⃣ Cargar primeros 15 productos
+  // 1️⃣ Cargar todos los productos
   // ============================================================
   useEffect(() => {
-    const loadInitial = async () => {
+    const loadAll = async () => {
       try {
         const ref = collection(db, "products");
-        const q = query(ref, orderBy("createdAt", "desc"), limit(15));
-
+        const q = query(ref, orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
 
         const items = snapshot.docs.map((doc) => ({
@@ -44,8 +45,6 @@ export default function AdminProducts() {
         }));
 
         setProducts(items);
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-        setMoreAvailable(snapshot.docs.length === 15);
       } catch (err) {
         console.error("❌ Error cargando productos:", err);
       } finally {
@@ -53,45 +52,11 @@ export default function AdminProducts() {
       }
     };
 
-    loadInitial();
+    loadAll();
   }, []);
 
   // ============================================================
-  // ⭐ 2️⃣ Cargar más productos (paginación)
-  // ============================================================
-  const loadMore = async () => {
-    if (!lastDoc) return;
-
-    setLoadingMore(true);
-
-    try {
-      const ref = collection(db, "products");
-      const q = query(
-        ref,
-        orderBy("createdAt", "desc"),
-        startAfter(lastDoc),
-        limit(15)
-      );
-
-      const snapshot = await getDocs(q);
-
-      const items = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setProducts((prev) => [...prev, ...items]);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      setMoreAvailable(snapshot.docs.length === 15);
-    } catch (err) {
-      console.error("❌ Error cargando más productos:", err);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
-  // ============================================================
-  // ⭐ 3️⃣ Eliminar producto (seguro)
+  // 2️⃣ Eliminar producto (seguro)
   // ============================================================
   const handleDelete = async (product) => {
     const confirmDelete = window.confirm(
@@ -119,7 +84,7 @@ export default function AdminProducts() {
   };
 
   // ============================================================
-  // ⭐ 4️⃣ Pausar / Activar un solo producto
+  // 3️⃣ Pausar / Activar un solo producto
   // ============================================================
   const togglePause = async (product) => {
     try {
@@ -138,7 +103,7 @@ export default function AdminProducts() {
   };
 
   // ============================================================
-  // ⭐ 5️⃣ Pausar o activar TODOS los productos
+  // 4️⃣ Pausar o activar TODOS los productos
   // ============================================================
   const togglePauseAll = async (pauseValue) => {
     const confirmMsg = pauseValue
@@ -176,7 +141,7 @@ export default function AdminProducts() {
   };
 
   // ============================================================
-  // ⭐ 6️⃣ Render
+  // 5️⃣ Render
   // ============================================================
   if (loading) return <p style={{ padding: 20 }}>Cargando productos...</p>;
 
@@ -187,123 +152,90 @@ export default function AdminProducts() {
       <div className="admin-content">
         <h1>Productos</h1>
 
-        <Link to="/admin/products/add" className="admin-add-btn">
-          + Agregar Producto
-        </Link>
-
-        {/* 🔥 BOTÓN PAUSAR/ACTIVAR TODOS */}
-        <div style={{ margin: "15px 0" }}>
-          <button
-            onClick={() => togglePauseAll(true)}
-            disabled={bulkLoading}
-            className="admin-danger-btn"
-          >
-            Pausar TODOS
-          </button>
-
-          <button
-            onClick={() => togglePauseAll(false)}
-            disabled={bulkLoading}
-            className="admin-ok-btn"
-            style={{ marginLeft: "10px" }}
-          >
-            Activar TODOS
-          </button>
+        <div className="ap-toolbar">
+          <input
+            className="ap-search"
+            placeholder="Buscar por nombre o categoría..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="ap-toolbar-right">
+            <button
+              onClick={() => togglePauseAll(true)}
+              disabled={bulkLoading}
+              className="ap-bulk-btn ap-bulk-pause"
+            >
+              Pausar TODOS
+            </button>
+            <button
+              onClick={() => togglePauseAll(false)}
+              disabled={bulkLoading}
+              className="ap-bulk-btn ap-bulk-activate"
+            >
+              Activar TODOS
+            </button>
+            <Link to="/admin/products/add" className="ap-add-btn">
+              + Agregar
+            </Link>
+          </div>
         </div>
 
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Imagen</th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Pausado</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {products.map((p) => {
-              const img =
-                p.cover ||
-                p.images?.[0]?.imageUrl ||
-                p.image ||
-                "";
-
-              return (
-                <tr
-                  key={p.id}
-                  style={{
-                    opacity: p.paused ? 0.4 : 1,
-                  }}
-                >
-                  <td>
-                    <img
-                      src={img}
-                      alt={p.name}
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        objectFit: "cover",
-                        borderRadius: "6px",
-                        border: "1px solid #ddd",
-                      }}
-                    />
-                  </td>
-
-                  <td>{p.name}</td>
-                  <td>{p.category}</td>
-                  <td>${p.price}</td>
-                  <td>{p.stock ?? 0}</td>
-
-                  <td>
-                    {p.paused ? (
-                      <span className="badge-paused">PAUSADO</span>
-                    ) : (
-                      <span className="badge-active">Activo</span>
-                    )}
-                  </td>
-
-                  <td>
-                    <button
-                      className="admin-edit-btn"
-                      onClick={() => togglePause(p)}
-                    >
-                      {p.paused ? "Activar" : "Pausar"}
-                    </button>
-
-                    <Link
-                      to={`/admin/products/edit/${p.id}`}
-                      className="admin-edit-btn"
-                    >
-                      Editar
-                    </Link>
-
-                    <button
-                      className="admin-delete-btn"
-                      onClick={() => handleDelete(p)}
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        {moreAvailable && (
-          <button
-            className="admin-load-more"
-            onClick={loadMore}
-            disabled={loadingMore}
-            style={{ marginTop: "20px" }}
-          >
-            {loadingMore ? "Cargando..." : "Cargar más productos"}
-          </button>
+        {filteredProducts.length === 0 && (
+          <p className="ap-empty">Sin resultados.</p>
         )}
+
+        <div className="ap-grid">
+          {filteredProducts.map((p) => {
+            const img =
+              p.cover || p.images?.[0]?.imageUrl || p.image || "";
+
+            return (
+              <div
+                key={p.id}
+                className={`ap-card${p.paused ? " ap-card--paused" : ""}`}
+              >
+                <div className="ap-card-img-wrap">
+                  <img src={img} alt={p.name} className="ap-card-img" />
+                  {p.paused && (
+                    <span className="ap-card-badge-paused">PAUSADO</span>
+                  )}
+                </div>
+
+                <div className="ap-card-body">
+                  <span className="ap-card-category">{p.category}</span>
+                  <p className="ap-card-name">{p.name}</p>
+                  <div className="ap-card-meta">
+                    <span className="ap-card-price">${p.price}</span>
+                    <span className="ap-card-stock">
+                      Stock: {p.stock ?? 0}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="ap-card-actions">
+                  <button
+                    className="ap-action-btn ap-action-toggle"
+                    onClick={() => togglePause(p)}
+                  >
+                    {p.paused ? "Activar" : "Pausar"}
+                  </button>
+                  <Link
+                    to={`/admin/products/edit/${p.id}`}
+                    className="ap-action-btn ap-action-edit"
+                  >
+                    Editar
+                  </Link>
+                  <button
+                    className="ap-action-btn ap-action-delete"
+                    onClick={() => handleDelete(p)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

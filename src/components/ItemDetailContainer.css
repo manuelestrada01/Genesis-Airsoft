@@ -1,39 +1,72 @@
 /* === LAYOUT GENERAL === */
 .detail-container-pro {
   display: grid;
-  grid-template-columns: 120px 1fr 380px;
-  gap: 40px;
+  grid-template-columns: 110px 1fr 400px;
+  gap: 36px;
   margin-top: 150px;
-  padding: 20px 150px;
+  padding: 20px 120px 60px;
   align-items: flex-start;
   font-family: "Montserrat", sans-serif;
 }
+
+/* === ESTADO PAUSADO === */
+.paused-container-pro {
+  padding: 60px 30px;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+}
+.paused-container-pro h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+  margin-bottom: 8px;
+}
+.paused-container-pro p {
+  font-size: 14px;
+  color: #777;
+}
+.paused-back-btn {
+  margin-top: 24px;
+  padding: 11px 28px;
+  background: #111;
+  color: #ffe600;
+  border: none;
+  border-radius: 6px;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.paused-back-btn:hover { background: #333; }
 
 /* === MINIATURAS === */
 .gallery-thumbs-pro {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .thumb-pro {
   width: 100%;
-  height: 90px;
+  height: 88px;
   object-fit: cover;
   border-radius: 8px;
   cursor: pointer;
   border: 2px solid transparent;
-  opacity: 0.8;
-  transition: 0.2s ease;
+  opacity: 0.65;
+  transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
 }
 
 .thumb-pro:hover {
   opacity: 1;
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .thumb-pro.active {
-  border-color: #000000;
+  border-color: #111;
   opacity: 1;
 }
 
@@ -42,205 +75,247 @@
   position: relative;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .main-img-pro {
   width: 95%;
-  max-height: 550px;
+  max-height: 540px;
   object-fit: contain;
   border-radius: 12px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.15);
   transition: transform 0.3s ease;
 }
 
 .main-img-pro:hover {
-  transform: scale(1.03);
+  transform: scale(1.02);
 }
 
-/* DESCUENTO */
+/* BADGE DESCUENTO */
 .discount-badge-pro {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
   background: #ff3e3e;
-  color: white;
-  padding: 8px 12px;
-  font-weight: bold;
-  border-radius: 8px;
-  font-size: 14px;
+  color: #fff;
+  padding: 7px 12px;
+  font-weight: 800;
+  border-radius: 6px;
+  font-size: 13px;
+  letter-spacing: 0.3px;
 }
 
 /* === INFO PANEL === */
 .info-panel-pro {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+}
+
+/* Categoría como pill badge */
+.category-pro {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: #888;
+  background: #f2f2f2;
+  padding: 5px 10px;
+  border-radius: 999px;
 }
 
 .title-pro {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
+  color: #111;
+  line-height: 1.2;
+  margin: 0;
 }
 
-.category-pro {
-  font-size: 14px;
-  color: #777;
-}
-
+/* STOCK BADGE */
 .stock-badge-pro {
-  padding: 6px 12px;
-  font-size: 14px;
-  border-radius: 8px;
-  font-weight: 600;
+  display: inline-block;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border-radius: 999px;
   width: fit-content;
 }
-
 .stock-badge-pro.in {
-  background: #dbffe0;
-  color: #008b2a;
+  background: #e6f4ea;
+  color: #2e7d32;
 }
-
 .stock-badge-pro.out {
-  background: #ffe0e0;
-  color: #b30000;
+  background: #fdecea;
+  color: #c62828;
 }
 
 /* === PRECIOS === */
 .price-box-pro {
   display: flex;
   gap: 10px;
-  align-items: center;
-  margin-top: 5px;
+  align-items: baseline;
 }
 
 .price-final-pro {
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 32px;
+  font-weight: 800;
+  color: #111;
 }
 
 .price-original-pro {
-  font-size: 18px;
+  font-size: 17px;
+  font-weight: 500;
   text-decoration: line-through;
+  color: #bbb;
+}
+
+/* PRECIO TRANSFERENCIA */
+.transfer-info-pro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255, 230, 0, 0.1);
+  border-left: 3px solid #ffe600;
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+}
+.transfer-info-pro__label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #888;
+}
+.transfer-info-pro__price {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+}
+.transfer-info-pro__hint {
+  font-size: 11px;
   color: #aaa;
+  font-weight: 500;
 }
 
 /* === DESCRIPCIÓN === */
-/* === DESCRIPCIÓN PRODUCTO === */
 .desc-pro {
-  font-size: 15px;
-  line-height: 1.65;
-  color: #dcdcdc;              /* 🔥 mucho más legible */
+  font-size: 14px;
+  line-height: 1.7;
+  color: #444;
 }
-
-/* Párrafos dentro del HTML */
-.desc-pro p {
-  margin-bottom: 14px;
-  color: #dcdcdc;
-}
-
-/* Listas */
+.desc-pro p { margin-bottom: 12px; color: #444; }
 .desc-pro ul,
-.desc-pro ol {
-  margin-left: 18px;
-  margin-bottom: 14px;
-}
-
-.desc-pro li {
-  margin-bottom: 8px;
-  color: #cfcfcf;
-}
-
-/* Títulos dentro de la descripción */
+.desc-pro ol { margin-left: 18px; margin-bottom: 12px; }
+.desc-pro li { margin-bottom: 6px; color: #444; }
 .desc-pro h1,
 .desc-pro h2,
-.desc-pro h3 {
-  color: #ffffff;
-  margin-top: 18px;
-  margin-bottom: 10px;
-}
-
-/* Enlaces (si vienen del HTML) */
-.desc-pro a {
-  color: #ff6600;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.desc-pro a:hover {
-  text-decoration: underline;
-}
-
+.desc-pro h3 { color: #111; margin: 16px 0 8px; font-weight: 700; }
+.desc-pro a { color: #b8860b; font-weight: 600; text-decoration: none; }
+.desc-pro a:hover { text-decoration: underline; }
 
 .readmore-pro {
   background: none;
   border: none;
   cursor: pointer;
-  color: #000000;
-  font-weight: 600;
+  color: #111;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
   padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.2s;
 }
+.readmore-pro:hover { opacity: 0.6; }
 
 /* === CANTIDAD === */
+.qty-box-pro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .qty-box-pro label {
-  font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #888;
 }
 
 /* === BOTONES === */
 .btns-pro {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 4px;
 }
-
 
 .btn-buy-pro {
-  background: #000;
-  color: white;
+  background: #111;
+  color: #ffe600;
   border: none;
-  padding: 14px;
-  font-size: 16px;
-  border-radius: 10px;
+  padding: 15px;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
+  transition: background 0.2s;
+}
+.btn-buy-pro:hover:not(:disabled) { background: #333; }
+.btn-buy-pro:disabled {
+  background: #ccc;
+  color: #888;
+  cursor: not-allowed;
 }
 
-.btn-buy-pro:hover {
-  background: #222;
+.btn-cart-pro {
+  background: transparent;
+  color: #111;
+  border: 1.5px solid #111;
+  padding: 14px;
+  font-size: 14px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
+.btn-cart-pro:hover:not(:disabled) { background: #111; color: #fff; }
 
+/* html-description redundante — unificado en desc-pro */
 .html-description ul,
-.html-description ol {
-  margin-left: 20px;
-  margin-top: 10px;
-}
-
-.html-description li {
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
+.html-description ol { margin-left: 20px; margin-top: 10px; }
+.html-description li { margin-bottom: 6px; line-height: 1.4; }
 .html-description h1,
 .html-description h2,
-.html-description h3 {
-  margin-top: 15px;
-}
+.html-description h3 { margin-top: 15px; }
 
 /* =============================== */
-/* 📱 ITEM DETAIL – MOBILE FIX */
+/* 📱 MOBILE                        */
 /* =============================== */
 @media (max-width: 768px) {
-
-  /* CONTENEDOR GENERAL */
   .detail-container-pro {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 12px;
-    margin-top: 120px; /* 🔥 reduce espacio muerto arriba */
+    padding: 12px 16px 40px;
+    margin-top: 120px;
   }
 
-  /* MINIATURAS → FILA HORIZONTAL */
+  /* Imagen principal primero */
+  .gallery-main-pro { order: 1; width: 100%; }
+  .main-img-pro { width: 100%; max-height: 300px; }
+
+  /* Miniaturas horizontales debajo de imagen */
   .gallery-thumbs-pro {
     order: 2;
     flex-direction: row;
@@ -248,109 +323,33 @@
     gap: 8px;
     overflow-x: auto;
   }
+  .thumb-pro { width: 60px; height: 60px; flex-shrink: 0; }
 
-  .thumb-pro {
-    width: 64px;
-    height: 64px;
-    flex-shrink: 0;
-  }
+  /* Info panel */
+  .info-panel-pro { order: 3; gap: 14px; }
 
-  /* IMAGEN PRINCIPAL */
-  .gallery-main-pro {
-    order: 1;
-    width: 100%;
-  }
+  .title-pro { font-size: 20px; color: #fff; }
+  .price-final-pro { font-size: 26px; color: #fff; }
+  .price-original-pro { font-size: 14px; color: #bbb; }
 
-  .main-img-pro {
-    width: 100%;
-    max-height: 320px;
-    margin: 0 auto;
-  }
+  .transfer-info-pro { background: rgba(255, 230, 0, 0.15); }
+  .transfer-info-pro__price { font-size: 20px; color: #fff; }
+  .transfer-info-pro__label { color: #aaa; }
 
-  /* PANEL DE INFO */
-  .info-panel-pro {
-    order: 3;
-    gap: 14px;
-  }
+  .category-pro { background: rgba(255,255,255,0.12); color: #ccc; }
 
-  /* TÍTULO */
-  .title-pro {
-    font-size: 22px;
-    line-height: 1.25;
-  }
+  .stock-badge-pro.in { background: rgba(40, 167, 69, 0.18); color: #6fcf97; }
+  .stock-badge-pro.out { background: rgba(198, 40, 40, 0.18); color: #eb5757; }
 
-  /* PRECIO */
-  .price-final-pro {
-    font-size: 24px;
-  }
+  .desc-pro { font-size: 14px; color: #ccc; }
+  .desc-pro p, .desc-pro li { color: #ccc; }
+  .desc-pro h1, .desc-pro h2, .desc-pro h3 { color: #fff; }
 
-  .price-original-pro {
-    font-size: 14px;
-  }
+  .readmore-pro { color: #fff; }
 
-  /* BOTONES */
-  .btns-pro {
-    gap: 10px;
-  }
+  .qty-box-pro label { color: #aaa; }
 
-  .btn-add-pro,
-  .btn-buy-pro {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-  }
-
-  /* DESCRIPCIÓN */
-  .desc-pro {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-}
-
-/* ================================= */
-/* === DESCRIPCIÓN – AJUSTE DESKTOP === */
-/* ================================= */
-
-@media (min-width: 769px) {
-  .desc-pro {
-    color: #333; /* gris oscuro, buena lectura */
-  }
-
-  .html-description {
-    color: #333;
-  }
-
-  .html-description p,
-  .html-description li {
-    color: #444;
-  }
-}
-
-/* =========================================
-   FIX PUNTUAL: color de título y precio
-   - Mobile (<=768): blanco (fondo oscuro)
-   - Desktop (>768): negro (fondo blanco)
-   ========================================= */
-
-/* Desktop por defecto */
-.detail-container-pro .title-pro,
-.detail-container-pro .price-final-pro,
-.detail-container-pro .price-original-pro {
-  color: #111 !important;
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .detail-container-pro .title-pro,
-  .detail-container-pro .price-final-pro,
-  .detail-container-pro .price-original-pro {
-    color: #fff !important;
-  }
-}
-
-/* ✅ SOLO MOBILE: el botón "Leer más" debe verse blanco */
-@media (max-width: 768px) {
-  .detail-container-pro .readmore-pro {
-    color: #fff !important;
-  }
+  .btn-buy-pro { width: 100%; padding: 15px; font-size: 14px; }
+  .btn-cart-pro { width: 100%; border-color: #555; color: #eee; }
+  .btn-cart-pro:hover:not(:disabled) { background: #333; border-color: #333; }
 }

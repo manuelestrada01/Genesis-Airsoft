@@ -8,6 +8,22 @@ import { CartContext } from "../context/CartContext";
 
 const TRANSFER_DISCOUNT = 0.2; // -20%
 
+// Convierte texto plano a HTML. Si ya tiene tags HTML, lo deja igual.
+const toHtml = (text) => {
+  if (!text) return "";
+  if (/<[a-z][\s\S]*>/i.test(text)) return text;
+
+  let html = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+  // Convierte separadores tipo bullet a salto de línea.
+  // Cubre: · (U+00B7), • (U+2022), · (U+2027), ∙ (U+2219), ⋅ (U+22C5), y similares
+  html = html.replace(/\s*[\u00B7\u2022\u2027\u2219\u22C5\u25CF\u25AA\u25E6]\s*/g, "\n\u2022 ");
+
+  html = html.replace(/\n+/g, "<br />");
+
+  return html;
+};
+
 const formatARS = (value) =>
   Number(value || 0).toLocaleString("es-AR", {
     minimumFractionDigits: 2,
@@ -69,19 +85,10 @@ const ProductDetail = () => {
   // =========================
   if (product?.paused)
     return (
-      <div style={{ padding: 30, textAlign: "center" }}>
+      <div className="paused-container-pro">
         <h2>Producto no disponible</h2>
         <p>Este producto fue temporalmente pausado.</p>
-        <button
-          onClick={() => navigate("/")}
-          style={{
-            marginTop: 20,
-            padding: "10px 20px",
-            background: "#000",
-            color: "#fff",
-            borderRadius: 6,
-          }}
-        >
+        <button className="paused-back-btn" onClick={() => navigate("/")}>
           Volver al inicio
         </button>
       </div>
@@ -151,7 +158,7 @@ const ProductDetail = () => {
       {/* PANEL DE INFO */}
       <div className="info-panel-pro">
         <h1 className="title-pro">{product.name}</h1>
-        <p className="category-pro">Categoría: {product.category}</p>
+        <p className="category-pro">{product.category}</p>
 
         <span className={`stock-badge-pro ${outOfStock ? "out" : "in"}`}>
           {outOfStock ? "SIN STOCK" : "EN STOCK"}
@@ -168,24 +175,12 @@ const ProductDetail = () => {
           )}
         </div>
 
-        {/* ✅ NUEVO: precio por transferencia (INFO) */}
+        {/* precio por transferencia */}
         {!outOfStock && (
-          <div
-            style={{
-              marginTop: 6,
-              fontSize: 14,
-              opacity: 0.9,
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <span style={{ fontWeight: 800 }}>Transferencia (-20%):</span>
-            <span style={{ fontWeight: 900 }}>${formatARS(transferPriceNumber)}</span>
-            <span style={{ fontSize: 12, opacity: 0.75 }}>
-              (se confirma en checkout)
-            </span>
+          <div className="transfer-info-pro">
+            <span className="transfer-info-pro__label">Transferencia (-20%)</span>
+            <span className="transfer-info-pro__price">${formatARS(transferPriceNumber)}</span>
+            <span className="transfer-info-pro__hint">Se confirma en checkout</span>
           </div>
         )}
 
@@ -193,7 +188,7 @@ const ProductDetail = () => {
         <div
           className="desc-pro html-description"
           dangerouslySetInnerHTML={{
-            __html: showFullDesc ? FULL_DESC : SHORT_DESC,
+            __html: toHtml(showFullDesc ? FULL_DESC : SHORT_DESC),
           }}
         />
 

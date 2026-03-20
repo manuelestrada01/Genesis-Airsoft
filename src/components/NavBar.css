@@ -512,3 +512,39 @@ a,
   tap-highlight-color: transparent;
 }
 
+/* =========================================
+   FIX MENU MOBILE – mantener diseño original
+   ========================================= */
+
+.mnav-drawer {
+  background: #ffffff; /* como estaba antes */
+  color: #333;
+}
+
+/* Links del menú */
+.mnav-drawer .mnav-item,
+.mnav-drawer .mnav-list a {
+  color: #333 !important;
+  text-decoration: none;
+}
+
+/* Hover */
+.mnav-drawer .mnav-item:hover {
+  background: #f2f2f2;
+}
+
+/* Tabs */
+.mnav-tab {
+  color: #333 !important;
+  border: 1px solid #ddd;
+}
+
+.mnav-tab.active {
+  background: #333;
+  color: #fff !important;
+}
+
+/* Loading texto */
+.mnav-loading {
+  color: #555;
+}
