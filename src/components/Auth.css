@@ -96,6 +96,29 @@
   background: #444;
 }
 
+/* 🔹 Botón Google */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 10px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-google:hover {
+  background: #f5f5f5;
+  border-color: #aaa;
+}
+
 /* 🔹 Extras */
 .options {
   display: flex;

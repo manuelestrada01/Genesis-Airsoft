@@ -1,252 +1,495 @@
-
-.profile-container {
-  max-width: 1000px;
-  margin: 80px auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
+/* ================================
+   PROFILE — VARIABLES
+================================ */
+:root {
+  --profile-bg: #f4f4f6;
+  --panel-bg: #ffffff;
+  --border: #e8e8ec;
+  --text-primary: #111;
+  --text-secondary: #6b7280;
+  --accent: #111;
+  --radius: 16px;
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
 }
 
-/* GRID GENERAL */
+/* ================================
+   CONTAINER
+================================ */
+.profile-container {
+  max-width: 1060px;
+  margin: 100px auto 60px;
+  padding: 0 20px;
+}
+
+/* ================================
+   HEADER
+================================ */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+}
+
+.profile-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar span {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.profile-header-info h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.profile-header-info p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+
+.google-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  background: #f1f3f4;
+  color: #444;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+/* ================================
+   GRID
+================================ */
 .profile-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-top: 30px;
+  gap: 20px;
 }
 
-/* =========== PEDIDOS =========== */
-
-.orders-section h3 {
-  text-align: center;
-  margin-bottom: 15px;
+/* ================================
+   PANEL
+================================ */
+.profile-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
 }
 
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.orders-count {
+  background: #f0f0f2;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+
+/* ================================
+   ORDERS
+================================ */
 .orders-list {
   list-style: none;
   padding: 0;
-  margin-top: 20px;
-}
-
-/* Tarjeta de pedido */
-.order-card {
-  background: #fff;
-  padding: 16px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  transition: transform 0.15s ease;
+}
+
+.order-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  position: relative;
 }
 
 .order-card:hover {
-  transform: translateY(-2px);
+  border-color: #bbb;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
 
-/* Fila */
-.order-row {
+.order-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
 }
 
-/* Etiqueta */
-.order-label {
-  font-weight: 600;
-  color: #444;
-}
-
-/* Valor */
-.order-value {
-  font-weight: 500;
-  color: #222;
-}
-
-/* ID con monoespaciado */
 .order-id {
-  font-family: "Courier New", monospace;
-  font-size: 0.85rem;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+  color: #333;
+  background: #ebebed;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
 }
 
-/* Estado Badge */
+.order-card-mid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta-label {
+  font-size: 0.72rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.meta-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.order-total {
+  color: #111;
+}
+
+.order-card-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bbb;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* STATUS BADGES */
 .status-badge {
-  padding: 4px 10px;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
 
-.status-badge.approved {
-  background-color: green;
-}
+.status-approved   { background: #16a34a; color: #fff; font-weight: 700; }
+.status-pending    { background: #d97706; color: #fff; font-weight: 700; }
+.status-rejected   { background: #dc2626; color: #fff; font-weight: 700; }
+.status-in_process { background: #2563eb; color: #fff; font-weight: 700; }
 
-.status-badge.pending {
-  background-color: #d98300;
-}
-
-/* Despachado Badge */
+/* DISPATCH BADGE */
 .dispatch-badge {
-  padding: 4px 10px;
-  border-radius: 6px;
-  color: white;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
 }
 
-.dispatch-badge.done {
-  background-color: green;
-}
+.dispatch-badge.done     { background: #16a34a; color: #fff; font-weight: 700; }
+.dispatch-badge.not-done { background: #dc2626; color: #fff; font-weight: 700; }
 
-.dispatch-badge.not-done {
-  background-color: #d00000;
-}
-
-/* Botón Cargar más */
+/* BTN CARGAR MÁS */
 .btn-load-more {
-  margin-top: 10px;
-  padding: 10px 20px;
-  background: #000;
-  color: white;
-  border-radius: 8px;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   cursor: pointer;
-  border: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: background 0.15s ease;
 }
 
 .btn-load-more:hover {
+  background: #f5f5f7;
+}
+
+/* EMPTY / LOADING */
+.empty-state,
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 30px 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e5e5;
+  border-top-color: #555;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================
+   SETTINGS
+================================ */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.field-group label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.field-group input {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  background: #fff;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.field-group input:focus {
+  border-color: #888;
+}
+
+.field-group input:disabled {
+  background: #f5f5f7;
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 14px;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.google-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f8f8;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 8px 0 12px;
+}
+
+.settings-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-save {
+  padding: 12px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.btn-save:hover {
   background: #333;
 }
 
-/* =========== CONFIGURACIÓN =========== */
-
-.settings-section h3 {
-  text-align: center;
-  margin-bottom: 15px;
-}
-
-.settings-form label {
-  display: block;
-  margin-top: 10px;
-  font-weight: bold;
-  color: #333;
-}
-
-.settings-form input {
-  width: 100%;
-  margin-top: 5px;
-  margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.settings-form button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.settings-form button:first-of-type {
-  background: #000;
-  color: white;
-}
-
 .btn-logout {
+  padding: 12px;
+  background: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-logout:hover {
   background: #dc3545;
-  color: white;
+  color: #fff;
 }
 
 .update-message {
-  text-align: center;
-  margin-top: 10px;
-  font-weight: bold;
-  color: green;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-top: 4px;
 }
 
-/* Responsive */
+.update-message.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.update-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.not-logged {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 60px 0;
+}
+
+/* ================================
+   RESPONSIVE
+================================ */
 @media (max-width: 900px) {
   .profile-grid {
     grid-template-columns: 1fr;
   }
-
-  .order-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
-.clickable-order {
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.clickable-order:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-/* =============================== */
-/* PROFILE - MOBILE DARK MODE FIX  */
-/* =============================== */
 @media (max-width: 768px) {
-
-  /* Fondo general */
   .profile-container {
-    background: #1e1e1e;
-    padding: 20px 15px 40px;
     margin: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-  
-
-  /* Títulos */
-  .profile-container h2,
-  .orders-section h3,
-  .settings-section h3 {
-    color: #ffffff;
+    padding: 20px 14px 40px;
+    background: #1a1a1a;
+    min-height: 100vh;
   }
 
-  /* Cards de pedidos */
-  .order-card {
-    background: #ffffff;
-    color: #222;
-    border-radius: 14px;
+  .profile-header {
+    background: #242424;
+    border-color: #333;
   }
 
-  /* Labels y valores */
-  .order-label {
-    color: #555;
+  .profile-header-info h2 { color: #f5f5f5; }
+  .profile-header-info p  { color: #999; }
+
+  .profile-panel {
+    background: #242424;
+    border-color: #333;
   }
 
-  .order-value {
-    color: #111;
+  .panel-header { border-bottom-color: #333; }
+  .panel-header h3 { color: #f5f5f5; }
+  .orders-count { background: #333; color: #999; }
+
+  .order-card { border-color: #333; }
+  .order-card:hover { border-color: #555; }
+  .order-id { background: #2e2e2e; color: #888; }
+  .meta-label { color: #888; }
+  .meta-value { color: #eee; }
+
+  .field-group label { color: #999; }
+  .field-group input {
+    background: #1e1e1e;
+    border-color: #333;
+    color: #eee;
+  }
+  .field-group input:disabled { background: #1a1a1a; color: #666; }
+  .field-group input:focus { border-color: #666; }
+
+  .section-divider { color: #666; }
+  .section-divider::before,
+  .section-divider::after { background: #333; }
+
+  .google-notice {
+    background: #2a2a2a;
+    border-color: #333;
+    color: #888;
   }
 
-  /* Estado y despachado ya están bien (verde / rojo) */
-
-  /* Sección configuración */
-  .settings-section {
-    background: #ffffff;
-    border-radius: 14px;
-    padding: 20px;
-  }
-
-  .settings-form label {
-    color: #333;
-  }
-
-  /* Botón cargar más */
   .btn-load-more {
-    background: #000;
-    color: #fff;
+    border-color: #333;
+    color: #ccc;
   }
+  .btn-load-more:hover { background: #2e2e2e; }
 }
