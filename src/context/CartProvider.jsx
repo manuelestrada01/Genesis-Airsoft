@@ -110,7 +110,17 @@ function CartProvider({ children }) {
   };
 
   // ============================================================
-  // 4) Eliminar item
+  // 4) Actualizar cantidad
+  // ============================================================
+  const updateQuantity = (id, quantity) => {
+    if (quantity < 1) return;
+    setCart((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+    );
+  };
+
+  // ============================================================
+  // 5) Eliminar item
   // ============================================================
   const removeFromCart = (id) =>
     setCart((prev) => prev.filter((item) => item.id !== id));
@@ -154,6 +164,7 @@ function CartProvider({ children }) {
       value={{
         cart,
         addToCart,
+        updateQuantity,
         removeFromCart,
         clearCart,
         totalPrice: getTotalPrice(),

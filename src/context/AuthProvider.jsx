@@ -10,6 +10,8 @@ import {
   sendEmailVerification,
   signOut,
   onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 
 function AuthProvider({ children }) {
@@ -85,6 +87,16 @@ function AuthProvider({ children }) {
     return credential.user;
   };
 
+  // 🟢 Login con Google
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const credential = await signInWithPopup(auth, provider);
+    await credential.user.getIdToken(true);
+    await loadUserClaims(credential.user);
+    setUser(credential.user);
+    return credential.user;
+  };
+
   // 🟢 Logout
   const logoutUser = async () => {
     await signOut(auth);
@@ -100,6 +112,7 @@ function AuthProvider({ children }) {
         isAdmin,
         registerUser,
         loginUser,
+        loginWithGoogle,
         logoutUser,
       }}
     >

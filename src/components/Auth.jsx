@@ -9,7 +9,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../firebase/config";
 
 const Auth = () => {
-  const { registerUser, loginUser } = useContext(AuthContext);
+  const { registerUser, loginUser, loginWithGoogle } = useContext(AuthContext);
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
@@ -38,6 +38,18 @@ const Auth = () => {
       setLoginData({ ...loginData, [e.target.name]: e.target.value });
     } else {
       setRegisterData({ ...registerData, [e.target.name]: e.target.value });
+    }
+  };
+
+  // 🔐 LOGIN CON GOOGLE
+  const handleGoogleLogin = async () => {
+    setLoginError("");
+    try {
+      await loginWithGoogle();
+      navigate("/");
+    } catch (err) {
+      console.error("❌ Error Google Login:", err.code, err.message);
+      setLoginError("❌ Error al iniciar sesión con Google.");
     }
   };
 
@@ -180,6 +192,20 @@ const Auth = () => {
 
           <button type="submit" className="btn-login">
             LOG IN
+          </button>
+
+          <button
+            type="button"
+            className="btn-google"
+            onClick={handleGoogleLogin}
+          >
+            <img
+              src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+              alt="Google"
+              width={18}
+              height={18}
+            />
+            Continuar con Google
           </button>
 
           {/* ENLACE OLVIDÉ MI CONTRASEÑA */}
