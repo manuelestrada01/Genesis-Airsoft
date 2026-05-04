@@ -1,230 +1,117 @@
-/* ================================= */
-/* === CONTADOR + BOTÓN DESKTOP ==== */
-/* ================================= */
-
-@media (min-width: 769px) {
-
-  .count-row {
-    align-items: stretch; /* fuerza misma altura */
-  }
-
-  .count-box {
-    height: 50px;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-  }
-
-  .count-btn {
-    height: 34px;
-    width: 38px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .count-number {
-    min-width: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .count-add-btn {
-    height: 50px;
-    padding: 0 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-/* === FILA PRINCIPAL: selector + botón === */
+/* ============================================
+   ITEM COUNT — DARK THEME
+   ============================================ */
 .count-row {
   display: flex;
   align-items: center;
-  gap: 15px; /* separación entre selector y botón */
+  gap: 14px;
   margin-top: 10px;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font);
+  width: 100%;
 }
 
-/* === SELECTOR DE CANTIDAD === */
 .count-box {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-
-  background: #f8f8f8;
-  border: 1px solid #dcdcdc;
-  border-radius: 8px;
-
-  padding: 10px 15px;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 0 14px;
   width: fit-content;
+  height: 46px;
 }
 
-/* === BOTONES +/- === */
 .count-btn {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 18px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 0;
+  width: 34px;
+  height: 30px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
   cursor: pointer;
-  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
 }
 
 .count-btn:hover {
-  background: #eee;
-  border-color: #999;
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-/* === NÚMERO === */
 .count-number {
-  font-size: 18px;
-  font-weight: bold;
-  min-width: 35px;
+  font-size: 17px;
+  font-weight: 700;
+  min-width: 36px;
   text-align: center;
+  color: var(--text);
 }
 
-/* === BOTÓN AGREGAR === */
 .count-add-btn {
-  background: #000000;
-  color: white;
+  background: var(--accent);
+  color: #000;
   border: none;
-  padding: 12px 22px;
-  font-size: 16px;
-  border-radius: 8px;
+  padding: 0 16px;
+  height: 46px;
+  font-size: 14px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  white-space: nowrap; /* evita saltos de línea */
+  font-weight: 800;
+  font-family: var(--font);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
 }
 
 .count-add-btn:hover {
-  background: #000000;
+  background: var(--accent-hover);
+  box-shadow: 0 0 16px var(--accent-glow);
+  transform: translateY(-1px);
 }
 
-/* === Estado ✔ agregado === */
 .count-add-btn.added {
-  background: #28a745 !important;
-  color: #fff;
-  transform: scale(1.05);
+  background: rgba(200,244,0,0.2) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--accent);
+  transform: scale(1.03);
 }
 
-/* Deshabilitado mientras muestra ✔ */
-.count-add-btn:disabled {
-  cursor: default;
-  opacity: 0.9;
-}
+.count-add-btn:disabled { cursor: default; opacity: 0.9; }
 
-/* Ocultamos el estilo viejo (por si queda algo) */
 .count-container,
-.count-after {
-  display: none;
-}
+.count-after { display: none; }
 
-/* ================================================= */
-/* ============ FIX CONTADOR SOLO MOBILE =========== */
-/* ================================================= */
-
-@media (max-width: 768px) {
-
-  /* Caja del contador */
-  .count-box {
-    background: #f5f5f5;
-    border: 1px solid #ccc;
-  }
-
-  /* Botones + / - */
-  .count-btn {
-    background: #ffffff;
-    border: 1px solid #bbb;
-    color: #222;          /* 🔥 deja de ser blanco */
-    font-size: 20px;
-    font-weight: 600;
-    padding: 8px 16px;
-  }
-
-  .count-btn:hover {
-    background: #eee;
-    color: #000;
-  }
-
-  /* Número */
-  .count-number {
-    color: #000;          /* 🔥 bien visible */
-    font-size: 20px;
-    font-weight: 700;
-    min-width: 40px;
-  }
-}
-
-/* ================================================= */
-/* === CONTADOR Y BOTÓN MISMA ALTURA (SOLO MOBILE) == */
-/* ================================================= */
-
-@media (max-width: 768px) {
-
-  /* Fila completa */
-  .count-row {
-    align-items: stretch; /* 🔥 fuerza misma altura */
-  }
-
-  /* Caja del contador */
-  .count-box {
-    height: 48px;                 /* 🔥 misma altura visual */
-    padding: 0 12px;
-    display: flex;
-    align-items: center;
-  }
-
-  /* Botones + / - */
-  .count-btn {
-    height: 32px;
-    width: 36px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Número */
-  .count-number {
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Botón agregar */
-  .count-add-btn {
-    height: 48px;                 /* 🔥 clave */
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-/* ================================= */
-/* 🖥️ FIX ALIGN BOTÓN AGREGAR – DESKTOP */
-/* ================================= */
+/* ============================================
+   DESKTOP ALIGN
+   ============================================ */
 @media (min-width: 769px) {
+  .count-row { align-items: stretch; width: 100%; }
+  .count-box { height: 50px; }
+  .count-btn { height: 34px; width: 38px; }
+  .count-number { display: flex; align-items: center; justify-content: center; }
+  .count-add-btn { height: 50px; flex: 1; }
+  .btns-pro { width: 100%; }
+}
 
-  /* La fila ocupa todo el ancho del panel */
-  .count-row {
-    width: 100%;
-  }
-
-  /* Empuja el botón al extremo derecho */
-  .count-add-btn {
-    margin-left: auto;
-  }
-
-  /* Alineación visual perfecta con "Comprar ahora" */
-  .btns-pro {
-    width: 100%;
-  }
+/* ============================================
+   MOBILE
+   ============================================ */
+@media (max-width: 768px) {
+  .count-row { align-items: stretch; }
+  .count-box { height: 46px; padding: 0 10px; }
+  .count-btn { height: 30px; width: 34px; }
+  .count-number { display: flex; align-items: center; justify-content: center; }
+  .count-add-btn { height: 46px; padding: 0 18px; }
 }

@@ -15,11 +15,12 @@ const toHtml = (text) => {
 
   let html = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-  // Convierte separadores tipo bullet a salto de línea.
-  // Cubre: · (U+00B7), • (U+2022), · (U+2027), ∙ (U+2219), ⋅ (U+22C5), y similares
+  // Bullets → newline + bullet char
   html = html.replace(/\s*[\u00B7\u2022\u2027\u2219\u22C5\u25CF\u25AA\u25E6]\s*/g, "\n\u2022 ");
 
-  html = html.replace(/\n+/g, "<br />");
+  // Multiple newlines → single paragraph break (no doble <br />)
+  html = html.replace(/\n{2,}/g, "</p><p>").replace(/\n/g, "<br />");
+  html = "<p>" + html + "</p>";
 
   return html;
 };
@@ -115,8 +116,7 @@ const ProductDetail = () => {
   );
 
   const FULL_DESC = product.description || "";
-  const SHORT_DESC =
-    FULL_DESC.length > 300 ? FULL_DESC.slice(0, 300) + "..." : FULL_DESC;
+  const hasLongDesc = FULL_DESC.length > 300;
 
   const handleBuyNow = () => {
     if (outOfStock) return;
@@ -186,14 +186,12 @@ const ProductDetail = () => {
 
         {/* DESCRIPCIÓN HTML */}
         <div
-          className="desc-pro html-description"
-          dangerouslySetInnerHTML={{
-            __html: toHtml(showFullDesc ? FULL_DESC : SHORT_DESC),
-          }}
+          className={`desc-pro html-description${showFullDesc ? " expanded" : ""}`}
+          dangerouslySetInnerHTML={{ __html: toHtml(FULL_DESC) }}
         />
 
         {/* BOTÓN LEER MÁS */}
-        {FULL_DESC.length > 300 && (
+        {hasLongDesc && (
           <button
             className="readmore-pro"
             onClick={() => setShowFullDesc(!showFullDesc)}

@@ -176,18 +176,33 @@ const ItemListContainer = () => {
       <ItemList products={products} />
 
       {!searchQuery && !noMoreProducts && products.length > 0 && (
-        <div style={{ textAlign: "center", marginTop: 30 }}>
+        <div style={{ textAlign: "center", marginTop: 30, marginBottom: 40 }}>
           <button
             onClick={loadMoreProducts}
             disabled={loadingMore}
             style={{
-              padding: "12px 20px",
-              background: "#222",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
+              padding: "12px 32px",
+              background: "transparent",
+              color: "var(--accent)",
+              border: "1px solid var(--accent)",
+              borderRadius: "8px",
               cursor: "pointer",
-              fontSize: 16,
+              fontSize: "13px",
+              fontWeight: "700",
+              fontFamily: "var(--font)",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              transition: "background 0.2s, box-shadow 0.2s",
+            }}
+            onMouseEnter={e => {
+              e.target.style.background = "var(--accent)";
+              e.target.style.color = "#000";
+              e.target.style.boxShadow = "0 0 16px var(--accent-glow)";
+            }}
+            onMouseLeave={e => {
+              e.target.style.background = "transparent";
+              e.target.style.color = "var(--accent)";
+              e.target.style.boxShadow = "none";
             }}
           >
             {loadingMore ? "Cargando..." : "Cargar más"}
@@ -196,7 +211,7 @@ const ItemListContainer = () => {
       )}
 
       {noMoreProducts && !searchQuery && products.length > 0 && (
-        <p style={{ textAlign: "center", marginTop: 25, color: "#777" }}>
+        <p style={{ textAlign: "center", marginTop: 25, marginBottom: 40, color: "var(--text-muted)", fontSize: "13px" }}>
           No hay más productos para mostrar.
         </p>
       )}

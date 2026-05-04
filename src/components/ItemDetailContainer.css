@@ -1,48 +1,69 @@
-/* === LAYOUT GENERAL === */
+/* ============================================
+   PRODUCT DETAIL — Dark theme
+   ============================================ */
 .detail-container-pro {
   display: grid;
-  grid-template-columns: 110px 1fr 400px;
-  gap: 36px;
-  margin-top: 150px;
-  padding: 20px 120px 60px;
+  grid-template-columns: 100px 1fr 380px;
+  gap: 32px;
+  margin-top: 160px;
+  padding: 20px 80px 60px;
   align-items: flex-start;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font);
+  background: var(--bg);
+  min-height: 100vh;
 }
 
-/* === ESTADO PAUSADO === */
+/* ============================================
+   ESTADO PAUSADO
+   ============================================ */
 .paused-container-pro {
-  padding: 60px 30px;
+  padding: 80px 30px;
   text-align: center;
-  font-family: "Montserrat", sans-serif;
+  font-family: var(--font);
+  background: var(--bg);
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
+
 .paused-container-pro h2 {
   font-size: 22px;
   font-weight: 800;
-  color: #111;
+  color: var(--text);
   margin-bottom: 8px;
 }
+
 .paused-container-pro p {
   font-size: 14px;
-  color: #777;
+  color: var(--text-muted);
 }
+
 .paused-back-btn {
   margin-top: 24px;
-  padding: 11px 28px;
-  background: #111;
-  color: #ffe600;
+  padding: 12px 28px;
+  background: var(--accent);
+  color: #000;
   border: none;
-  border-radius: 6px;
-  font-family: "Montserrat", sans-serif;
+  border-radius: var(--radius-md);
+  font-family: var(--font);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--transition), box-shadow var(--transition);
 }
-.paused-back-btn:hover { background: #333; }
 
-/* === MINIATURAS === */
+.paused-back-btn:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+/* ============================================
+   MINIATURAS
+   ============================================ */
 .gallery-thumbs-pro {
   display: flex;
   flex-direction: column;
@@ -51,39 +72,49 @@
 
 .thumb-pro {
   width: 100%;
-  height: 88px;
+  height: 80px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   border: 2px solid transparent;
-  opacity: 0.65;
-  transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+  opacity: 0.55;
+  transition: opacity var(--transition), border-color var(--transition), transform var(--transition);
+  background: var(--surface);
 }
 
 .thumb-pro:hover {
   opacity: 1;
   transform: scale(1.04);
+  border-color: var(--border-light);
 }
 
 .thumb-pro.active {
-  border-color: #111;
+  border-color: var(--accent);
   opacity: 1;
+  box-shadow: 0 0 10px var(--accent-dim);
 }
 
-/* === IMAGEN PRINCIPAL === */
+/* ============================================
+   IMAGEN PRINCIPAL
+   ============================================ */
 .gallery-main-pro {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
 }
 
 .main-img-pro {
   width: 95%;
-  max-height: 540px;
+  max-height: 520px;
   object-fit: contain;
-  border-radius: 12px;
-  transition: transform 0.3s ease;
+  border-radius: var(--radius-lg);
+  transition: transform 0.35s ease;
+  padding: 16px;
 }
 
 .main-img-pro:hover {
@@ -93,25 +124,28 @@
 /* BADGE DESCUENTO */
 .discount-badge-pro {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: #ff3e3e;
-  color: #fff;
+  top: 14px;
+  left: 14px;
+  background: var(--accent);
+  color: #000;
   padding: 7px 12px;
   font-weight: 800;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   letter-spacing: 0.3px;
+  box-shadow: 0 2px 10px var(--accent-glow);
 }
 
-/* === INFO PANEL === */
+/* ============================================
+   INFO PANEL
+   ============================================ */
 .info-panel-pro {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
-/* Categoría como pill badge */
+/* Categoría */
 .category-pro {
   display: inline-block;
   width: fit-content;
@@ -119,17 +153,18 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  color: #888;
-  background: #f2f2f2;
-  padding: 5px 10px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  padding: 5px 12px;
   border-radius: 999px;
 }
 
 .title-pro {
   font-size: 28px;
-  font-weight: 800;
-  color: #111;
-  line-height: 1.2;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.15;
   margin: 0;
 }
 
@@ -143,110 +178,154 @@
   text-transform: uppercase;
   border-radius: 999px;
   width: fit-content;
-}
-.stock-badge-pro.in {
-  background: #e6f4ea;
-  color: #2e7d32;
-}
-.stock-badge-pro.out {
-  background: #fdecea;
-  color: #c62828;
+  font-family: var(--font);
 }
 
-/* === PRECIOS === */
+.stock-badge-pro.in {
+  background: rgba(200, 244, 0, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(200, 244, 0, 0.3);
+}
+
+.stock-badge-pro.out {
+  background: rgba(255, 59, 59, 0.12);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 59, 59, 0.3);
+}
+
+/* ============================================
+   PRECIOS
+   ============================================ */
 .price-box-pro {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: baseline;
 }
 
 .price-final-pro {
-  font-size: 32px;
-  font-weight: 800;
-  color: #111;
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--accent);
+  font-family: var(--font);
 }
 
 .price-original-pro {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 500;
   text-decoration: line-through;
-  color: #bbb;
+  color: var(--text-subtle);
 }
 
-/* PRECIO TRANSFERENCIA */
+/* TRANSFERENCIA */
 .transfer-info-pro {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background: rgba(255, 230, 0, 0.1);
-  border-left: 3px solid #ffe600;
-  border-radius: 0 6px 6px 0;
-  padding: 10px 14px;
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px;
 }
+
 .transfer-info-pro__label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #888;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
 }
+
 .transfer-info-pro__price {
-  font-size: 22px;
-  font-weight: 800;
-  color: #111;
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--accent);
+  font-family: var(--font);
 }
+
 .transfer-info-pro__hint {
   font-size: 11px;
-  color: #aaa;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
-/* === DESCRIPCIÓN === */
+/* ============================================
+   DESCRIPCIÓN
+   ============================================ */
 .desc-pro {
   font-size: 14px;
-  line-height: 1.7;
-  color: #444;
+  line-height: 1.65;
+  color: var(--text-muted);
+  max-height: 140px;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
 }
-.desc-pro p { margin-bottom: 12px; color: #444; }
-.desc-pro ul,
-.desc-pro ol { margin-left: 18px; margin-bottom: 12px; }
-.desc-pro li { margin-bottom: 6px; color: #444; }
-.desc-pro h1,
-.desc-pro h2,
-.desc-pro h3 { color: #111; margin: 16px 0 8px; font-weight: 700; }
-.desc-pro a { color: #b8860b; font-weight: 600; text-decoration: none; }
+
+.desc-pro.expanded {
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Scrollbar dentro de descripción */
+.desc-pro::-webkit-scrollbar { width: 4px; }
+.desc-pro::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+.desc-pro p              { margin: 0 0 8px; color: var(--text-muted); }
+.desc-pro p:last-child   { margin-bottom: 0; }
+.desc-pro ul, .desc-pro ol { margin-left: 18px; margin-bottom: 8px; }
+.desc-pro li             { margin-bottom: 4px; color: var(--text-muted); }
+.desc-pro h1, .desc-pro h2, .desc-pro h3 {
+  color: var(--text);
+  margin: 12px 0 6px;
+  font-weight: 700;
+}
+
+.desc-pro a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
 .desc-pro a:hover { text-decoration: underline; }
 
 .readmore-pro {
   background: none;
   border: none;
   cursor: pointer;
-  color: #111;
-  font-family: "Montserrat", sans-serif;
-  font-size: 13px;
+  color: var(--accent);
+  font-family: var(--font);
+  font-size: 12px;
   font-weight: 700;
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 3px;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition);
+  display: block;
+  margin-top: 4px;
 }
-.readmore-pro:hover { opacity: 0.6; }
 
-/* === CANTIDAD === */
+.readmore-pro:hover { opacity: 0.7; }
+
+/* ============================================
+   CANTIDAD
+   ============================================ */
 .qty-box-pro {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .qty-box-pro label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #888;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
 }
 
-/* === BOTONES === */
+/* ============================================
+   BOTONES
+   ============================================ */
 .btns-pro {
   display: flex;
   flex-direction: column;
@@ -255,67 +334,90 @@
 }
 
 .btn-buy-pro {
-  background: #111;
-  color: #ffe600;
+  background: var(--accent);
+  color: #000;
   border: none;
-  padding: 15px;
+  padding: 16px;
   font-size: 14px;
-  font-family: "Montserrat", sans-serif;
-  font-weight: 800;
+  font-family: var(--font);
+  font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
 }
-.btn-buy-pro:hover:not(:disabled) { background: #333; }
+
+.btn-buy-pro:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 0 20px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
 .btn-buy-pro:disabled {
-  background: #ccc;
-  color: #888;
+  background: var(--surface-3);
+  color: var(--text-subtle);
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-cart-pro {
   background: transparent;
-  color: #111;
-  border: 1.5px solid #111;
+  color: var(--text);
+  border: 1.5px solid var(--border-light);
   padding: 14px;
-  font-size: 14px;
-  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-family: var(--font);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--transition), color var(--transition),
+              border-color var(--transition), box-shadow var(--transition);
 }
-.btn-cart-pro:hover:not(:disabled) { background: #111; color: #fff; }
 
-/* html-description redundante — unificado en desc-pro */
-.html-description ul,
-.html-description ol { margin-left: 20px; margin-top: 10px; }
-.html-description li { margin-bottom: 6px; line-height: 1.4; }
-.html-description h1,
-.html-description h2,
-.html-description h3 { margin-top: 15px; }
+.btn-cart-pro:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
 
-/* =============================== */
-/* 📱 MOBILE                        */
-/* =============================== */
+/* HTML description */
+.html-description ul, .html-description ol { margin-left: 20px; margin-top: 10px; }
+.html-description li  { margin-bottom: 6px; line-height: 1.4; color: var(--text-muted); }
+.html-description h1, .html-description h2, .html-description h3 {
+  margin-top: 15px;
+  color: var(--text);
+}
+
+/* ============================================
+   MOBILE
+   ============================================ */
 @media (max-width: 768px) {
   .detail-container-pro {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 12px 16px 40px;
-    margin-top: 120px;
+    padding: 14px 14px 60px;
+    margin-top: 130px;
+    background: var(--bg);
+    min-height: 100vh;
   }
 
-  /* Imagen principal primero */
-  .gallery-main-pro { order: 1; width: 100%; }
-  .main-img-pro { width: 100%; max-height: 300px; }
+  .gallery-main-pro {
+    order: 1;
+    width: 100%;
+    background: var(--surface);
+  }
 
-  /* Miniaturas horizontales debajo de imagen */
+  .main-img-pro {
+    width: 100%;
+    max-height: 280px;
+    padding: 12px;
+  }
+
   .gallery-thumbs-pro {
     order: 2;
     flex-direction: row;
@@ -323,33 +425,22 @@
     gap: 8px;
     overflow-x: auto;
   }
-  .thumb-pro { width: 60px; height: 60px; flex-shrink: 0; }
 
-  /* Info panel */
-  .info-panel-pro { order: 3; gap: 14px; }
+  .thumb-pro {
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+  }
 
-  .title-pro { font-size: 20px; color: #fff; }
-  .price-final-pro { font-size: 26px; color: #fff; }
-  .price-original-pro { font-size: 14px; color: #bbb; }
+  .info-panel-pro {
+    order: 3;
+    gap: 14px;
+  }
 
-  .transfer-info-pro { background: rgba(255, 230, 0, 0.15); }
-  .transfer-info-pro__price { font-size: 20px; color: #fff; }
-  .transfer-info-pro__label { color: #aaa; }
+  .title-pro { font-size: 22px; }
+  .price-final-pro { font-size: 28px; }
+  .price-original-pro { font-size: 15px; }
+  .transfer-info-pro__price { font-size: 22px; }
 
-  .category-pro { background: rgba(255,255,255,0.12); color: #ccc; }
-
-  .stock-badge-pro.in { background: rgba(40, 167, 69, 0.18); color: #6fcf97; }
-  .stock-badge-pro.out { background: rgba(198, 40, 40, 0.18); color: #eb5757; }
-
-  .desc-pro { font-size: 14px; color: #ccc; }
-  .desc-pro p, .desc-pro li { color: #ccc; }
-  .desc-pro h1, .desc-pro h2, .desc-pro h3 { color: #fff; }
-
-  .readmore-pro { color: #fff; }
-
-  .qty-box-pro label { color: #aaa; }
-
-  .btn-buy-pro { width: 100%; padding: 15px; font-size: 14px; }
-  .btn-cart-pro { width: 100%; border-color: #555; color: #eee; }
-  .btn-cart-pro:hover:not(:disabled) { background: #333; border-color: #333; }
+  .btn-buy-pro, .btn-cart-pro { width: 100%; }
 }
