@@ -1,80 +1,159 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap');
 
-html, body {
-  font-family: "Montserrat", sans-serif;
-}
-
+/* ============================================
+   DESIGN TOKENS — Genesis Airsoft
+   Palette: #0f0f0f + #c8f400 (lime)
+   ============================================ */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --bg:           #0f0f0f;
+  --surface:      #1a1a1a;
+  --surface-2:    #242424;
+  --surface-3:    #2e2e2e;
+  --accent:       #c8f400;
+  --accent-dim:   rgba(200, 244, 0, 0.10);
+  --accent-glow:  rgba(200, 244, 0, 0.25);
+  --accent-hover: #d6ff1a;
+  --text:         #ffffff;
+  --text-muted:   #888888;
+  --text-subtle:  #555555;
+  --border:       #2a2a2a;
+  --border-light: #333333;
+  --radius-sm:    6px;
+  --radius-md:    10px;
+  --radius-lg:    16px;
+  --transition:   0.22s ease;
+  --font:         'Montserrat', sans-serif;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: var(--font);
+  color-scheme: dark;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* ============================================
+   BASE RESET
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 html, body, #root {
   margin: 0;
   padding: 0;
-  height: 100%;        /* ocupa toda la ventana */
+  width: 100%;
+}
+
+html, body {
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* Forzar dark siempre — no al auto light */
+@media (prefers-color-scheme: light) {
+  html, body {
+    background: var(--bg) !important;
+    color: var(--text) !important;
+  }
 }
 
 body {
   display: flex;
-  flex-direction: column; /* apilar header/main/footer */
-  min-height: 100vh;      /* mínimo altura de la ventana */
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* ============================================
+   LINKS
+   ============================================ */
+a {
+  color: var(--text);
+  text-decoration: none;
+  transition: color var(--transition);
 }
 
+a:hover {
+  color: var(--accent);
+}
+
+/* ============================================
+   TIPOGRAFÍA BASE
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.15;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; }
+h2 { font-size: clamp(1.4rem, 3vw, 2.2rem); font-weight: 800; }
+h3 { font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: 700; }
+
+p {
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ============================================
+   BOTONES BASE
+   ============================================ */
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+  font-family: var(--font);
   cursor: pointer;
-  transition: border-color 0.25s;
+  border: none;
+  outline: none;
+  transition: background var(--transition), color var(--transition),
+              box-shadow var(--transition), transform var(--transition);
 }
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
+
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+/* ============================================
+   INPUTS BASE
+   ============================================ */
+input, textarea, select {
+  font-family: var(--font);
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  color-scheme: dark;
 }
 
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
 
+input::placeholder, textarea::placeholder {
+  color: var(--text-subtle);
+}
+
+/* Scrollbar dark */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-subtle); }
+
+/* ============================================
+   UTILIDADES
+   ============================================ */
+.text-accent   { color: var(--accent); }
+.text-muted    { color: var(--text-muted); }
+.bg-surface    { background: var(--surface); }
+.bg-surface-2  { background: var(--surface-2); }
+
+/* Tap highlight mobile */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+}

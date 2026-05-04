@@ -1,14 +1,17 @@
+/* ============================================
+   AUTH — DARK THEME
+   ============================================ */
 .auth-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
   max-width: 1000px;
-  margin: 190px auto 50px auto; /* 👈 margen superior */
+  margin: 190px auto 50px;
   padding: 20px;
-  position: relative; /* necesario para ubicar mensajes */
+  position: relative;
+  background: var(--bg);
 }
 
-/* 🔹 Contenedor para los mensajes de error/éxito */
 .auth-messages {
   position: absolute;
   top: -60px;
@@ -16,42 +19,39 @@
   transform: translateX(-50%);
   text-align: center;
   width: 100%;
-  height: 40px; /* espacio reservado */
+  height: 40px;
 }
 
-/* 🔹 Mensajes */
 .auth-error,
 .auth-success {
   margin: 0;
   display: inline-block;
-  padding: 10px 15px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
 }
 
-.auth-error {
-  background-color: #e74c3c;
-  color: #fff;
-}
+.auth-error   { background: rgba(255,59,59,0.15); color: #ff6b6b; border: 1px solid rgba(255,59,59,0.3); }
+.auth-success { background: rgba(200,244,0,0.12); color: var(--accent); border: 1px solid rgba(200,244,0,0.3); }
 
-.auth-success {
-  background-color: #27ae60;
-  color: #fff;
-}
-
-/* 🔹 Formulario */
+/* ============================================
+   AUTH BOX
+   ============================================ */
 .auth-box {
-  padding: 20px;
-}
-
-.auth-box:last-child {
-  border-right: none;
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 28px;
 }
 
 .auth-box h2 {
   margin-bottom: 20px;
-  color: #222;
+  color: var(--text);
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: var(--font);
 }
 
 .auth-box form {
@@ -61,241 +61,172 @@
 
 .auth-box label {
   margin-bottom: 5px;
-  font-size: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 700;
 }
 
 .auth-box input {
-  margin-bottom: 15px;
-  padding: 10px;
+  margin-bottom: 14px;
+  padding: 11px 14px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
   outline: none;
-  transition: border-color 0.2s ease;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font);
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .auth-box input:focus {
-  border-color: #888;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
-/* 🔹 Botones */
+.auth-box input::placeholder { color: var(--text-subtle); }
+
+/* ============================================
+   BOTONES
+   ============================================ */
 .btn-login,
 .btn-register {
-  background: #222;
-  color: #ffffff;
+  background: var(--accent);
+  color: #000;
   border: none;
-  padding: 12px;
+  padding: 13px;
   cursor: pointer;
   border-radius: 20px;
   margin-bottom: 10px;
-  transition: background 0.3s ease;
+  font-weight: 800;
+  font-family: var(--font);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background var(--transition), box-shadow var(--transition);
 }
 
 .btn-login:hover,
 .btn-register:hover {
-  background: #444;
+  background: var(--accent-hover);
+  box-shadow: 0 0 16px var(--accent-glow);
 }
 
-/* 🔹 Botón Google */
+/* GOOGLE */
 .btn-google {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: #fff;
-  color: #333;
-  border: 1px solid #ccc;
-  padding: 10px 12px;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-light);
+  padding: 11px 12px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
   margin-bottom: 10px;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background var(--transition), border-color var(--transition);
 }
 
 .btn-google:hover {
-  background: #f5f5f5;
-  border-color: #aaa;
+  background: var(--surface-3);
+  border-color: var(--border-light);
 }
 
-/* 🔹 Extras */
+/* EXTRA */
 .options {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .privacy {
-  font-size: 13px;
+  font-size: 12px;
   margin: 10px 0;
-  color: #555;
+  color: var(--text-muted);
 }
 
 .forgot-password-link {
   margin-top: 10px;
-  color: #0077ff;
+  color: var(--accent);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   text-decoration: underline;
 }
 
 .reset-box {
   margin-top: 15px;
-  background: #f5f5f5;
-  padding: 15px;
-  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-light);
+  padding: 16px;
+  border-radius: var(--radius-md);
 }
 
 .btn-reset {
   margin-top: 10px;
   width: 100%;
-  padding: 10px;
-  background: #111;
-  color: white;
+  padding: 11px;
+  background: var(--accent);
+  color: #000;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  font-weight: 800;
+  font-family: var(--font);
+  transition: background var(--transition);
 }
 
-/* ========================= */
-/* LOGIN / REGISTER - MOBILE */
-/* ========================= */
+.btn-reset:hover { background: var(--accent-hover); }
+
+/* ============================================
+   MOBILE
+   ============================================ */
 @media (max-width: 768px) {
-
-  /* CONTENEDOR GENERAL */
-  .auth-container,
-  .login-container,
-  .register-container {
+  .auth-container {
+    grid-template-columns: 1fr;
+    margin: 20px auto 40px;
     width: 100%;
-    min-height: calc(100vh - 160px); /* descuenta header */
-    padding: 25px 18px 40px;
-    background: #1e1e1e;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    min-height: calc(100vh - 160px);
+    padding: 20px 14px 40px;
+    background: var(--bg);
+    gap: 20px;
   }
 
-  /* TITULOS */
-  .auth-container h1,
-  .login-container h1,
-  .register-container h1 {
-    color: #ffffff;
-    font-size: 26px;
-    font-weight: 700;
-    margin-bottom: 25px;
+  .auth-box {
+    background: var(--surface);
+    padding: 20px 16px;
   }
 
-  /* LABELS */
-  .auth-container label,
-  .login-container label,
-  .register-container label {
-    color: #cfcfcf;
-    font-size: 14px;
-    margin-bottom: 6px;
-  }
+  .auth-box h2 { font-size: 22px; }
 
-  /* INPUTS */
-  .auth-container input,
-  .login-container input,
-  .register-container input {
+  .auth-box input {
     width: 100%;
-    height: 52px;
-    border-radius: 10px;
-    border: 1px solid #444;
-    background: #2a2a2a;
-    color: #fff;
+    height: 50px;
     font-size: 15px;
     padding: 0 14px;
-    margin-bottom: 18px;
+    border-radius: var(--radius-md);
   }
 
-  .auth-container input::placeholder {
-    color: #aaa;
-  }
-
-  /* BOTÓN PRINCIPAL (LOG IN / REGISTRARSE) */
-  .auth-container button[type="submit"],
-  .login-container button[type="submit"],
-  .register-container button[type="submit"] {
+  .btn-login,
+  .btn-register {
     width: 100%;
-    height: 56px;
+    height: 52px;
     border-radius: 30px;
-    background: #ffffff; /* estilo MK */
-    color: #000;
-    font-size: 16px;
-    font-weight: 700;
-    border: none;
-    margin-top: 10px;
+    font-size: 15px;
   }
 
-  /* CHECKBOX */
-  .auth-container .remember-me,
-  .login-container .remember-me {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #bbb;
-    font-size: 14px;
-    margin: 15px 0;
-  }
-
-  /* LINKS */
-  .auth-container a,
-  .login-container a,
-  .register-container a {
-    color: #4ea1ff;
-    font-size: 14px;
-    text-decoration: none;
-  }
-
-  /* SEPARADOR */
-  .auth-divider {
-    margin: 35px 0 20px;
-    height: 1px;
-    background: #333;
-    width: 100%;
-  }
-
-  /* TEXTO CAMBIO LOGIN / REGISTER */
-  .auth-switch {
-    text-align: center;
-    margin-top: 20px;
-    color: #ccc;
-    font-size: 14px;
-  }
-
-  .auth-switch a {
-    color: #fff;
-    font-weight: 600;
-  }
-
-  /* TITULOS LOGIN / REGISTER - MOBILE */
-.auth-box h2,
-.auth-container h2,
-.login-container h2,
-.register-container h2 {
-  color: #f5f5f5;      /* claro pero no blanco puro */
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-}
-
-
-
-/* FIX: Título de "Restablecer contraseña" en mobile */
-@media (max-width: 768px) {
   .reset-box h2,
   .reset-box h3 {
-    color: #222;          /* texto oscuro para fondo claro */
-    font-size: 22px;
-    font-weight: 700;
+    color: var(--text);
+    font-size: 20px;
   }
 
   .reset-box p,
-  .reset-box label {
-    color: #444;
-  }
+  .reset-box label { color: var(--text-muted); }
 }

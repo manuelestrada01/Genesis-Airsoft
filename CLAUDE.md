@@ -65,3 +65,12 @@ Key business constants in `Checkout.jsx`:
 ### Styling
 
 Per-component CSS files. `useIsMobile.js` hook (768px breakpoint) drives mobile-specific layout. Dark/light mode is toggled globally.
+
+## Skills (auto-apply)
+
+- **UI/frontend changes** (components, CSS, layouts, new screens) → use `frontend-design` skill
+- **Animations** (GSAP, scroll, transitions) → use `gsap-react` + `gsap-scrolltrigger` skills
+- **Commits** → use `caveman-commit` skill
+- **Code review / PR review** → use `caveman-review` skill
+- **Code cleanup after changes** → use `simplify` skill
+- **settings.json / hooks / permissions changes** → use `update-config` skill

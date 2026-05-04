@@ -3,9 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Public components
 import ProductDetail from "./components/ItemDetailContainer";
-import NavBarTop from "./components/NavBarTop";
-import NavBarBottom from "./components/NavBarBottom";
-import MobileNavBar from "./components/MobileNavBar"; // 👈 NUEVO
+import NavBarDesktop from "./components/NavBarDesktop";
+import MobileNavBar from "./components/MobileNavBar";
 import Carousel from "./components/Carousel";
 import Greetting from "./components/greeting";
 import ItemListContainer from "./components/ItemListContainer";
@@ -114,12 +113,9 @@ function App() {
 
       {/* ================= NAVBARS ================= */}
       {isMobile ? (
-        <MobileNavBar /> // 👈 SOLO MOBILE
+        <MobileNavBar />
       ) : (
-        <>
-          <NavBarTop />
-          <NavBarBottom />
-        </>
+        <NavBarDesktop />
       )}
 
       {/* ================= PUBLIC ROUTES ================= */}

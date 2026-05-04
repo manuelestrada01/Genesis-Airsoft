@@ -1,32 +1,184 @@
+/* ============================================
+   FOOTER
+   ============================================ */
 .footer {
-  background: #222; /* color uniforme */
-  color: #fff;
-  padding: 20px 0;
-  text-align: center;
-
-  width: 100vw;   /* 👈 ocupa exactamente todo el viewport */
-  margin-left: calc(-50vw + 50%); /* 👈 corrige el “desplazamiento” */
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  color: var(--text);
+  padding: 12px 0 16px;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  font-family: var(--font);
 }
 
-/* Top (logo centrado) */
-.footer-top {
-  margin-bottom: 15px;
+/* Top accent line */
+.footer::before {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 3px;
+  background: var(--accent);
+  margin: 0 auto 16px;
+  border-radius: 2px;
+}
+
+/* ============================================
+   GRID
+   ============================================ */
+.footer-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto 20px;
+  padding: 0 24px;
+  text-align: center;
+}
+
+/* ============================================
+   BRAND COL
+   ============================================ */
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }
 
 .footer-logo {
-  height: 80px; /* ajusta tamaño según tu logo */
+  height: 72px;
+  width: auto;
+  filter: brightness(1.05);
+  transition: filter var(--transition);
 }
 
-/* Bottom (texto copyright) */
+.footer-logo:hover {
+  filter: drop-shadow(0 0 12px var(--accent-glow));
+}
+
+.footer-tagline {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* ============================================
+   LINKS COL
+   ============================================ */
+.footer-col h4 {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-links a {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition), padding-left var(--transition);
+  display: block;
+}
+
+.footer-links a:hover {
+  color: var(--accent);
+  padding-left: 4px;
+}
+
+/* ============================================
+   SOCIAL COL
+   ============================================ */
+.footer-social {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.footer-social a svg {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.footer-social a:hover { color: var(--accent); }
+
+/* ============================================
+   DIVIDER + BOTTOM
+   ============================================ */
+.footer-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0 24px 20px;
+}
+
 .footer-bottom {
-  border-top: 1px solid #333; /* línea separadora */
-  padding-top: 10px;
-  font-size: 14px;
-  color: #bbb;
+  text-align: center;
+  padding: 0 24px;
+}
+
+.footer-bottom p {
+  font-size: 12px;
+  color: var(--text-subtle);
+  margin: 0 0 4px;
 }
 
 .footer-powered {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #555;
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
+.footer-powered a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-powered a:hover { text-decoration: underline; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 640px) {
+  .footer {
+    padding: 10px 0 12px;
+  }
+
+  .footer::before {
+    margin: 0 auto 12px;
+  }
+
+  .footer-grid {
+    gap: 12px;
+    margin: 0 auto 14px;
+  }
+
+  .footer-social {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
 }

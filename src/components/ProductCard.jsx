@@ -48,25 +48,25 @@ const ProductCard = ({
     <>
       <div className="product-card">
 
-        {/* 🔥 BADGE DE DESCUENTO */}
-        {discount > 0 && (
-          <div className="discount-badge">-{discount}%</div>
-        )}
+        {/* IMAGE ZONE — fondo claro intencional */}
+        <div className="product-img-wrap">
+          {discount > 0 && (
+            <div className="discount-badge">-{discount}%</div>
+          )}
 
-        {/* Imagen clickeable */}
-        <Link to={`/product/${id}`}>
-          <img
-            src={finalImage}
-            alt={name}
-            className="product-img"
-            onError={(e) => (e.target.src = "/placeholder.jpg")}
-          />
-        </Link>
+          <Link to={`/product/${id}`}>
+            <img
+              src={finalImage}
+              alt={name}
+              className="product-img"
+              onError={(e) => (e.target.src = "/placeholder.jpg")}
+            />
+          </Link>
 
-        {/* Quick View */}
-        <button className="quick-view-btn" onClick={() => setShowPreview(true)}>
-          <FaSearch />
-        </button>
+          <button className="quick-view-btn" onClick={() => setShowPreview(true)}>
+            <FaSearch />
+          </button>
+        </div>
 
         <div className="product-info">
           <Link

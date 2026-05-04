@@ -3,7 +3,18 @@
     "allow": [
       "Bash(wc -l /c/Users/jetsa/Coolvending/src/pages/*/*.jsx /c/Users/jetsa/Coolvending/src/services/firebase/*.js /c/Users/jetsa/Coolvending/src/shared/utils/*.jsx /c/Users/jetsa/Coolvending/src/shared/layout/*.jsx)",
       "Bash(python3 -c \":*)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(tasklist)",
+      "Bash(wmic process:*)",
+      "Bash(npm install:*)",
+      "Bash(npm list:*)",
+      "Bash(npm run:*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(node_modules/.bin/vite build:*)"
     ]
   }
 }
