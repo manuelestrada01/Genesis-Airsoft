@@ -231,18 +231,20 @@
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 1.15rem;
-  padding: 8px;
+  font-size: 1.2rem;
+  padding: 9px;
   cursor: pointer;
-  transition: color var(--transition);
+  transition: color var(--transition), background var(--transition);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
+  text-decoration: none;
 }
 
 .nd-icon-btn:hover {
   color: var(--accent);
+  background: var(--accent-dim);
 }
 
 /* Login / Mi Perfil button */
@@ -337,8 +339,8 @@
   min-width: 0;
   height: 50px;
   background: transparent;
-  border: 0 solid transparent;
-  border-width: 0;
+  border: none;
+  border-radius: 0;
   outline: none;
   box-shadow: none;
   -webkit-appearance: none;
@@ -348,6 +350,13 @@
   font-size: 1rem;
   font-family: var(--font);
   padding: 0;
+}
+
+.nd-search-inner .nd-search-input {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  outline: none;
 }
 
 .nd-search-input::placeholder {
@@ -376,9 +385,29 @@
 @media (max-width: 768px) {
   .nd-wrapper { display: none; }
 
-  .mnav-header {
+  /* Wrapper único fixed — se anima como unidad */
+  .mnav-wrapper {
     position: fixed;
-    top: 30px;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1502;
+    will-change: transform;
+  }
+
+  /* top-bar: relative dentro del wrapper */
+  .top-bar {
+    position: relative;
+    height: 32px;
+    line-height: 32px;
+    padding: 0;
+    width: 100%;
+    z-index: auto;
+  }
+
+  .mnav-header {
+    position: relative;
+    top: auto;
     left: 0;
     right: 0;
     z-index: 1500;

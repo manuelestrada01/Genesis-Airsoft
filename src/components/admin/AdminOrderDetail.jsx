@@ -326,25 +326,25 @@ export default function AdminOrderDetail() {
       statusLabel === "approved"
         ? "#16a34a"
         : statusLabel === "pending" || statusLabel.includes("transfer")
-        ? "#f59e0b"
+        ? "#d97706"
         : statusLabel === "rejected"
         ? "#dc2626"
-        : "#64748b",
+        : "#374151",
   };
 
   const cardStyle = {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
+    background: "#1a1a1a",
+    border: "1px solid #2a2a2a",
     borderRadius: 14,
     padding: 16,
-    boxShadow: "0 6px 22px rgba(0,0,0,0.06)",
+    boxShadow: "0 6px 22px rgba(0,0,0,0.4)",
   };
 
   const sectionTitleStyle = {
     margin: 0,
     fontSize: 14,
     fontWeight: 900,
-    color: "#111827",
+    color: "#fff",
     textTransform: "uppercase",
     letterSpacing: 0.6,
   };
@@ -354,31 +354,37 @@ export default function AdminOrderDetail() {
     justifyContent: "space-between",
     gap: 16,
     padding: "8px 0",
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid #222",
   };
 
-  const labelStyle = { color: "#475569", fontWeight: 700, fontSize: 13 };
-  const valueStyle = { color: "#0f172a", fontWeight: 700, fontSize: 13, textAlign: "right" };
+  const labelStyle = { color: "#888", fontWeight: 700, fontSize: 13 };
+  const valueStyle = { color: "#fff", fontWeight: 700, fontSize: 13, textAlign: "right" };
 
   const primaryBtn = (disabled) => ({
     padding: "10px 14px",
     borderRadius: 10,
-    border: "1px solid #0f172a",
-    background: "#0f172a",
-    color: "#fff",
+    border: "none",
+    background: "#c8f400",
+    color: "#000",
     cursor: disabled ? "not-allowed" : "pointer",
     fontWeight: 900,
-    opacity: disabled ? 0.6 : 1,
+    opacity: disabled ? 0.5 : 1,
+    fontSize: 13,
   });
 
   const ghostBtn = {
     padding: "10px 14px",
     borderRadius: 10,
-    border: "1px solid #cbd5e1",
-    background: "#fff",
-    color: "#0f172a",
+    border: "1px solid #333",
+    background: "transparent",
+    color: "#fff",
     cursor: "pointer",
     fontWeight: 900,
+    fontSize: 13,
+    textDecoration: "none",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   const gridWrap = {
@@ -393,7 +399,7 @@ export default function AdminOrderDetail() {
   const itemsTableWrap = {
     width: "100%",
     overflowX: "auto",
-    border: "1px solid #e5e7eb",
+    border: "1px solid #2a2a2a",
     borderRadius: 12,
   };
 
@@ -407,18 +413,18 @@ export default function AdminOrderDetail() {
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 0.6,
-    color: "#334155",
-    background: "#f8fafc",
+    color: "#888",
+    background: "#242424",
     padding: "10px 12px",
-    borderBottom: "1px solid #e5e7eb",
+    borderBottom: "1px solid #2a2a2a",
     whiteSpace: "nowrap",
   };
 
   const td = {
     padding: "10px 12px",
-    borderBottom: "1px solid #f1f5f9",
+    borderBottom: "1px solid #222",
     fontSize: 13,
-    color: "#0f172a",
+    color: "#fff",
     verticalAlign: "top",
   };
 
@@ -427,21 +433,21 @@ export default function AdminOrderDetail() {
   return (
     <div
         className="admin-content"
-        style={{ background: "#f8fafc", paddingTop: 220 }}>
+        style={{ background: "var(--bg, #0f0f0f)", paddingTop: 220 }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "flex-start" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 34, fontWeight: 900, color: "#0f172a" }}>
-            Pedido <span style={{ color: "#64748b" }}>#{order.id}</span>
+          <h1 style={{ margin: 0, fontSize: 34, fontWeight: 900, color: "#fff" }}>
+            Pedido <span style={{ color: "#888" }}>#{order.id}</span>
           </h1>
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={statusPillStyle}>{statusLabel.toUpperCase()}</span>
-            <span style={{ color: "#475569", fontWeight: 700, fontSize: 13 }}>
-              Fecha: <span style={{ color: "#0f172a" }}>{createdAtLabel}</span>
+            <span style={{ color: "#888", fontWeight: 700, fontSize: 13 }}>
+              Fecha: <span style={{ color: "#fff" }}>{createdAtLabel}</span>
             </span>
-            <span style={{ color: "#475569", fontWeight: 700, fontSize: 13 }}>
+            <span style={{ color: "#888", fontWeight: 700, fontSize: 13 }}>
               Envío:{" "}
-              <span style={{ color: "#0f172a" }}>
+              <span style={{ color: "#fff" }}>
                 {order.buyer?.method === "pickup" ? "Retiro en tienda" : "Delivery"}
               </span>
             </span>
@@ -475,12 +481,14 @@ export default function AdminOrderDetail() {
               <h3 style={sectionTitleStyle}>Cliente y entrega</h3>
               <span
                 style={{
-                  padding: "6px 10px",
+                  padding: "5px 10px",
                   borderRadius: 999,
                   fontWeight: 900,
-                  fontSize: 12,
-                  background: order.dispatched ? "#16a34a" : "#ef4444",
-                  color: "#fff",
+                  fontSize: 11,
+                  background: order.dispatched ? "rgba(74,222,128,0.12)" : "rgba(239,68,68,0.12)",
+                  color: order.dispatched ? "#4ade80" : "#f87171",
+                  border: order.dispatched ? "1px solid rgba(74,222,128,0.25)" : "1px solid rgba(239,68,68,0.25)",
+                  letterSpacing: 0.4,
                 }}
               >
                 {order.dispatched ? "DESPACHADO" : "PENDIENTE"}
@@ -509,9 +517,9 @@ export default function AdminOrderDetail() {
 
               <div style={{ height: 10 }} />
 
-              <div style={{ fontWeight: 900, color: "#0f172a", marginBottom: 6 }}>Dirección</div>
+              <div style={{ fontWeight: 900, color: "#fff", marginBottom: 6 }}>Dirección</div>
               {order.buyer?.method === "delivery" ? (
-                <div style={{ color: "#334155", fontWeight: 700, lineHeight: 1.5 }}>
+                <div style={{ color: "#aaa", fontWeight: 700, lineHeight: 1.5 }}>
                   <div>
                     {order.buyer.street} {order.buyer.number}
                   </div>
@@ -520,15 +528,15 @@ export default function AdminOrderDetail() {
                   </div>
                 </div>
               ) : (
-                <div style={{ color: "#334155", fontWeight: 700 }}>
+                <div style={{ color: "#aaa", fontWeight: 700 }}>
                   <i>Retiro en tienda</i>
                 </div>
               )}
 
               <div style={{ height: 12 }} />
 
-              <div style={{ fontWeight: 900, color: "#0f172a", marginBottom: 6 }}>Comentario del envío</div>
-              <div style={{ whiteSpace: "pre-wrap", color: "#334155", fontWeight: 700 }}>
+              <div style={{ fontWeight: 900, color: "#fff", marginBottom: 6 }}>Comentario del envío</div>
+              <div style={{ whiteSpace: "pre-wrap", color: "#aaa", fontWeight: 700 }}>
                 {buyerNotes.trim() ? buyerNotes : "—"}
               </div>
             </div>
@@ -560,7 +568,7 @@ export default function AdminOrderDetail() {
                         <td style={td}>
                           <div style={{ fontWeight: 900 }}>{item.name || "Producto"}</div>
                           {item.productId && (
-                            <div style={{ color: "#64748b", fontWeight: 700, fontSize: 12 }}>
+                            <div style={{ color: "#666", fontWeight: 700, fontSize: 12 }}>
                               ID: {item.productId}
                             </div>
                           )}
@@ -612,14 +620,14 @@ export default function AdminOrderDetail() {
               <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
                 <h3 style={sectionTitleStyle}>Transferencia</h3>
                 {expiresAtLabel && (
-                  <span style={{ color: "#475569", fontWeight: 900, fontSize: 12 }}>
-                    Vence: <span style={{ color: "#0f172a" }}>{expiresAtLabel}</span>
+                  <span style={{ color: "#888", fontWeight: 900, fontSize: 12 }}>
+                    Vence: <span style={{ color: "#fff" }}>{expiresAtLabel}</span>
                   </span>
                 )}
               </div>
 
               {order.transfer && (
-                <div style={{ marginTop: 12, color: "#334155", fontWeight: 800, fontSize: 13, lineHeight: 1.6 }}>
+                <div style={{ marginTop: 12, color: "#aaa", fontWeight: 800, fontSize: 13, lineHeight: 1.6 }}>
                   <div><b>Banco:</b> {order.transfer.bank || "—"}</div>
                   <div><b>Alias:</b> {order.transfer.alias || "—"}</div>
                   <div><b>CVU:</b> {order.transfer.cvu || "—"}</div>
@@ -630,7 +638,7 @@ export default function AdminOrderDetail() {
               <div style={{ height: 12 }} />
 
               {loadingProof ? (
-                <p style={{ margin: 0, color: "#475569", fontWeight: 800 }}>Cargando comprobante...</p>
+                <p style={{ margin: 0, color: "#888", fontWeight: 800 }}>Cargando comprobante...</p>
               ) : proofUrl ? (
                 <>
                   <a
@@ -640,7 +648,7 @@ export default function AdminOrderDetail() {
                     style={{
                       display: "inline-block",
                       fontWeight: 900,
-                      color: "#0f172a",
+                      color: "#c8f400",
                       textDecoration: "underline",
                       marginBottom: 10,
                     }}
@@ -650,10 +658,10 @@ export default function AdminOrderDetail() {
 
                   <div
                     style={{
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid #2a2a2a",
                       borderRadius: 12,
                       overflow: "hidden",
-                      background: "#f8fafc",
+                      background: "#242424",
                     }}
                   >
                     <iframe
@@ -675,7 +683,7 @@ export default function AdminOrderDetail() {
                   </div>
                 </>
               ) : (
-                <p style={{ margin: 0, color: "#475569", fontWeight: 800 }}>
+                <p style={{ margin: 0, color: "#888", fontWeight: 800 }}>
                   No hay comprobante cargado todavía.
                 </p>
               )}
@@ -696,9 +704,12 @@ export default function AdminOrderDetail() {
                 padding: "10px 12px",
                 width: "100%",
                 borderRadius: 10,
-                border: "1px solid #cbd5e1",
+                border: "1px solid #2a2a2a",
+                background: "#242424",
+                color: "#fff",
                 fontWeight: 800,
                 outline: "none",
+                boxSizing: "border-box",
               }}
             />
 
@@ -726,8 +737,8 @@ export default function AdminOrderDetail() {
             </div>
 
             {order.trackingNumber && (
-              <div style={{ marginTop: 10, color: "#475569", fontWeight: 800, fontSize: 13 }}>
-                Guardado: <span style={{ color: "#0f172a" }}>{order.trackingNumber}</span>
+              <div style={{ marginTop: 10, color: "#888", fontWeight: 800, fontSize: 13 }}>
+                Guardado: <span style={{ color: "#c8f400" }}>{order.trackingNumber}</span>
               </div>
             )}
           </div>
@@ -738,6 +749,7 @@ export default function AdminOrderDetail() {
       <style>{`
         @media (max-width: 980px){
           .admin-content { padding: 16px !important; }
+          .order-grid-wrap { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </div>

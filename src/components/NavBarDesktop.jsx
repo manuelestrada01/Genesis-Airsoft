@@ -170,14 +170,12 @@ const NavBarDesktop = () => {
           )}
 
           {!user ? (
-            <Link to="/auth" className="nd-login-btn">
+            <Link to="/auth" className="nd-icon-btn" aria-label="Ingresar">
               <FaUser />
-              <span>Ingresar</span>
             </Link>
           ) : (
-            <button className="nd-login-btn" onClick={() => navigate("/profile")} type="button">
+            <button className="nd-icon-btn" onClick={() => navigate("/profile")} type="button" aria-label="Mi Perfil">
               <FaUser />
-              <span>Mi Perfil</span>
             </button>
           )}
         </div>

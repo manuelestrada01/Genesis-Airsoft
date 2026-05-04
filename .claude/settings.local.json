@@ -11,7 +11,10 @@
       "Bash(npm run:*)",
       "Bash(git stash:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(node_modules/.bin/vite build:*)"
     ]
   }
 }

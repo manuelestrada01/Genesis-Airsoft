@@ -5,7 +5,7 @@
   background: var(--surface);
   border-top: 1px solid var(--border);
   color: var(--text);
-  padding: 48px 0 24px;
+  padding: 12px 0 16px;
   width: 100vw;
   margin-left: calc(-50vw + 50%);
   font-family: var(--font);
@@ -18,7 +18,7 @@
   width: 80px;
   height: 3px;
   background: var(--accent);
-  margin: 0 auto 40px;
+  margin: 0 auto 16px;
   border-radius: 2px;
 }
 
@@ -26,12 +26,14 @@
    GRID
    ============================================ */
 .footer-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   max-width: 900px;
-  margin: 0 auto 36px;
+  margin: 0 auto 20px;
   padding: 0 24px;
+  text-align: center;
 }
 
 /* ============================================
@@ -102,8 +104,9 @@
    ============================================ */
 .footer-social {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  gap: 24px;
+  justify-content: center;
 }
 
 .footer-social a {
@@ -160,15 +163,22 @@
    RESPONSIVE
    ============================================ */
 @media (max-width: 640px) {
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 28px;
-    text-align: center;
+  .footer {
+    padding: 10px 0 12px;
   }
 
-  .footer-links a:hover { padding-left: 0; }
+  .footer::before {
+    margin: 0 auto 12px;
+  }
+
+  .footer-grid {
+    gap: 12px;
+    margin: 0 auto 14px;
+  }
 
   .footer-social {
+    flex-direction: column;
     align-items: center;
+    gap: 10px;
   }
 }

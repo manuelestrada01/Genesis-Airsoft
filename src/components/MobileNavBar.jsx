@@ -1,7 +1,8 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaUser } from "react-icons/fa";
 import { FiMenu, FiX } from "react-icons/fi";
+import { gsap } from "gsap";
 import CartWidget from "./CartWidget";
 import logo from "../assets/LogoGenesis.png";
 import AuthContext from "../context/AuthContext";
@@ -11,6 +12,7 @@ import "./NavBar.css";
 const MobileNavBar = () => {
   const { user, isAdmin } = useContext(AuthContext);
   const navigate = useNavigate();
+  const wrapperRef = useRef(null);
 
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -53,6 +55,42 @@ const MobileNavBar = () => {
     };
   }, [open]);
 
+  // Ocultar navbar al scrollear hacia abajo, mostrar al subir
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    let lastY = window.scrollY;
+    let hidden = false;
+    let rafId = null;
+
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const y    = window.scrollY;
+        const diff = y - lastY;
+
+        if (diff > 0 && y > 60 && !hidden) {
+          hidden = true;
+          gsap.to(el, { y: -el.offsetHeight, duration: 0.3, ease: "power2.in" });
+        }
+
+        if (diff < 0 && hidden) {
+          hidden = false;
+          gsap.to(el, { y: 0, duration: 0.38, ease: "power2.out" });
+        }
+
+        lastY = y;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   const menuItems = useMemo(() => {
     const arr = [
       { label: "Inicio", to: "/" },
@@ -72,7 +110,9 @@ const MobileNavBar = () => {
 
   return (
     <>
-      <div className="top-bar">Envíos a todo Argentina</div>
+      {/* WRAPPER fijo — se anima como unidad al scrollear */}
+      <div ref={wrapperRef} className="mnav-wrapper">
+        <div className="top-bar">Envíos a todo Argentina</div>
 
       {/* HEADER (siempre visible) */}
       <header className="mnav-header">
@@ -128,6 +168,7 @@ const MobileNavBar = () => {
           />
         </div>
       </header>
+      </div>{/* /mnav-wrapper */}
 
       {/* BACKDROP */}
       {open && (
