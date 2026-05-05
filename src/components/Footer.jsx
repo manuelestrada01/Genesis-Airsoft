@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaInstagram, FaWhatsapp, FaFacebookF } from "react-icons/fa";
 import "./Footer.css";
 import logo from "../assets/LogoGenesis.png";
@@ -10,7 +10,9 @@ const Footer = () => {
       <div className="footer-grid">
         {/* Brand */}
         <div className="footer-brand footer-col">
-          <img src={logo} alt="Genesis Airsoft" className="footer-logo" />
+          <Link to="/">
+            <img src={logo} alt="Genesis Airsoft" className="footer-logo" />
+          </Link>
         </div>
 
         {/* Social */}
@@ -19,7 +21,7 @@ const Footer = () => {
             <a href="https://instagram.com/genesis.airsoft.ar" target="_blank" rel="noopener noreferrer">
               <FaInstagram /> @genesis.airsoft.ar
             </a>
-            <a href="https://wa.me/5491100000000" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/541130441967" target="_blank" rel="noopener noreferrer">
               <FaWhatsapp /> WhatsApp
             </a>
           </div>

@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa";
 
 // Public components
 import ProductDetail from "./components/ItemDetailContainer";
@@ -139,6 +140,40 @@ function App() {
       </div>
 
       <Footer />
+
+      {/* WhatsApp flotante */}
+      <a
+        href="https://wa.me/541130441967"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          width: "52px",
+          height: "52px",
+          borderRadius: "50%",
+          background: "#25D366",
+          color: "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "28px",
+          boxShadow: "0 4px 16px rgba(37,211,102,0.4)",
+          zIndex: 9999,
+          transition: "transform 0.2s ease, box-shadow 0.2s ease",
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.transform = "scale(1.1)";
+          e.currentTarget.style.boxShadow = "0 6px 24px rgba(37,211,102,0.6)";
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.transform = "scale(1)";
+          e.currentTarget.style.boxShadow = "0 4px 16px rgba(37,211,102,0.4)";
+        }}
+      >
+        <FaWhatsapp />
+      </a>
     </BrowserRouter>
   );
 }

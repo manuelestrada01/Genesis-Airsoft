@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db, analytics } from "../firebase/config";
@@ -41,6 +41,25 @@ const ProductDetail = () => {
   const [mainImage, setMainImage] = useState("");
   const [showFullDesc, setShowFullDesc] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const thumbsRef = useRef(null);
+
+  const imageList = product?.images?.length
+    ? product.images.map((img) => img.imageUrl)
+    : mainImage ? [mainImage] : [];
+
+  const currentIndex = imageList.indexOf(mainImage);
+
+  const goNext = () => {
+    if (imageList.length < 2) return;
+    const next = (currentIndex + 1) % imageList.length;
+    setMainImage(imageList[next]);
+  };
+
+  const goPrev = () => {
+    if (imageList.length < 2) return;
+    const prev = (currentIndex - 1 + imageList.length) % imageList.length;
+    setMainImage(imageList[prev]);
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -149,17 +168,27 @@ const ProductDetail = () => {
   return (
     <div className="detail-container-pro">
       {/* MINIATURAS */}
-      <div className="gallery-thumbs-pro">
-        {(product.images?.length ? product.images : [{ imageUrl: mainImage }]).map(
-          (img, i) => (
-            <img
-              key={i}
-              src={img.imageUrl}
-              className={`thumb-pro ${mainImage === img.imageUrl ? "active" : ""}`}
-              onClick={() => setMainImage(img.imageUrl)}
-              alt="thumb"
-            />
-          )
+      <div className="gallery-thumbs-wrapper">
+        <div className="gallery-thumbs-pro" ref={thumbsRef}>
+          {(product.images?.length ? product.images : [{ imageUrl: mainImage }]).map(
+            (img, i) => (
+              <img
+                key={i}
+                src={img.imageUrl}
+                className={`thumb-pro ${mainImage === img.imageUrl ? "active" : ""}`}
+                onClick={() => setMainImage(img.imageUrl)}
+                alt="thumb"
+              />
+            )
+          )}
+        </div>
+        {imageList.length > 6 && (
+          <button
+            className="thumbs-scroll-btn"
+            onClick={() => thumbsRef.current?.scrollBy({ top: 90, behavior: "smooth" })}
+          >
+            &#8964;
+          </button>
         )}
       </div>
 
@@ -167,6 +196,12 @@ const ProductDetail = () => {
       <div className="gallery-main-pro">
         {hasDiscount && <div className="discount-badge-pro">-{discount}%</div>}
         <img src={mainImage} alt={product.name} className="main-img-pro" />
+        {imageList.length > 1 && (
+          <>
+            <button className="gallery-arrow-pro gallery-arrow-pro--prev" onClick={goPrev}>&#8249;</button>
+            <button className="gallery-arrow-pro gallery-arrow-pro--next" onClick={goNext}>&#8250;</button>
+          </>
+        )}
       </div>
 
       {/* PANEL DE INFO */}
@@ -198,22 +233,6 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* DESCRIPCIÓN HTML */}
-        <div
-          className={`desc-pro html-description${showFullDesc ? " expanded" : ""}`}
-          dangerouslySetInnerHTML={{ __html: toHtml(FULL_DESC) }}
-        />
-
-        {/* BOTÓN LEER MÁS */}
-        {hasLongDesc && (
-          <button
-            className="readmore-pro"
-            onClick={() => setShowFullDesc(!showFullDesc)}
-          >
-            {showFullDesc ? "Leer menos" : "Leer más"}
-          </button>
-        )}
-
         {!outOfStock && (
           <div className="qty-box-pro">
             <label>Cantidad</label>
@@ -229,13 +248,31 @@ const ProductDetail = () => {
           <button className="btn-buy-pro" onClick={handleBuyNow} disabled={outOfStock}>
             Comprar ahora
           </button>
-
-          {/* Si lo usás, dejé la función lista */}
-          {/* <button className="btn-cart-pro" onClick={handleAddToCart} disabled={outOfStock}>
-            Agregar al carrito
-          </button> */}
         </div>
       </div>
+
+      {/* DESCRIPCIÓN — debajo de la galería */}
+      {FULL_DESC && (
+        <div className="desc-section-pro">
+          <div className="desc-section-pro__header">
+            <div className="desc-section-pro__line" />
+            <span className="desc-section-pro__label">Descripción</span>
+            <div className="desc-section-pro__line" />
+          </div>
+          <div
+            className={`desc-pro html-description${showFullDesc ? " expanded" : ""}`}
+            dangerouslySetInnerHTML={{ __html: toHtml(FULL_DESC) }}
+          />
+          {hasLongDesc && (
+            <button
+              className="readmore-pro"
+              onClick={() => setShowFullDesc(!showFullDesc)}
+            >
+              {showFullDesc ? "Leer menos" : "Leer más"}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
