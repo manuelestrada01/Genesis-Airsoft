@@ -2,6 +2,8 @@
 import React, { useEffect, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
+import { logEvent } from "firebase/analytics";
+import { analytics } from "../firebase/config";
 
 function CheckoutSuccess() {
   const { clearCart } = useContext(CartContext);
@@ -16,6 +18,14 @@ function CheckoutSuccess() {
   // 🔥 Limpiar carrito apenas llegamos a esta pantalla
 useEffect(() => {
   clearCart();
+
+  if (paymentId) {
+    logEvent(analytics, "purchase", {
+      transaction_id: paymentId,
+      currency: "ARS",
+      ...(externalReference && { affiliation: externalReference }),
+    });
+  }
 
   // 🔥 Forzar re-render global para que todas las pantallas actualicen el carrito
   setTimeout(() => {

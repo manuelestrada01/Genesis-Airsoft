@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db, analytics } from "../firebase/config";
+import { logEvent } from "firebase/analytics";
 import "./ItemDetailContainer.css";
 import ItemCount from "./ItemCount";
 import { CartContext } from "../context/CartContext";
@@ -66,13 +67,20 @@ const ProductDetail = () => {
           data.image ||
           "";
 
-        setProduct({
+        const productData = {
           ...data,
           image: firstImage,
           images: data.images || [],
           stock: data.stock ?? 0,
-        });
+        };
+        setProduct(productData);
         setMainImage(firstImage);
+
+        logEvent(analytics, "view_item", {
+          currency: "ARS",
+          value: data.price || 0,
+          items: [{ item_id: snap.id, item_name: data.name, price: data.price || 0, item_category: data.category || "" }],
+        });
       } catch (err) {
         console.error("Error cargando producto:", err);
       }
@@ -120,6 +128,12 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     if (outOfStock) return;
+
+    logEvent(analytics, "begin_checkout", {
+      currency: "ARS",
+      value: finalPriceNumber * quantity,
+      items: [{ item_id: product.id, item_name: product.name, price: finalPriceNumber, quantity, item_category: product.category || "" }],
+    });
 
     clearCart();
     addToCart({ ...product, price: finalPriceNumber }, quantity);

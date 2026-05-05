@@ -3,9 +3,10 @@
 import { useState, useEffect, useContext } from "react";
 import { CartContext } from "./CartContext";
 import AuthContext from "./AuthContext";
-import { db } from "../firebase/config";
+import { db, analytics } from "../firebase/config";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { CheckoutContext } from "./CheckoutContext";
+import { logEvent } from "firebase/analytics";
 
 function CartProvider({ children }) {
 
@@ -91,6 +92,12 @@ function CartProvider({ children }) {
       description: item.description || "",
       images: Array.isArray(item.images) ? item.images : [],
     };
+
+    logEvent(analytics, "add_to_cart", {
+      currency: "ARS",
+      value: safeItem.price * quantity,
+      items: [{ item_id: safeItem.id, item_name: safeItem.name, price: safeItem.price, quantity, item_category: safeItem.category || "" }],
+    });
 
     setCart((prev) => {
       const existing = prev.find((prod) => prod.id === safeItem.id);

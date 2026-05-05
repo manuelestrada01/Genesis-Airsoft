@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
 // Configuración de tu proyecto Firebase
 const firebaseConfig = {
@@ -16,6 +17,7 @@ const firebaseConfig = {
   storageBucket: "genesis-airsoft.firebasestorage.app",
   messagingSenderId: "352857393989",
   appId: "1:352857393989:web:6ac9ef76dd80c41d280c2c",
+  measurementId: "G-PR5Z2RDEYM",
 };
 
 // Inicializar Firebase
@@ -25,6 +27,7 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const analytics = getAnalytics(app);
 
 // ============================================================
 // 🔒 1. Fijar persistencia a Sesión (NO localStorage / IndexedDB)
