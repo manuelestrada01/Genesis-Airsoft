@@ -28,6 +28,10 @@ const Profile = () => {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [moreAvailable, setMoreAvailable] = useState(true);
 
+  // Rental reservations
+  const [rentals, setRentals] = useState([]);
+  const [loadingRentals, setLoadingRentals] = useState(true);
+
   const [displayName, setDisplayName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -158,6 +162,27 @@ const Profile = () => {
     if (!loading && user) loadInitialOrders();
   }, [user, loading]);
 
+  // Load rental reservations
+  useEffect(() => {
+    const loadRentals = async () => {
+      if (!user) return;
+      try {
+        const q = query(
+          collection(db, "rentalReservations"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+        setRentals(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Error cargando alquileres:", err);
+      } finally {
+        setLoadingRentals(false);
+      }
+    };
+    if (!loading && user) loadRentals();
+  }, [user, loading]);
+
   const isGoogleUser =
     user?.providerData?.some((p) => p.providerId === "google.com") || false;
 
@@ -283,6 +308,75 @@ const Profile = () => {
               ) : (
                 <div className="empty-state">
                   <p>Todavía no tenés pedidos.</p>
+                </div>
+              )}
+            </div>
+
+            {/* PANEL — MIS ALQUILERES */}
+            <div className="profile-panel">
+              <div className="panel-header">
+                <h3>Mis Alquileres</h3>
+                <span className="orders-count">
+                  {loadingRentals ? "—" : rentals.length}
+                </span>
+              </div>
+
+              {loadingRentals ? (
+                <div className="loading-state">
+                  <div className="spinner" />
+                  <p>Cargando alquileres...</p>
+                </div>
+              ) : rentals.length > 0 ? (
+                <ul className="orders-list">
+                  {rentals.map((r) => {
+                    const rentalStatusMap = {
+                      pending_payment: "Pendiente pago",
+                      confirmed: "Confirmada",
+                      expired: "Expirada",
+                      cancelled: "Cancelada",
+                    };
+                    const rentalStatusClass = {
+                      pending_payment: "status-pending",
+                      confirmed: "status-approved",
+                      expired: "status-rejected",
+                      cancelled: "status-rejected",
+                    };
+                    return (
+                      <li
+                        key={r.id}
+                        className="order-card"
+                        onClick={() => navigate(`/alquileres/reserva/${r.id}`)}
+                      >
+                        <div className="order-card-top">
+                          <span className="order-id">#{r.id.slice(0, 10)}…</span>
+                          <span className={`status-badge ${rentalStatusClass[r.status] || ""}`}>
+                            {rentalStatusMap[r.status] || r.status}
+                          </span>
+                        </div>
+                        <div className="order-card-mid">
+                          <div className="order-meta">
+                            <span className="meta-label">Fecha</span>
+                            <span className="meta-value">
+                              {r.createdAt?.toDate
+                                ? r.createdAt.toDate().toLocaleDateString("es-AR")
+                                : "—"}
+                            </span>
+                          </div>
+                          <div className="order-meta">
+                            <span className="meta-label">Seña</span>
+                            <span className="meta-value order-total">
+                              ${(r.pricing?.deposit || 0).toLocaleString("es-AR")}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="order-card-arrow">›</div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="empty-state">
+                  <p>No tenés alquileres registrados.</p>
                 </div>
               )}
             </div>

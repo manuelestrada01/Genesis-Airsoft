@@ -20,7 +20,12 @@ import CheckoutPending from "./components/CheckoutPending";
 import OrderDetail from "./components/OrderDetail";
 import Contact from "./components/Contact";
 import AboutGenesis from "./components/AboutGenesis";
-import AlquileresConstruccion from "./components/AlquileresConstruccion";
+
+// Alquileres (public)
+import AlquileresPage from "./components/alquileres/AlquileresPage";
+import PartidaDetail from "./components/alquileres/PartidaDetail";
+import RentalReservationFlow from "./components/alquileres/RentalReservationFlow";
+import ReservationStatus from "./components/alquileres/ReservationStatus";
 
 // Admin components
 import AdminDashboard from "./components/admin/AdminDashboard";
@@ -30,6 +35,12 @@ import AdminEditProduct from "./components/admin/AdminEditProduct";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminOrders from "./components/admin/AdminOrders";
 import AdminOrderDetail from "./components/admin/AdminOrderDetail";
+import AdminPartidas from "./components/admin/AdminPartidas";
+import AdminAddPartida from "./components/admin/AdminAddPartida";
+import AdminEditPartida from "./components/admin/AdminEditPartida";
+import AdminRentalReservations from "./components/admin/AdminRentalReservations";
+import AdminRentalReservationDetail from "./components/admin/AdminRentalReservationDetail";
+import AdminRentalConfig from "./components/admin/AdminRentalConfig";
 
 // Hooks
 import useIsMobile from "./hooks/useIsMobile";
@@ -109,6 +120,56 @@ function App() {
             </AdminRoute>
           }
         />
+
+        {/* Rental admin routes */}
+        <Route
+          path="/admin/partidas"
+          element={
+            <AdminRoute>
+              <AdminPartidas />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/partidas/add"
+          element={
+            <AdminRoute>
+              <AdminAddPartida />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/partidas/edit/:id"
+          element={
+            <AdminRoute>
+              <AdminEditPartida />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/alquileres"
+          element={
+            <AdminRoute>
+              <AdminRentalReservations />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/alquileres/:id"
+          element={
+            <AdminRoute>
+              <AdminRentalReservationDetail />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/rental-config"
+          element={
+            <AdminRoute>
+              <AdminRentalConfig />
+            </AdminRoute>
+          }
+        />
       </Routes>
 
       {/* ================= NAVBARS ================= */}
@@ -134,7 +195,12 @@ function App() {
           <Route path="/order/:id" element={<OrderDetail />} />
           <Route path="/contacto" element={<Contact />} />
           <Route path="/search" element={<ItemListContainer />} />
-          <Route path="/alquileres/:zona" element={<AlquileresConstruccion />} />
+
+          {/* Alquileres */}
+          <Route path="/alquileres" element={<AlquileresPage />} />
+          <Route path="/alquileres/partida/:id" element={<PartidaDetail />} />
+          <Route path="/alquileres/reservar/:partidaId" element={<RentalReservationFlow />} />
+          <Route path="/alquileres/reserva/:id" element={<ReservationStatus />} />
         </Routes>
       </div>
 

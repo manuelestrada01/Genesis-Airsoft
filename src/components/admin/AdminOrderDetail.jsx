@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp, writeBatch, increment } from "firebase/firestore";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { db, storage } from "../../firebase/config";
 import "./admin.css";
@@ -267,18 +267,29 @@ export default function AdminOrderDetail() {
     setApproving(true);
 
     try {
-      await updateDoc(doc(db, "orders", id), {
+      const batch = writeBatch(db);
+
+      // Update order status
+      batch.update(doc(db, "orders", id), {
         status: "approved",
         paidAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         transferApprovedAt: serverTimestamp(),
       });
 
-      setOrder((prev) => ({
-        ...prev,
-        status: "approved",
-      }));
+      // Decrement stock for each item
+      const items = Array.isArray(order.items) ? order.items : [];
+      for (const item of items) {
+        if (item.productId) {
+          batch.update(doc(db, "products", item.productId), {
+            stock: increment(-(item.quantity || 1)),
+          });
+        }
+      }
 
+      await batch.commit();
+
+      setOrder((prev) => ({ ...prev, status: "approved" }));
       alert("Transferencia aprobada ✔");
     } catch (e) {
       console.error("Error aprobando transferencia:", e);

@@ -1,0 +1,180 @@
+.alq-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.alq-hero {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.alq-title {
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 12px;
+  letter-spacing: -0.5px;
+}
+
+.alq-subtitle {
+  color: var(--text-muted, #888);
+  font-size: 16px;
+  font-weight: 600;
+  max-width: 500px;
+  margin: 0 auto 20px;
+  line-height: 1.5;
+}
+
+.alq-price-badge {
+  display: inline-block;
+  background: var(--accent-dim, rgba(200, 244, 0, 0.1));
+  border: 1px solid var(--accent, #c8f400);
+  border-radius: 999px;
+  padding: 8px 24px;
+  color: var(--accent, #c8f400);
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.alq-price-badge span {
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.alq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.alq-loading,
+.alq-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted, #888);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.alq-empty p {
+  margin: 4px 0;
+}
+
+/* ============================
+   Partida Card
+   ============================ */
+
+.partida-card {
+  background: var(--surface, #1a1a1a);
+  border: 1px solid var(--border, #2a2a2a);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  transition: transform var(--transition, 0.22s ease), border-color var(--transition, 0.22s ease);
+}
+
+.partida-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent, #c8f400);
+}
+
+.partida-card__map {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: var(--surface-2, #242424);
+}
+
+.partida-card__map img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.partida-card__body {
+  padding: 20px;
+}
+
+.partida-card__date {
+  color: var(--accent, #c8f400);
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: capitalize;
+  margin-bottom: 6px;
+}
+
+.partida-card__lugar {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0 0 4px;
+}
+
+.partida-card__dir {
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.partida-card__meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.partida-card__tag {
+  background: var(--surface-2, #242424);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted, #888);
+}
+
+.partida-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #2a2a2a);
+}
+
+.partida-card__price {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.partida-card__slots {
+  background: var(--accent-dim, rgba(200, 244, 0, 0.1));
+  color: var(--accent, #c8f400);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.partida-card__full {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-width: 768px) {
+  .alq-page {
+    padding: 20px 16px 60px;
+  }
+
+  .alq-title {
+    font-size: 30px;
+  }
+
+  .alq-grid {
+    grid-template-columns: 1fr;
+  }
+}
