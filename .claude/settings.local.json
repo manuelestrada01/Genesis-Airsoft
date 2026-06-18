@@ -14,7 +14,18 @@
       "Bash(git add:*)",
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
-      "Bash(node_modules/.bin/vite build:*)"
+      "Bash(node_modules/.bin/vite build:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(xargs grep:*)",
+      "Bash(firebase --version)",
+      "Bash(firebase projects:list)",
+      "Bash(GOOGLE_CLOUD_PROJECT=genesis-airsoft node seed-categories.mjs)",
+      "Bash(gcloud auth:*)",
+      "Bash(firebase --token)",
+      "Bash(firebase login:ci --no-localhost)",
+      "Bash(cmd:*)"
     ]
   }
 }

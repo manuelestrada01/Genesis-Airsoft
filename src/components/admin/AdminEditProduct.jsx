@@ -241,6 +241,8 @@ export default function AdminEditProduct() {
                 <option value="Indumentaria">Indumentaria</option>
                 <option value="Marcadoras GBB">Marcadoras GBB</option>
                 <option value="Magazines">Magazines</option>
+                <option value="Repuestos">Repuestos</option>
+                <option value="Baterias">Baterias</option>
               </select>
             </div>
           </div>
