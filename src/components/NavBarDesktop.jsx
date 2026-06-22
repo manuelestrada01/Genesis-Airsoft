@@ -141,14 +141,8 @@ const NavBarDesktop = () => {
             <NavLink to="/contacto">Contacto</NavLink>
           </li>
 
-          <li className="nd-dropdown">
-            <button className="nd-dropbtn" type="button">
-              Alquileres <FiChevronDown className="nd-chevron" />
-            </button>
-            <ul className="nd-dropmenu">
-              <li><Link to="/alquileres/capital-federal">Capital Federal</Link></li>
-              <li><Link to="/alquileres/mendoza">Mendoza</Link></li>
-            </ul>
+          <li>
+            <NavLink to="/alquileres">Alquileres</NavLink>
           </li>
         </ul>
 

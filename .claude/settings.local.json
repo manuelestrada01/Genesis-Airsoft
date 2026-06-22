@@ -25,7 +25,8 @@
       "Bash(gcloud auth:*)",
       "Bash(firebase --token)",
       "Bash(firebase login:ci --no-localhost)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)"
     ]
   }
 }

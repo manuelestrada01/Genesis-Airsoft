@@ -95,7 +95,7 @@ const MobileNavBar = () => {
     const arr = [
       { label: "Inicio", to: "/" },
       { label: "Contacto", to: "/contacto" },
-      { label: "Alquileres", to: "/alquileres/capital-federal" },
+      { label: "Alquileres", to: "/alquileres" },
     ];
 
     // Admin (si corresponde)

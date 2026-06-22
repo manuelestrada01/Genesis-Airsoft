@@ -3,6 +3,8 @@
 // ================================
 
 import { onRequest } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 import admin from "firebase-admin";
@@ -32,6 +34,7 @@ const WEBHOOK_URL =
 // ================================
 const allowedOrigins = [
   "http://localhost:5173", // dev
+  "http://localhost:5174", // dev alt port
   "https://genesis-airsoft.web.app",
   "https://genesis-airsoft.firebaseapp.com",
   "https://genesisairsoft.com.ar",
@@ -550,6 +553,539 @@ export const contactForm = onRequest(
       } catch (error) {
         logger.error(error);
         return res.status(500).json({ error: "Server error" });
+      }
+    });
+  }
+);
+
+// ======================================================================================
+// 6) CREATE RENTAL RESERVATION — Transacción atómica + email
+// ======================================================================================
+export const createRentalReservation = onRequest(
+  { secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      try {
+        if (req.method !== "POST") {
+          return res.status(405).json({ error: "Method not allowed" });
+        }
+
+        const userId = xss(req.body.userId || "");
+        const partidaId = xss(req.body.partidaId || "");
+        const extrasIds = Array.isArray(req.body.extras) ? req.body.extras : [];
+        const userReq = req.body.user || {};
+
+        const userData = {
+          name: xss(userReq.name || ""),
+          email: xss(userReq.email || ""),
+          phone: xss(userReq.phone || ""),
+          dni: xss(userReq.dni || ""),
+        };
+
+        if (!userId || !partidaId || !userData.name || !userData.email || !userData.phone || !userData.dni) {
+          return res.status(400).json({ error: "Datos incompletos" });
+        }
+
+        const firestore = admin.firestore();
+
+        // Load rental config (server-side prices)
+        const configSnap = await firestore.doc("rentalConfig/default").get();
+        if (!configSnap.exists) {
+          return res.status(500).json({ error: "Configuración de alquiler no encontrada" });
+        }
+        const config = configSnap.data();
+
+        // Validate extras against config
+        const validExtras = (config.extras || []).filter((e) =>
+          extrasIds.includes(e.id)
+        );
+
+        const basePrice = Number(config.basePrice || 24000);
+        const depositPercent = Number(config.depositPercent || 50);
+        const expirationMinutes = Number(config.expirationMinutes || 30);
+
+        // Transaction: check slots + create reservation
+        const result = await firestore.runTransaction(async (t) => {
+          const partidaRef = firestore.doc(`partidas/${partidaId}`);
+          const partidaSnap = await t.get(partidaRef);
+
+          if (!partidaSnap.exists) {
+            throw new Error("Partida no encontrada");
+          }
+
+          const partida = partidaSnap.data();
+
+          if (partida.status !== "active") {
+            throw new Error("Esta partida ya no está disponible");
+          }
+
+          const now = new Date();
+          const partidaDate = partida.horario?.toDate ? partida.horario.toDate() : new Date(partida.horario);
+          if (partidaDate <= now) {
+            throw new Error("Esta partida ya pasó");
+          }
+
+          if ((partida.slotsReserved || 0) >= (partida.slotsTotal || 0)) {
+            throw new Error("No hay cupos disponibles");
+          }
+
+          // Check user doesn't already have active reservation for this partida
+          const existingSnap = await firestore
+            .collection("rentalReservations")
+            .where("partidaId", "==", partidaId)
+            .where("userId", "==", userId)
+            .where("status", "in", ["pending_payment", "confirmed"])
+            .get();
+
+          if (!existingSnap.empty) {
+            throw new Error("Ya tenés una reserva activa para esta partida");
+          }
+
+          // Apply partida-level discount (fallback to config default)
+          const discountPct = Number(partida.discountPercent ?? config.defaultDiscountPercent ?? 0);
+          const discountedBase = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100)) : basePrice;
+          const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price), 0);
+          const totalFull = discountedBase + extrasTotal;
+          const deposit = Math.round(discountedBase * (depositPercent / 100));
+          const remainingOnDay = totalFull - deposit;
+
+          const expiresAt = new Date(now.getTime() + expirationMinutes * 60 * 1000);
+
+          const reservationRef = firestore.collection("rentalReservations").doc();
+          t.set(reservationRef, {
+            partidaId,
+            userId,
+            user: userData,
+            extras: validExtras,
+            pricing: {
+              basePrice: discountedBase,
+              ...(discountPct > 0 && { originalBasePrice: basePrice, discountPercent: discountPct }),
+              extrasTotal,
+              totalFull,
+              deposit,
+              remainingOnDay,
+            },
+            status: "pending_payment",
+            marcadoraNumber: null,
+            expiresAt,
+            paidAt: null,
+            confirmedAt: null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          t.update(partidaRef, {
+            slotsReserved: admin.firestore.FieldValue.increment(1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          return {
+            reservationId: reservationRef.id,
+            deposit,
+            remainingOnDay,
+            expiresAt: expiresAt.toISOString(),
+          };
+        });
+
+        // Send emails (outside transaction)
+        try {
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+          });
+
+          const extrasHtml = validExtras.length
+            ? validExtras.map((e) => `<li>${e.name} — $${e.price.toLocaleString("es-AR")}</li>`).join("")
+            : "<li>Sin extras</li>";
+
+          // Email to user
+          await transporter.sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: userData.email,
+            subject: "Reserva de alquiler creada - Genesis Airsoft",
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#c8f400;">Tu reserva fue creada</h2>
+                <p>Hola <strong>${userData.name}</strong>,</p>
+                <p>Tu reserva de alquiler fue registrada. Tenés <strong>${expirationMinutes} minutos</strong> para realizar la transferencia.</p>
+
+                <h3 style="color:#c8f400;">Datos de transferencia</h3>
+                <p><strong>Alias:</strong> ${config.transferAlias || "genesis.airsoft"}</p>
+                <p><strong>CVU:</strong> ${config.transferCVU || ""}</p>
+                <p><strong>Titular:</strong> ${config.transferHolder || ""}</p>
+                <p><strong>Monto seña:</strong> $${result.deposit.toLocaleString("es-AR")}</p>
+
+                <h3 style="color:#c8f400;">Extras seleccionados</h3>
+                <ul>${extrasHtml}</ul>
+
+                <p><strong>Total el día de la partida:</strong> $${result.remainingOnDay.toLocaleString("es-AR")}</p>
+
+                <p style="color:#ff4444;"><strong>Importante:</strong> Si no se confirma el pago en ${expirationMinutes} minutos, la reserva se cancelará automáticamente.</p>
+              </div>
+            `,
+          });
+
+          // Email to admin
+          await transporter.sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: GMAIL_EMAIL.value(),
+            subject: `Nueva reserva de alquiler - ${userData.name}`,
+            html: `
+              <h2>Nueva reserva de alquiler</h2>
+              <p><strong>Cliente:</strong> ${userData.name}</p>
+              <p><strong>Email:</strong> ${userData.email}</p>
+              <p><strong>Teléfono:</strong> ${userData.phone}</p>
+              <p><strong>DNI:</strong> ${userData.dni}</p>
+              <p><strong>Seña:</strong> $${result.deposit.toLocaleString("es-AR")}</p>
+              <h3>Extras:</h3>
+              <ul>${extrasHtml}</ul>
+              <p><strong>ID Reserva:</strong> ${result.reservationId}</p>
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando emails de reserva:", emailErr);
+        }
+
+        return res.status(200).json({
+          reservationId: result.reservationId,
+          deposit: result.deposit,
+          expiresAt: result.expiresAt,
+          transferInfo: {
+            alias: config.transferAlias || "genesis.airsoft",
+            cvu: config.transferCVU || "",
+            holder: config.transferHolder || "",
+          },
+        });
+      } catch (err) {
+        logger.error("createRentalReservation error:", err);
+        const msg = err.message || "Error del servidor";
+        return res.status(400).json({ error: msg });
+      }
+    });
+  }
+);
+
+// ======================================================================================
+// 7) EXPIRE RENTAL RESERVATIONS — Scheduled every 5 minutes
+// ======================================================================================
+export const expireRentalReservations = onSchedule(
+  { schedule: "every 5 minutes", secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  async () => {
+    const firestore = admin.firestore();
+    const now = new Date();
+
+    const snap = await firestore
+      .collection("rentalReservations")
+      .where("status", "==", "pending_payment")
+      .where("expiresAt", "<=", now)
+      .get();
+
+    if (snap.empty) {
+      logger.info("No hay reservas expiradas");
+      return;
+    }
+
+    const batch = firestore.batch();
+    const partidaDecrements = {};
+    const emails = [];
+
+    for (const doc of snap.docs) {
+      const data = doc.data();
+
+      batch.update(doc.ref, {
+        status: "expired",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const pid = data.partidaId;
+      partidaDecrements[pid] = (partidaDecrements[pid] || 0) + 1;
+
+      if (data.user?.email) {
+        emails.push(data.user);
+      }
+    }
+
+    for (const [pid, count] of Object.entries(partidaDecrements)) {
+      const partidaRef = firestore.doc(`partidas/${pid}`);
+      batch.update(partidaRef, {
+        slotsReserved: admin.firestore.FieldValue.increment(-count),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+    logger.info(`Expiradas ${snap.size} reservas de alquiler`);
+
+    // Send expiration emails
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+      });
+
+      for (const user of emails) {
+        await transporter.sendMail({
+          from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+          to: user.email,
+          subject: "Tu reserva de alquiler ha expirado - Genesis Airsoft",
+          html: `
+            <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+              <h2 style="color:#ff4444;">Reserva expirada</h2>
+              <p>Hola <strong>${user.name}</strong>,</p>
+              <p>Tu reserva de alquiler expiró porque no se confirmó el pago a tiempo.</p>
+              <p>Si querés, podés realizar una nueva reserva desde nuestra web.</p>
+              <p><a href="https://genesisairsoft.com.ar/alquileres" style="color:#c8f400;">Ver partidas disponibles</a></p>
+            </div>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      logger.error("Error enviando emails de expiración:", emailErr);
+    }
+  }
+);
+
+// ======================================================================================
+// 8) ON RENTAL STATUS CHANGE — Firestore trigger for confirmation emails
+// ======================================================================================
+export const onRentalStatusChange = onDocumentUpdated(
+  { document: "rentalReservations/{docId}", secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+
+    // Only act when status changes to "confirmed"
+    if (before.status === after.status || after.status !== "confirmed") {
+      return;
+    }
+
+    const user = after.user || {};
+    if (!user.email) {
+      logger.warn("Reserva confirmada sin email de usuario");
+      return;
+    }
+
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+      });
+
+      // Load partida details
+      const firestore = admin.firestore();
+      const partidaSnap = await firestore.doc(`partidas/${after.partidaId}`).get();
+      const partida = partidaSnap.exists ? partidaSnap.data() : {};
+
+      const horario = partida.horario?.toDate
+        ? partida.horario.toDate().toLocaleString("es-AR", { dateStyle: "long", timeStyle: "short" })
+        : "A confirmar";
+
+      const extrasHtml = (after.extras || []).length
+        ? after.extras.map((e) => `<li>${e.name} — $${e.price.toLocaleString("es-AR")}</li>`).join("")
+        : "<li>Sin extras</li>";
+
+      await transporter.sendMail({
+        from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+        to: user.email,
+        subject: "Pago confirmado - Tu alquiler está reservado",
+        html: `
+          <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+            <h2 style="color:#c8f400;">Pago confirmado</h2>
+            <p>Hola <strong>${user.name}</strong>,</p>
+            <p>Tu pago fue confirmado. Tu alquiler de equipamiento está reservado.</p>
+
+            <h3 style="color:#c8f400;">Detalles de la partida</h3>
+            <p><strong>Lugar:</strong> ${partida.lugar || "A confirmar"}</p>
+            <p><strong>Fecha:</strong> ${horario}</p>
+            <p><strong>Modalidad:</strong> ${partida.modalidad || "A confirmar"}</p>
+
+            <h3 style="color:#c8f400;">Tu equipamiento</h3>
+            <p>Equipamiento base incluido: marcadora, batería, cargador y lentes.</p>
+            <p><strong>Extras:</strong></p>
+            <ul>${extrasHtml}</ul>
+
+            <p><strong>Restante a pagar el día:</strong> $${(after.pricing?.remainingOnDay || 0).toLocaleString("es-AR")}</p>
+
+            <h3 style="color:#c8f400;">Recordá</h3>
+            <ul>
+              <li>Traé tu DNI para firmar el contrato</li>
+              <li>Usá lentes protectores obligatoriamente</li>
+              <li>Solo se permiten BBs BLS</li>
+            </ul>
+
+            <p>Nos vemos en la partida.</p>
+          </div>
+        `,
+      });
+
+      logger.info("Email de confirmación de alquiler enviado a:", user.email);
+    } catch (err) {
+      logger.error("Error enviando email de confirmación de alquiler:", err);
+    }
+  }
+);
+
+// ======================================================================================
+// 9) CANCEL RENTAL RESERVATION — User-initiated cancellation
+// ======================================================================================
+export const cancelRentalReservation = onRequest(
+  {},
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+      try {
+        // Verify Firebase Auth token
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        const { reservationId } = req.body;
+        if (!reservationId) return res.status(400).json({ error: "reservationId requerido" });
+
+        const db = admin.firestore();
+        const reservationRef = db.collection("rentalReservations").doc(reservationId);
+
+        await db.runTransaction(async (t) => {
+          const snap = await t.get(reservationRef);
+          if (!snap.exists) throw new Error("Reserva no encontrada");
+
+          const data = snap.data();
+          if (data.userId !== uid) throw new Error("No autorizado");
+          if (data.status !== "pending_payment") throw new Error("Solo se pueden cancelar reservas pendientes de pago");
+
+          t.update(reservationRef, {
+            status: "cancelled",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          if (data.partidaId) {
+            const partidaRef = db.collection("partidas").doc(data.partidaId);
+            t.update(partidaRef, {
+              slotsReserved: admin.firestore.FieldValue.increment(-1),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        });
+
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        logger.error("cancelRentalReservation error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
+      }
+    });
+  }
+);
+
+// ======================================================================================
+// 10) CREATE MANUAL RESERVATION — Admin-only, bypasses client Firestore rules
+// ======================================================================================
+export const createManualReservation = onRequest(
+  {},
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+      try {
+        // Verify Firebase Auth token + admin claim
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        if (decoded.role !== "admin") return res.status(403).json({ error: "Acceso denegado" });
+
+        const { partidaId, user: userReq, extras: extrasIds, status, marcadoraNumber, notes, discountOverride } = req.body;
+
+        if (!partidaId || !userReq?.name || !userReq?.email || !userReq?.phone || !userReq?.dni) {
+          return res.status(400).json({ error: "Datos incompletos" });
+        }
+
+        const userData = {
+          name: xss(userReq.name || ""),
+          email: xss(userReq.email || ""),
+          phone: xss(userReq.phone || ""),
+          dni: xss(userReq.dni || ""),
+        };
+
+        const validStatus = ["confirmed", "pending_payment"].includes(status) ? status : "confirmed";
+        const safeExtrasIds = Array.isArray(extrasIds) ? extrasIds : [];
+
+        const firestore = admin.firestore();
+
+        // Load config
+        const configSnap = await firestore.doc("rentalConfig/default").get();
+        if (!configSnap.exists) return res.status(500).json({ error: "Configuración no encontrada" });
+        const config = configSnap.data();
+
+        const validExtras = (config.extras || []).filter((e) => safeExtrasIds.includes(e.id));
+        const basePrice = Number(config.basePrice || 24000);
+        const depositPercent = Number(config.depositPercent || 50);
+        const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price), 0);
+
+        let reservationId;
+        await firestore.runTransaction(async (t) => {
+          const partidaRef = firestore.doc(`partidas/${partidaId}`);
+          const partidaSnap = await t.get(partidaRef);
+          if (!partidaSnap.exists) throw new Error("Partida no encontrada");
+
+          const partida = partidaSnap.data();
+          if ((partida.slotsReserved || 0) >= (partida.slotsTotal || 0)) {
+            throw new Error("No hay cupos disponibles");
+          }
+
+          // Discount: override > partida-level > config default
+          const rawDiscount = discountOverride !== undefined && discountOverride !== ""
+            ? Number(discountOverride)
+            : Number(partida.discountPercent ?? config.defaultDiscountPercent ?? 0);
+          const discountPct = Math.min(Math.max(rawDiscount, 0), 100);
+          const discountedBase = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100)) : basePrice;
+          const totalFull = discountedBase + extrasTotal;
+          const deposit = Math.round(discountedBase * (depositPercent / 100));
+          const remainingOnDay = totalFull - deposit;
+
+          const pricing = {
+            basePrice: discountedBase,
+            ...(discountPct > 0 && { originalBasePrice: basePrice, discountPercent: discountPct }),
+            extrasTotal,
+            totalFull,
+            deposit,
+            remainingOnDay,
+          };
+
+          const reservationRef = firestore.collection("rentalReservations").doc();
+          reservationId = reservationRef.id;
+
+          t.set(reservationRef, {
+            partidaId,
+            userId: null,
+            isManual: true,
+            user: userData,
+            extras: validExtras,
+            pricing,
+            status: validStatus,
+            marcadoraNumber: marcadoraNumber ? Number(marcadoraNumber) : null,
+            notes: xss(notes || ""),
+            expiresAt: null,
+            paidAt: validStatus === "confirmed" ? admin.firestore.FieldValue.serverTimestamp() : null,
+            confirmedAt: validStatus === "confirmed" ? admin.firestore.FieldValue.serverTimestamp() : null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          t.update(partidaRef, {
+            slotsReserved: (partida.slotsReserved || 0) + 1,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        });
+
+        return res.status(200).json({ reservationId });
+      } catch (err) {
+        logger.error("createManualReservation error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
       }
     });
   }

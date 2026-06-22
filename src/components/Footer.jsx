@@ -18,8 +18,8 @@ const Footer = () => {
         {/* Social */}
         <div className="footer-col">
 <div className="footer-social">
-            <a href="https://instagram.com/genesis.airsoft.ar" target="_blank" rel="noopener noreferrer">
-              <FaInstagram /> @genesis.airsoft.ar
+            <a href="https://instagram.com/genesis_airsoft" target="_blank" rel="noopener noreferrer">
+              <FaInstagram /> @genesis_airsoft
             </a>
             <a href="https://wa.me/541130441967" target="_blank" rel="noopener noreferrer">
               <FaWhatsapp /> WhatsApp
