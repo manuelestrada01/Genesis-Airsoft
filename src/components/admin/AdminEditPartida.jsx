@@ -34,9 +34,11 @@ export default function AdminEditPartida() {
         setForm({
           lugar: data.lugar || "",
           direccion: data.direccion || "",
+          mapsUrl: data.mapsUrl || "",
           horario: horarioStr,
           modalidad: data.modalidad || "",
           slotsTotal: data.slotsTotal || 5,
+          discountPercent: data.discountPercent ?? 0,
           status: data.status || "active",
           mapImageUrl: data.mapImageUrl || "",
           mapImagePath: data.mapImagePath || "",
@@ -71,9 +73,11 @@ export default function AdminEditPartida() {
       const updates = {
         lugar: form.lugar.trim(),
         direccion: form.direccion.trim(),
+        mapsUrl: form.mapsUrl.trim(),
         horario: new Date(form.horario),
         modalidad: form.modalidad.trim(),
         slotsTotal: Number(form.slotsTotal) || 5,
+        discountPercent: Number(form.discountPercent) || 0,
         status: form.status,
         updatedAt: serverTimestamp(),
       };
@@ -81,7 +85,7 @@ export default function AdminEditPartida() {
       // Handle map image change
       if (newMapFile) {
         if (form.mapImagePath) {
-          try { await deletePartidaImage(form.mapImagePath); } catch (e) { /* ok */ }
+          try { await deletePartidaImage(form.mapImagePath); } catch { /* ok */ }
         }
         const { imageUrl, imagePath } = await uploadPartidaImage(newMapFile, id);
         updates.mapImageUrl = imageUrl;
@@ -120,6 +124,11 @@ export default function AdminEditPartida() {
             <input className="af-input" name="direccion" value={form.direccion} onChange={handleChange} />
           </div>
 
+          <div className="af-field">
+            <label className="af-label">Link de Google Maps</label>
+            <input className="af-input" name="mapsUrl" value={form.mapsUrl} onChange={handleChange} placeholder="https://maps.google.com/..." />
+          </div>
+
           <div className="af-row">
             <div className="af-field">
               <label className="af-label">Fecha y hora *</label>
@@ -152,6 +161,14 @@ export default function AdminEditPartida() {
                 <option value="completed">Completada</option>
               </select>
             </div>
+          </div>
+
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Descuento para esta partida (%)</label>
+              <input className="af-input" name="discountPercent" type="number" min="0" max="100" value={form.discountPercent} onChange={handleChange} placeholder="0" />
+            </div>
+            <div className="af-field" />
           </div>
 
           <hr className="af-divider" />

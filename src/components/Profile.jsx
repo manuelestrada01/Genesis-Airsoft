@@ -6,8 +6,6 @@ import {
   where,
   getDocs,
   orderBy,
-  limit,
-  startAfter,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import AuthContext from "../context/AuthContext";
@@ -24,9 +22,7 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [orders, setOrders] = useState([]);
-  const [lastDoc, setLastDoc] = useState(null);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [moreAvailable, setMoreAvailable] = useState(true);
 
   // Rental reservations
   const [rentals, setRentals] = useState([]);
@@ -36,6 +32,7 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [configOpen, setConfigOpen] = useState(false);
 
   const handleLogout = () => {
     logoutUser();
@@ -105,8 +102,7 @@ const Profile = () => {
     const q = query(
       ordersRef,
       where("userId", "==", user.uid),
-      orderBy("createdAt", "desc"),
-      limit(3)
+      orderBy("createdAt", "desc")
     );
 
     const snapshot = await getDocs(q);
@@ -123,39 +119,7 @@ const Profile = () => {
     });
 
     setOrders(docs);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-    setMoreAvailable(snapshot.docs.length === 3);
     setLoadingOrders(false);
-  };
-
-  const loadMoreOrders = async () => {
-    if (!lastDoc) return;
-
-    const ordersRef = collection(db, "orders");
-    const q = query(
-      ordersRef,
-      where("userId", "==", user.uid),
-      orderBy("createdAt", "desc"),
-      startAfter(lastDoc),
-      limit(3)
-    );
-
-    const snapshot = await getDocs(q);
-
-    const newDocs = snapshot.docs.map((docSnap) => {
-      const data = docSnap.data();
-      const items = Array.isArray(data.items) ? data.items : [];
-      const subtotal = items.reduce(
-        (acc, i) => acc + Number(i.price || 0) * Number(i.quantity || 0),
-        0
-      );
-      const shippingCost = Number(data.shipping?.cost || 0);
-      return { id: docSnap.id, ...data, total: subtotal + shippingCost };
-    });
-
-    setOrders((prev) => [...prev, ...newDocs]);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-    setMoreAvailable(snapshot.docs.length === 3);
   };
 
   useEffect(() => {
@@ -238,6 +202,12 @@ const Profile = () => {
                 </span>
               )}
             </div>
+            <button onClick={() => setConfigOpen(true)} className="profile-settings-btn" title="Configuración">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </button>
           </div>
 
           <div className="profile-grid">
@@ -299,11 +269,6 @@ const Profile = () => {
                     ))}
                   </ul>
 
-                  {moreAvailable && (
-                    <button onClick={loadMoreOrders} className="btn-load-more">
-                      Cargar más pedidos
-                    </button>
-                  )}
                 </>
               ) : (
                 <div className="empty-state">
@@ -381,81 +346,63 @@ const Profile = () => {
               )}
             </div>
 
-            {/* PANEL DERECHO — CONFIGURACIÓN */}
-            <div className="profile-panel">
-              <div className="panel-header">
-                <h3>Configuración</h3>
-              </div>
-
-              <div className="settings-form">
-                <div className="field-group">
-                  <label>Nombre de usuario</label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Tu nombre"
-                  />
+          </div>
+          {/* CONFIG MODAL */}
+          {configOpen && (
+            <div className="config-modal-overlay" onClick={() => setConfigOpen(false)}>
+              <div className="config-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="config-modal-header">
+                  <h3>Configuración</h3>
+                  <button className="config-modal-close" onClick={() => setConfigOpen(false)}>✕</button>
                 </div>
 
-                <div className="field-group">
-                  <label>Correo electrónico</label>
-                  <input type="email" value={user.email} disabled />
-                </div>
-
-                {!isGoogleUser ? (
-                  <>
-                    <div className="section-divider">
-                      <span>Cambiar contraseña</span>
-                    </div>
-
-                    <div className="field-group">
-                      <label>Contraseña actual</label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="field-group">
-                      <label>Nueva contraseña</label>
-                      <input
-                        type="password"
-                        placeholder="••••••••"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="google-notice">
-                    <img
-                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                      alt="Google"
-                      width={16}
-                      height={16}
+                <div className="settings-form">
+                  <div className="field-group">
+                    <label>Nombre de usuario</label>
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="Tu nombre"
                     />
-                    <span>La contraseña la gestiona Google</span>
                   </div>
-                )}
 
-                {msgText && (
-                  <p className={`update-message ${msgType}`}>{msgText}</p>
-                )}
+                  <div className="field-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" value={user.email} disabled />
+                  </div>
 
-                <div className="settings-actions">
-                  <button className="btn-save" onClick={handleSaveChanges}>
-                    Guardar cambios
-                  </button>
-                  <button className="btn-logout" onClick={handleLogout}>
-                    Cerrar sesión
-                  </button>
+                  {!isGoogleUser ? (
+                    <>
+                      <div className="section-divider"><span>Cambiar contraseña</span></div>
+                      <div className="field-group">
+                        <label>Contraseña actual</label>
+                        <input type="password" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                      </div>
+                      <div className="field-group">
+                        <label>Nueva contraseña</label>
+                        <input type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="google-notice">
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width={16} height={16} />
+                      <span>La contraseña la gestiona Google</span>
+                    </div>
+                  )}
+
+                  {msgText && (
+                    <p className={`update-message ${msgType}`}>{msgText}</p>
+                  )}
+
+                  <div className="settings-actions">
+                    <button className="btn-save" onClick={handleSaveChanges}>Guardar cambios</button>
+                    <button className="btn-logout" onClick={handleLogout}>Cerrar sesión</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </>
       ) : (
         <p className="not-logged">No estás logueado.</p>

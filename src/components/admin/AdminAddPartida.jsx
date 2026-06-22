@@ -9,9 +9,11 @@ export default function AdminAddPartida() {
   const [form, setForm] = useState({
     lugar: "",
     direccion: "",
+    mapsUrl: "",
     horario: "",
     modalidad: "",
     slotsTotal: 5,
+    discountPercent: 0,
     mapFile: null,
   });
   const [loading, setLoading] = useState(false);
@@ -58,9 +60,11 @@ export default function AdminAddPartida() {
       const partidaRef = await addDoc(collection(db, "partidas"), {
         lugar: form.lugar.trim(),
         direccion: form.direccion.trim(),
+        mapsUrl: form.mapsUrl.trim(),
         horario: horarioDate,
         modalidad: form.modalidad.trim(),
         slotsTotal: Number(form.slotsTotal) || 5,
+        discountPercent: Number(form.discountPercent) || 0,
         slotsReserved: 0,
         mapImageUrl: "",
         mapImagePath: "",
@@ -79,9 +83,11 @@ export default function AdminAddPartida() {
       setForm({
         lugar: "",
         direccion: "",
+        mapsUrl: "",
         horario: "",
         modalidad: "",
         slotsTotal: 5,
+        discountPercent: 0,
         mapFile: null,
       });
     } catch (err) {
@@ -111,6 +117,11 @@ export default function AdminAddPartida() {
             <input className="af-input" name="direccion" value={form.direccion} onChange={handleChange} placeholder="Ej: Ruta 8 km 42" />
           </div>
 
+          <div className="af-field">
+            <label className="af-label">Link de Google Maps</label>
+            <input className="af-input" name="mapsUrl" value={form.mapsUrl} onChange={handleChange} placeholder="https://maps.google.com/..." />
+          </div>
+
           <div className="af-row">
             <div className="af-field">
               <label className="af-label">Fecha y hora *</label>
@@ -130,9 +141,15 @@ export default function AdminAddPartida() {
             </div>
           </div>
 
-          <div className="af-field">
-            <label className="af-label">Cupos de alquiler disponibles</label>
-            <input className="af-input" name="slotsTotal" type="number" min="1" value={form.slotsTotal} onChange={handleChange} />
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Cupos de alquiler disponibles</label>
+              <input className="af-input" name="slotsTotal" type="number" min="1" value={form.slotsTotal} onChange={handleChange} />
+            </div>
+            <div className="af-field">
+              <label className="af-label">Descuento para esta partida (%)</label>
+              <input className="af-input" name="discountPercent" type="number" min="0" max="100" value={form.discountPercent} onChange={handleChange} placeholder="0" />
+            </div>
           </div>
 
           <hr className="af-divider" />

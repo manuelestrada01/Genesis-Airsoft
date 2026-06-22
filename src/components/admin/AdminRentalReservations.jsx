@@ -44,8 +44,9 @@ export default function AdminRentalReservations() {
     return true;
   });
 
-  // Sorted partidas for dropdown (by horario)
+  // Sorted partidas for dropdown (by horario) — only active
   const partidaOptions = Object.entries(partidas)
+    .filter(([, p]) => p.status === "active")
     .map(([id, p]) => {
       const d = p.horario?.toDate ? p.horario.toDate() : new Date(p.horario);
       return { id, label: `${p.lugar} — ${d.toLocaleDateString("es-AR", { dateStyle: "medium" })}`, date: d };
@@ -87,7 +88,16 @@ export default function AdminRentalReservations() {
     <div className="admin-container">
       <AdminSidebar />
       <div className="admin-content">
-        <h1 style={{ color: "#fff" }}>Reservas de Alquiler</h1>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
+          <h1 style={{ color: "#fff", margin: 0 }}>Reservas de Alquiler</h1>
+          <button
+            className="af-save-btn"
+            style={{ padding: "10px 18px", fontSize: 13 }}
+            onClick={() => navigate("/admin/alquileres/nueva")}
+          >
+            + Nueva reserva
+          </button>
+        </div>
 
         <div style={{ marginBottom: 20, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           {/* Status filters */}

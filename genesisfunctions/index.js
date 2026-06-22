@@ -603,10 +603,6 @@ export const createRentalReservation = onRequest(
         const basePrice = Number(config.basePrice || 24000);
         const depositPercent = Number(config.depositPercent || 50);
         const expirationMinutes = Number(config.expirationMinutes || 30);
-        const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price), 0);
-        const totalFull = basePrice + extrasTotal;
-        const deposit = Math.round(basePrice * (depositPercent / 100));
-        const remainingOnDay = totalFull - deposit;
 
         // Transaction: check slots + create reservation
         const result = await firestore.runTransaction(async (t) => {
@@ -645,6 +641,14 @@ export const createRentalReservation = onRequest(
             throw new Error("Ya tenés una reserva activa para esta partida");
           }
 
+          // Apply partida-level discount (fallback to config default)
+          const discountPct = Number(partida.discountPercent ?? config.defaultDiscountPercent ?? 0);
+          const discountedBase = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100)) : basePrice;
+          const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price), 0);
+          const totalFull = discountedBase + extrasTotal;
+          const deposit = Math.round(discountedBase * (depositPercent / 100));
+          const remainingOnDay = totalFull - deposit;
+
           const expiresAt = new Date(now.getTime() + expirationMinutes * 60 * 1000);
 
           const reservationRef = firestore.collection("rentalReservations").doc();
@@ -654,7 +658,8 @@ export const createRentalReservation = onRequest(
             user: userData,
             extras: validExtras,
             pricing: {
-              basePrice,
+              basePrice: discountedBase,
+              ...(discountPct > 0 && { originalBasePrice: basePrice, discountPercent: discountPct }),
               extrasTotal,
               totalFull,
               deposit,
@@ -677,6 +682,7 @@ export const createRentalReservation = onRequest(
           return {
             reservationId: reservationRef.id,
             deposit,
+            remainingOnDay,
             expiresAt: expiresAt.toISOString(),
           };
         });
@@ -707,12 +713,12 @@ export const createRentalReservation = onRequest(
                 <p><strong>Alias:</strong> ${config.transferAlias || "genesis.airsoft"}</p>
                 <p><strong>CVU:</strong> ${config.transferCVU || ""}</p>
                 <p><strong>Titular:</strong> ${config.transferHolder || ""}</p>
-                <p><strong>Monto seña:</strong> $${deposit.toLocaleString("es-AR")}</p>
+                <p><strong>Monto seña:</strong> $${result.deposit.toLocaleString("es-AR")}</p>
 
                 <h3 style="color:#c8f400;">Extras seleccionados</h3>
                 <ul>${extrasHtml}</ul>
 
-                <p><strong>Total el día de la partida:</strong> $${remainingOnDay.toLocaleString("es-AR")}</p>
+                <p><strong>Total el día de la partida:</strong> $${result.remainingOnDay.toLocaleString("es-AR")}</p>
 
                 <p style="color:#ff4444;"><strong>Importante:</strong> Si no se confirma el pago en ${expirationMinutes} minutos, la reserva se cancelará automáticamente.</p>
               </div>
@@ -730,7 +736,7 @@ export const createRentalReservation = onRequest(
               <p><strong>Email:</strong> ${userData.email}</p>
               <p><strong>Teléfono:</strong> ${userData.phone}</p>
               <p><strong>DNI:</strong> ${userData.dni}</p>
-              <p><strong>Seña:</strong> $${deposit.toLocaleString("es-AR")}</p>
+              <p><strong>Seña:</strong> $${result.deposit.toLocaleString("es-AR")}</p>
               <h3>Extras:</h3>
               <ul>${extrasHtml}</ul>
               <p><strong>ID Reserva:</strong> ${result.reservationId}</p>
@@ -968,6 +974,117 @@ export const cancelRentalReservation = onRequest(
         return res.status(200).json({ success: true });
       } catch (err) {
         logger.error("cancelRentalReservation error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
+      }
+    });
+  }
+);
+
+// ======================================================================================
+// 10) CREATE MANUAL RESERVATION — Admin-only, bypasses client Firestore rules
+// ======================================================================================
+export const createManualReservation = onRequest(
+  {},
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+      try {
+        // Verify Firebase Auth token + admin claim
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        if (decoded.role !== "admin") return res.status(403).json({ error: "Acceso denegado" });
+
+        const { partidaId, user: userReq, extras: extrasIds, status, marcadoraNumber, notes, discountOverride } = req.body;
+
+        if (!partidaId || !userReq?.name || !userReq?.email || !userReq?.phone || !userReq?.dni) {
+          return res.status(400).json({ error: "Datos incompletos" });
+        }
+
+        const userData = {
+          name: xss(userReq.name || ""),
+          email: xss(userReq.email || ""),
+          phone: xss(userReq.phone || ""),
+          dni: xss(userReq.dni || ""),
+        };
+
+        const validStatus = ["confirmed", "pending_payment"].includes(status) ? status : "confirmed";
+        const safeExtrasIds = Array.isArray(extrasIds) ? extrasIds : [];
+
+        const firestore = admin.firestore();
+
+        // Load config
+        const configSnap = await firestore.doc("rentalConfig/default").get();
+        if (!configSnap.exists) return res.status(500).json({ error: "Configuración no encontrada" });
+        const config = configSnap.data();
+
+        const validExtras = (config.extras || []).filter((e) => safeExtrasIds.includes(e.id));
+        const basePrice = Number(config.basePrice || 24000);
+        const depositPercent = Number(config.depositPercent || 50);
+        const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price), 0);
+
+        let reservationId;
+        await firestore.runTransaction(async (t) => {
+          const partidaRef = firestore.doc(`partidas/${partidaId}`);
+          const partidaSnap = await t.get(partidaRef);
+          if (!partidaSnap.exists) throw new Error("Partida no encontrada");
+
+          const partida = partidaSnap.data();
+          if ((partida.slotsReserved || 0) >= (partida.slotsTotal || 0)) {
+            throw new Error("No hay cupos disponibles");
+          }
+
+          // Discount: override > partida-level > config default
+          const rawDiscount = discountOverride !== undefined && discountOverride !== ""
+            ? Number(discountOverride)
+            : Number(partida.discountPercent ?? config.defaultDiscountPercent ?? 0);
+          const discountPct = Math.min(Math.max(rawDiscount, 0), 100);
+          const discountedBase = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100)) : basePrice;
+          const totalFull = discountedBase + extrasTotal;
+          const deposit = Math.round(discountedBase * (depositPercent / 100));
+          const remainingOnDay = totalFull - deposit;
+
+          const pricing = {
+            basePrice: discountedBase,
+            ...(discountPct > 0 && { originalBasePrice: basePrice, discountPercent: discountPct }),
+            extrasTotal,
+            totalFull,
+            deposit,
+            remainingOnDay,
+          };
+
+          const reservationRef = firestore.collection("rentalReservations").doc();
+          reservationId = reservationRef.id;
+
+          t.set(reservationRef, {
+            partidaId,
+            userId: null,
+            isManual: true,
+            user: userData,
+            extras: validExtras,
+            pricing,
+            status: validStatus,
+            marcadoraNumber: marcadoraNumber ? Number(marcadoraNumber) : null,
+            notes: xss(notes || ""),
+            expiresAt: null,
+            paidAt: validStatus === "confirmed" ? admin.firestore.FieldValue.serverTimestamp() : null,
+            confirmedAt: validStatus === "confirmed" ? admin.firestore.FieldValue.serverTimestamp() : null,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          t.update(partidaRef, {
+            slotsReserved: (partida.slotsReserved || 0) + 1,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        });
+
+        return res.status(200).json({ reservationId });
+      } catch (err) {
+        logger.error("createManualReservation error:", err);
         return res.status(400).json({ error: err.message || "Error del servidor" });
       }
     });

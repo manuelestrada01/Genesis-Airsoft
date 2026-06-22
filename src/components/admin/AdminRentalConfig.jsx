@@ -8,6 +8,7 @@ const DEFAULT_CONFIG = {
   basePrice: 24000,
   defaultSlots: 5,
   depositPercent: 50,
+  defaultDiscountPercent: 0,
   expirationMinutes: 30,
   transferAlias: "",
   transferCVU: "",
@@ -79,6 +80,7 @@ export default function AdminRentalConfig() {
         basePrice: Number(config.basePrice),
         defaultSlots: Number(config.defaultSlots),
         depositPercent: Number(config.depositPercent),
+        defaultDiscountPercent: Number(config.defaultDiscountPercent ?? 0),
         expirationMinutes: Number(config.expirationMinutes),
         updatedAt: serverTimestamp(),
       }, { merge: true });
@@ -144,6 +146,22 @@ export default function AdminRentalConfig() {
                 onChange={(e) => handleChange("expirationMinutes", e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="af-row">
+            <div className="af-field">
+              <label className="af-label">Descuento por defecto (%)</label>
+              <input
+                className="af-input"
+                type="number"
+                min="0"
+                max="100"
+                value={config.defaultDiscountPercent ?? 0}
+                onChange={(e) => handleChange("defaultDiscountPercent", e.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <div className="af-field" />
           </div>
 
           <hr className="af-divider" />

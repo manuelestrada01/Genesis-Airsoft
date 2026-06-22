@@ -42,7 +42,9 @@ export default function PartidaDetail() {
   const slotsAvailable = (partida.slotsTotal || 0) - (partida.slotsReserved || 0);
   const isFull = slotsAvailable <= 0;
   const basePrice = config?.basePrice || 24000;
-  const deposit = Math.round(basePrice * ((config?.depositPercent || 50) / 100));
+  const discount = Number(partida.discountPercent) || 0;
+  const discountedBase = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
+  const deposit = Math.round(discountedBase * ((config?.depositPercent || 50) / 100));
 
   const handleReservar = () => {
     if (!user) {
@@ -73,6 +75,11 @@ export default function PartidaDetail() {
           <span className="pd-date">{dateStr}</span>
           <h1 className="pd-lugar">{partida.lugar}</h1>
           {partida.direccion && <p className="pd-dir">{partida.direccion}</p>}
+          {partida.mapsUrl && (
+            <a href={partida.mapsUrl} target="_blank" rel="noopener noreferrer" className="pd-maps-link">
+              Ver en Google Maps →
+            </a>
+          )}
 
           <div className="pd-tags">
             <span className="pd-tag">{timeStr} hs</span>
@@ -95,10 +102,22 @@ export default function PartidaDetail() {
           <div className="pd-pricing">
             <div className="pd-price-row">
               <span>Alquiler</span>
-              <span className="pd-price">${basePrice.toLocaleString("es-AR")}</span>
+              <span className="pd-price" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                {discount > 0 && (
+                  <span style={{ color: "#555", fontSize: 14, fontWeight: 700, textDecoration: "line-through" }}>
+                    ${basePrice.toLocaleString("es-AR")}
+                  </span>
+                )}
+                ${discountedBase.toLocaleString("es-AR")}
+                {discount > 0 && (
+                  <span style={{ background: "var(--accent, #c8f400)", color: "#000", fontSize: 11, fontWeight: 900, padding: "2px 7px", borderRadius: 999 }}>
+                    -{discount}%
+                  </span>
+                )}
+              </span>
             </div>
             <div className="pd-price-row pd-price-row--highlight">
-              <span>Seña para reservar (50%)</span>
+              <span>Seña para reservar ({config?.depositPercent || 50}%)</span>
               <span className="pd-price">${deposit.toLocaleString("es-AR")}</span>
             </div>
           </div>
@@ -115,7 +134,7 @@ export default function PartidaDetail() {
 
           {!isFull && (
             <button className="pd-cta" onClick={handleReservar}>
-              Reservar Alquiler — Seña ${deposit.toLocaleString("es-AR")}
+              Reservar
             </button>
           )}
         </div>

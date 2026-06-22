@@ -21,6 +21,8 @@ export default function PartidaCard({ partida, basePrice }) {
 
   const slotsAvailable = (partida.slotsTotal || 0) - (partida.slotsReserved || 0);
   const isFull = slotsAvailable <= 0;
+  const discount = Number(partida.discountPercent) || 0;
+  const discountedPrice = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
 
   return (
     <div
@@ -48,7 +50,15 @@ export default function PartidaCard({ partida, basePrice }) {
 
         <div className="partida-card__footer">
           <div className="partida-card__price">
-            ${Number(basePrice).toLocaleString("es-AR")}
+            {discount > 0 && (
+              <span className="partida-card__price-original">
+                ${Number(basePrice).toLocaleString("es-AR")}
+              </span>
+            )}
+            ${Number(discountedPrice).toLocaleString("es-AR")}
+            {discount > 0 && (
+              <span className="partida-card__discount-badge">-{discount}%</span>
+            )}
           </div>
 
           {isFull ? (

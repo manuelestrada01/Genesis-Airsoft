@@ -30,11 +30,13 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: center;
 }
 
 .pd-map-img {
   width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   border-radius: var(--radius-lg, 16px);
   border: 1px solid var(--border, #2a2a2a);
 }
@@ -66,10 +68,23 @@
   margin: 8px 0 4px;
 }
 
+.pd-maps-link {
+  display: inline-block;
+  color: var(--accent, #c8f400);
+  font-weight: 800;
+  font-size: 13px;
+  text-decoration: none;
+  margin: 4px 0 12px;
+}
+
+.pd-maps-link:hover {
+  text-decoration: underline;
+}
+
 .pd-dir {
   color: var(--text-muted, #888);
   font-weight: 600;
-  margin: 0 0 16px;
+  margin: 0 0 4px;
 }
 
 .pd-tags {

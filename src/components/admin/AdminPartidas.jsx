@@ -3,6 +3,7 @@ import { collection, getDocs, query, orderBy, updateDoc, doc, deleteDoc } from "
 import { db } from "../../firebase/config";
 import { deletePartidaImage } from "../../firebase/uploadPartidaImage";
 import AdminSidebar from "./AdminSidebar";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import { useNavigate } from "react-router-dom";
 import "./admin.css";
 
@@ -10,6 +11,7 @@ export default function AdminPartidas() {
   const [partidas, setPartidas] = useState([]);
   const [filter, setFilter] = useState("upcoming");
   const [loading, setLoading] = useState(true);
+  const [dialog, setDialog] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,30 +41,40 @@ export default function AdminPartidas() {
     return true;
   });
 
-  const toggleStatus = async (partida) => {
+  const toggleStatus = (partida) => {
     const newStatus = partida.status === "active" ? "cancelled" : "active";
-    const msg = newStatus === "cancelled" ? "¿Cancelar esta partida?" : "¿Reactivar esta partida?";
-    if (!window.confirm(msg)) return;
-
-    await updateDoc(doc(db, "partidas", partida.id), { status: newStatus });
-    setPartidas((prev) =>
-      prev.map((p) => (p.id === partida.id ? { ...p, status: newStatus } : p))
-    );
+    setDialog({
+      title: newStatus === "cancelled" ? "Cancelar partida" : "Reactivar partida",
+      message: newStatus === "cancelled" ? "¿Cancelar esta partida?" : "¿Reactivar esta partida?",
+      confirmLabel: newStatus === "cancelled" ? "Cancelar partida" : "Reactivar",
+      danger: newStatus === "cancelled",
+      onConfirm: async () => {
+        setDialog(null);
+        await updateDoc(doc(db, "partidas", partida.id), { status: newStatus });
+        setPartidas((prev) => prev.map((p) => (p.id === partida.id ? { ...p, status: newStatus } : p)));
+      },
+    });
   };
 
-  const deletePartida = async (partida) => {
-    if (!window.confirm("¿Eliminar esta partida? Esta acción no se puede deshacer.")) return;
-
-    try {
-      if (partida.mapImagePath) {
-        try { await deletePartidaImage(partida.mapImagePath); } catch (e) { /* ok */ }
-      }
-      await deleteDoc(doc(db, "partidas", partida.id));
-      setPartidas((prev) => prev.filter((p) => p.id !== partida.id));
-    } catch (err) {
-      console.error("Error eliminando partida:", err);
-      alert("Error al eliminar la partida");
-    }
+  const deletePartida = (partida) => {
+    setDialog({
+      title: "Eliminar partida",
+      message: "¿Eliminar esta partida? Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      danger: true,
+      onConfirm: async () => {
+        setDialog(null);
+        try {
+          if (partida.mapImagePath) {
+            try { await deletePartidaImage(partida.mapImagePath); } catch { /* ok */ }
+          }
+          await deleteDoc(doc(db, "partidas", partida.id));
+          setPartidas((prev) => prev.filter((p) => p.id !== partida.id));
+        } catch (err) {
+          console.error("Error eliminando partida:", err);
+        }
+      },
+    });
   };
 
   const statusBadge = (status) => {
@@ -92,6 +104,15 @@ export default function AdminPartidas() {
 
   return (
     <div className="admin-container">
+      <ConfirmDialog
+        isOpen={!!dialog}
+        title={dialog?.title}
+        message={dialog?.message}
+        confirmLabel={dialog?.confirmLabel}
+        danger={dialog?.danger}
+        onConfirm={dialog?.onConfirm}
+        onCancel={() => setDialog(null)}
+      />
       <AdminSidebar />
       <div className="admin-content">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: 20 }}>
@@ -101,7 +122,7 @@ export default function AdminPartidas() {
           </button>
         </div>
 
-        <div style={{ marginBottom: 20, display: "flex", gap: 8 }}>
+        <div style={{ marginBottom: 20, display: "flex", gap: 8, flexWrap: "wrap" }}>
           {["upcoming", "past", "cancelled", "all"].map((f) => (
             <button
               key={f}

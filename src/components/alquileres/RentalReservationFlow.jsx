@@ -87,16 +87,25 @@ export default function RentalReservationFlow() {
 
   // Calculate pricing
   const basePrice = config?.basePrice || 24000;
+  const discount = Number(partida?.discountPercent) || 0;
+  const discountedBase = discount > 0 ? Math.round(basePrice * (1 - discount / 100)) : basePrice;
   const depositPercent = config?.depositPercent || 50;
   const expirationMinutes = config?.expirationMinutes || 30;
   const allExtras = config?.extras || [];
   const chosenExtras = allExtras.filter((e) => selectedExtras.includes(e.id));
   const extrasTotal = chosenExtras.reduce((sum, e) => sum + Number(e.price), 0);
-  const totalFull = basePrice + extrasTotal;
-  const deposit = Math.round(basePrice * (depositPercent / 100));
+  const totalFull = discountedBase + extrasTotal;
+  const deposit = Math.round(discountedBase * (depositPercent / 100));
   const remainingOnDay = totalFull - deposit;
 
-  const pricing = { basePrice, extrasTotal, totalFull, deposit, remainingOnDay };
+  const pricing = {
+    basePrice: discountedBase,
+    ...(discount > 0 && { originalBasePrice: basePrice, discountPercent: discount }),
+    extrasTotal,
+    totalFull,
+    deposit,
+    remainingOnDay,
+  };
   const transferInfo = {
     alias: config?.transferAlias || "",
     cvu: config?.transferCVU || "",
@@ -244,7 +253,7 @@ export default function RentalReservationFlow() {
               onClick={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? "Procesando..." : `Confirmar Reserva — Seña $${deposit.toLocaleString("es-AR")}`}
+              {submitting ? "Procesando..." : "Confirmar"}
             </button>
           </div>
         </div>

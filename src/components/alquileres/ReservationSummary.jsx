@@ -8,7 +8,19 @@ export default function ReservationSummary({ pricing, extras, transferInfo, expi
       <div className="rf-summary-card">
         <div className="rf-summary-row">
           <span>Alquiler base</span>
-          <span className="rf-summary-val">${Number(pricing.basePrice).toLocaleString("es-AR")}</span>
+          <span className="rf-summary-val" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {pricing.originalBasePrice && (
+              <span style={{ color: "#555", fontSize: 13, fontWeight: 700, textDecoration: "line-through" }}>
+                ${Number(pricing.originalBasePrice).toLocaleString("es-AR")}
+              </span>
+            )}
+            ${Number(pricing.basePrice).toLocaleString("es-AR")}
+            {pricing.discountPercent > 0 && (
+              <span style={{ background: "var(--accent, #c8f400)", color: "#000", fontSize: 11, fontWeight: 900, padding: "2px 7px", borderRadius: 999 }}>
+                -{pricing.discountPercent}%
+              </span>
+            )}
+          </span>
         </div>
 
         {extras.length > 0 && (

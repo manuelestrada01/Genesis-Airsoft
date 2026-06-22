@@ -40,6 +40,7 @@ import AdminAddPartida from "./components/admin/AdminAddPartida";
 import AdminEditPartida from "./components/admin/AdminEditPartida";
 import AdminRentalReservations from "./components/admin/AdminRentalReservations";
 import AdminRentalReservationDetail from "./components/admin/AdminRentalReservationDetail";
+import AdminAddReservation from "./components/admin/AdminAddReservation";
 import AdminRentalConfig from "./components/admin/AdminRentalConfig";
 
 // Hooks
@@ -151,6 +152,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminRentalReservations />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/alquileres/nueva"
+          element={
+            <AdminRoute>
+              <AdminAddReservation />
             </AdminRoute>
           }
         />

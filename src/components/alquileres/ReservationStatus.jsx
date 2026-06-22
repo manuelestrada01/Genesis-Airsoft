@@ -5,6 +5,7 @@ import { db, storage } from "../../firebase/config";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import AuthContext from "../../context/AuthContext";
 import RentalContract from "./RentalContract";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import "./ReservationStatus.css";
 
 export default function ReservationStatus() {
@@ -21,6 +22,7 @@ export default function ReservationStatus() {
   const [uploadError, setUploadError] = useState("");
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [cancelDialog, setCancelDialog] = useState(false);
 
   // Realtime listener on reservation
   useEffect(() => {
@@ -125,7 +127,6 @@ export default function ReservationStatus() {
   };
 
   const handleCancelReservation = async () => {
-    if (!window.confirm("¿Cancelar esta reserva? Esta acción no se puede deshacer.")) return;
     setCancelError("");
     setCancelling(true);
     try {
@@ -161,22 +162,41 @@ export default function ReservationStatus() {
     : null;
 
   const statusConfig = {
-    pending_payment: { label: "Pendiente de pago", color: "#d97706", icon: "⏳" },
-    confirmed: { label: "Confirmada", color: "#16a34a", icon: "✓" },
+    pending_payment: { label: "Pendiente de pago", color: "#c8f400", icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 2h14M5 22h14M6 2v4l6 6-6 6v4M18 2v4l-6 6 6 6v4"/>
+      </svg>
+    )},
+    pending_approval: { label: "Esperando aprobación", color: "#c8f400", icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 2h14M5 22h14M6 2v4l6 6-6 6v4M18 2v4l-6 6 6 6v4"/>
+      </svg>
+    )},
+    confirmed: { label: "Confirmada", color: "#c8f400", icon: "✓" },
     expired: { label: "Expirada", color: "#dc2626", icon: "✕" },
     cancelled: { label: "Cancelada", color: "#6b7280", icon: "✕" },
   };
-  const st = statusConfig[r.status] || statusConfig.pending_payment;
+  const effectiveStatus = r.status === "pending_payment" && r.comprobanteUrl ? "pending_approval" : r.status;
+  const st = statusConfig[effectiveStatus] || statusConfig.pending_payment;
 
   return (
     <div className="rs-page">
+      <ConfirmDialog
+        isOpen={cancelDialog}
+        title="Cancelar reserva"
+        message="¿Cancelar esta reserva? Esta acción no se puede deshacer."
+        confirmLabel="Cancelar reserva"
+        danger
+        onConfirm={() => { setCancelDialog(false); handleCancelReservation(); }}
+        onCancel={() => setCancelDialog(false)}
+      />
       <button className="rs-back" onClick={() => navigate("/alquileres")}>
         ← Volver a partidas
       </button>
 
       {/* Status header */}
       <div className="rs-status-card" style={{ borderColor: st.color }}>
-        <div className="rs-status-icon" style={{ background: st.color }}>{st.icon}</div>
+        <div className="rs-status-icon" style={{ background: st.color, color: st.color === "#c8f400" ? "#000" : "#fff" }}>{st.icon}</div>
         <div>
           <h2 className="rs-status-label" style={{ color: st.color }}>{st.label}</h2>
           <p className="rs-status-id">Reserva #{r.id}</p>
@@ -211,7 +231,19 @@ export default function ReservationStatus() {
 
           {/* Comprobante upload */}
           <div className="rs-comprobante">
-            <h4>Subir comprobante de transferencia</h4>
+            {!r.comprobanteUrl && !r.comprobanteRejected && <h4>Subir comprobante de transferencia</h4>}
+            {r.comprobanteRejected && !r.comprobanteUrl && (
+              <div className="rs-comprobante-rejected">
+                <span className="rs-comprobante-rejected-icon">✕</span>
+                <div>
+                  <strong>Comprobante rechazado</strong>
+                  {r.comprobanteRejectionReason && (
+                    <p className="rs-comprobante-rejected-reason">Motivo: {r.comprobanteRejectionReason}</p>
+                  )}
+                  <p className="rs-comprobante-rejected-hint">Subí un nuevo comprobante para continuar.</p>
+                </div>
+              </div>
+            )}
             {r.comprobanteUrl ? (
               <div className="rs-comprobante-done">
                 <span className="rs-comprobante-check">✓</span>
@@ -219,12 +251,27 @@ export default function ReservationStatus() {
                 <a href={r.comprobanteUrl} target="_blank" rel="noopener noreferrer" className="rs-comprobante-link">
                   Ver comprobante
                 </a>
+                <label className="rs-comprobante-label rs-comprobante-label--change">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="rs-comprobante-input"
+                    onChange={handleComprobanteUpload}
+                    disabled={uploadingComprobante}
+                  />
+                  <span className="rs-comprobante-btn rs-comprobante-btn--change">
+                    {uploadingComprobante ? "Subiendo..." : "Cambiar comprobante"}
+                  </span>
+                </label>
+                {uploadError && <p className="rs-comprobante-error">{uploadError}</p>}
               </div>
             ) : (
               <>
-                <p className="rs-comprobante-hint">
-                  Una vez realizada la transferencia, subí la captura o PDF del comprobante para agilizar la confirmación.
-                </p>
+                {!r.comprobanteRejected && (
+                  <p className="rs-comprobante-hint">
+                    Una vez realizada la transferencia, subí la captura o PDF del comprobante para agilizar la confirmación.
+                  </p>
+                )}
                 <label className="rs-comprobante-label">
                   <input
                     type="file"
@@ -246,7 +293,7 @@ export default function ReservationStatus() {
           <div className="rs-cancel-section">
             <button
               className="rs-cancel-btn"
-              onClick={handleCancelReservation}
+              onClick={() => setCancelDialog(true)}
               disabled={cancelling}
             >
               {cancelling ? "Cancelando..." : "Cancelar reserva"}
@@ -278,8 +325,8 @@ export default function ReservationStatus() {
           <div className="rs-reminder">
             <h4>Recordá</h4>
             <ul>
-              <li>Traé tu DNI para firmar el contrato</li>
-              <li>Restante a pagar el día: <strong>${Number(pricing.remainingOnDay || 0).toLocaleString("es-AR")}</strong></li>
+              <li>No olvides traer el DNI</li>
+              <li>Recordá llegar temprano</li>
             </ul>
           </div>
 
@@ -300,20 +347,52 @@ export default function ReservationStatus() {
       {/* Pricing summary */}
       <div className="rs-pricing">
         <h3>Detalle del alquiler</h3>
-        <div className="rs-price-row"><span>Alquiler base</span><span>${Number(pricing.basePrice || 0).toLocaleString("es-AR")}</span></div>
-        {(r.extras || []).map((e, i) => (
-          <div key={i} className="rs-price-row rs-price-row--sub">
-            <span>{e.name}</span>
-            <span>${Number(e.price || 0).toLocaleString("es-AR")}</span>
-          </div>
-        ))}
+
+        {/* Base price */}
+        <div className="rs-price-row">
+          <span>Alquiler base</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {pricing.originalBasePrice && (
+              <span style={{ color: "#555", fontSize: 13, fontWeight: 700, textDecoration: "line-through" }}>
+                ${Number(pricing.originalBasePrice).toLocaleString("es-AR")}
+              </span>
+            )}
+            ${Number(pricing.basePrice || 0).toLocaleString("es-AR")}
+            {pricing.discountPercent > 0 && (
+              <span style={{ background: "var(--accent, #c8f400)", color: "#000", fontSize: 11, fontWeight: 900, padding: "2px 7px", borderRadius: 999 }}>
+                -{pricing.discountPercent}%
+              </span>
+            )}
+          </span>
+        </div>
+
+        {/* Extras */}
+        {(r.extras || []).length > 0 && (
+          <>
+            <div className="rs-price-divider" />
+            <p className="rs-price-label">Extras (se pagan el día de la partida)</p>
+            {(r.extras || []).map((e, i) => (
+              <div key={i} className="rs-price-row rs-price-row--sub">
+                <span>{e.name}</span>
+                <span>${Number(e.price || 0).toLocaleString("es-AR")}</span>
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* Totals */}
+        <div className="rs-price-divider" />
         <div className="rs-price-row rs-price-row--total">
           <span>Total completo</span>
           <span>${Number(pricing.totalFull || 0).toLocaleString("es-AR")}</span>
         </div>
         <div className="rs-price-row rs-price-row--deposit">
-          <span>Seña (50%)</span>
+          <span>Seña abonada</span>
           <span>${Number(pricing.deposit || 0).toLocaleString("es-AR")}</span>
+        </div>
+        <div className="rs-price-row rs-price-row--remaining">
+          <span>Saldo restante (día de partida)</span>
+          <span>${Number(pricing.remainingOnDay || 0).toLocaleString("es-AR")}</span>
         </div>
       </div>
     </div>
