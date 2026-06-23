@@ -19,6 +19,10 @@ export default function AdminSidebar() {
         <Link to="/admin/partidas/add" className="admin-link">➕ Nueva Partida</Link>
         <Link to="/admin/alquileres" className="admin-link">📋 Reservas Alquiler</Link>
         <Link to="/admin/rental-config" className="admin-link">⚙️ Config Alquileres</Link>
+
+        <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
+
+        <Link to="/admin/etiqueta" className="admin-link">🏷️ Etiqueta de Despacho</Link>
       </nav>
     </div>
   );

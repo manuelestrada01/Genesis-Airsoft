@@ -16,6 +16,7 @@
       "Bash(npx vite:*)",
       "Bash(node_modules/.bin/vite build:*)",
       "Bash(git commit:*)",
+      "Bash(git commit -m ':*)",
       "Bash(git push:*)",
       "Bash(firebase deploy:*)",
       "Bash(xargs grep:*)",
@@ -26,7 +27,8 @@
       "Bash(firebase --token)",
       "Bash(firebase login:ci --no-localhost)",
       "Bash(cmd:*)",
-      "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)"
+      "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)",
+      "Bash(git merge:*)"
     ]
   }
 }

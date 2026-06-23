@@ -3,12 +3,15 @@ import { useParams } from "react-router-dom";
 import { doc, getDoc, updateDoc, serverTimestamp, writeBatch, increment } from "firebase/firestore";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { db, storage } from "../../firebase/config";
+import ShippingLabelModal from "./ShippingLabelModal";
 import "./admin.css";
 
 export default function AdminOrderDetail() {
   const { id } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [labelOpen, setLabelOpen] = useState(false);
 
   // Tracking Via Cargo
   const [tracking, setTracking] = useState("");
@@ -725,6 +728,9 @@ export default function AdminOrderDetail() {
             />
 
             <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <button style={primaryBtn(false)} onClick={() => setLabelOpen(true)}>
+                Etiqueta de despacho
+              </button>
               <button onClick={saveTracking} disabled={savingTracking} style={primaryBtn(savingTracking)}>
                 {savingTracking ? "Guardando..." : "Guardar seguimiento"}
               </button>
@@ -755,6 +761,8 @@ export default function AdminOrderDetail() {
           </div>
         </div>
       </div>
+
+      <ShippingLabelModal order={order} isOpen={labelOpen} onClose={() => setLabelOpen(false)} />
 
       {/* Responsive tweak simple */}
       <style>{`
