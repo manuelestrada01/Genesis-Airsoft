@@ -15,7 +15,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx vite:*)",
       "Bash(node_modules/.bin/vite build:*)",
-      "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)"
+      "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)",
+      "Bash(git commit -m ':*)"
     ]
   }
 }
