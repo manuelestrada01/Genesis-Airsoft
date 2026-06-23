@@ -42,6 +42,7 @@ import AdminRentalReservations from "./components/admin/AdminRentalReservations"
 import AdminRentalReservationDetail from "./components/admin/AdminRentalReservationDetail";
 import AdminAddReservation from "./components/admin/AdminAddReservation";
 import AdminRentalConfig from "./components/admin/AdminRentalConfig";
+import AdminShippingLabel from "./components/admin/AdminShippingLabel";
 
 // Hooks
 import useIsMobile from "./hooks/useIsMobile";
@@ -176,6 +177,14 @@ function App() {
           element={
             <AdminRoute>
               <AdminRentalConfig />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/etiqueta"
+          element={
+            <AdminRoute>
+              <AdminShippingLabel />
             </AdminRoute>
           }
         />
