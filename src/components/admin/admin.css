@@ -14,15 +14,21 @@
   width: 250px;
   background: var(--surface, #1a1a1a);
   color: var(--text, #fff);
-  padding: 25px;
-  min-height: calc(100vh - 160px);
+  padding: 20px;
+  height: 100vh;
   position: fixed;
-  top: 160px;
+  top: 0;
   left: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   border-right: 1px solid #2a2a2a;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-top: 110px;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
 }
 
 .admin-title {
@@ -36,18 +42,18 @@
 .admin-menu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .admin-link {
   display: block;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-radius: 6px;
   color: var(--text-muted, #888);
   text-decoration: none;
   background: var(--surface-2, #242424);
   transition: 0.2s ease;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   border: 1px solid transparent;
 }
@@ -63,6 +69,8 @@
 .admin-content {
   flex: 1;
   padding: 40px;
+  padding-top: 0px;
+  margin-top: -30px;
   margin-left: 270px;
   background: var(--bg, #0f0f0f);
   min-height: calc(100vh - 160px);
@@ -76,6 +84,10 @@
 .admin-content h4 {
   color: var(--text, #fff);
 }
+
+.admin-content h1 { font-size: 26px; font-weight: 800; }
+.admin-content h2 { font-size: 20px; font-weight: 700; }
+.admin-content h3 { font-size: 16px; font-weight: 700; }
 
 .admin-content p {
   color: var(--text-muted, #888);

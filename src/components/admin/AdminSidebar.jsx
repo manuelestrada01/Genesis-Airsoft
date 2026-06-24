@@ -22,6 +22,12 @@ export default function AdminSidebar() {
 
         <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
 
+        <Link to="/admin/servicio" className="admin-link">🔧 Turnos Servicio</Link>
+        <Link to="/admin/servicio/config" className="admin-link">⚙️ Config Servicio</Link>
+        <Link to="/admin/servicio/calendario" className="admin-link">📅 Calendario Turnos</Link>
+
+        <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
+
         <Link to="/admin/etiqueta" className="admin-link">🏷️ Etiqueta de Despacho</Link>
       </nav>
     </div>

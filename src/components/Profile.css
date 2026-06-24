@@ -555,6 +555,112 @@
 }
 
 /* ============================================
+   POINTS PANEL
+   ============================================ */
+.points-balance {
+  text-align: center;
+  padding: 16px 0 8px;
+}
+
+.points-number {
+  display: block;
+  color: var(--accent, #c8f400);
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.points-label {
+  display: block;
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.points-bar-wrap {
+  height: 6px;
+  background: var(--surface-2, #242424);
+  border-radius: 999px;
+  margin: 14px 0 8px;
+  overflow: hidden;
+}
+
+.points-bar-fill {
+  height: 100%;
+  background: var(--accent, #c8f400);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.points-sub {
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.points-redeem-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--accent, #c8f400);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.points-redeem-btn:hover:not(:disabled) { background: #d6ff1a; }
+.points-redeem-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: var(--accent, #c8f400);
+}
+
+.points-history {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.points-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--surface-2, #242424);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.points-delta {
+  font-weight: 900;
+  min-width: 36px;
+}
+
+.points-delta.positive { color: var(--accent, #c8f400); }
+.points-delta.negative { color: #f87171; }
+
+.points-reason {
+  flex: 1;
+  color: var(--text, #e0e0e0);
+  font-weight: 600;
+}
+
+.points-date {
+  color: var(--text-muted, #888);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ============================================
    RESPONSIVE
    ============================================ */
 @media (max-width: 900px) {
