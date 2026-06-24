@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Public components
 import ProductDetail from "./components/ItemDetailContainer";
@@ -28,7 +28,7 @@ import RentalReservationFlow from "./components/alquileres/RentalReservationFlow
 import ReservationStatus from "./components/alquileres/ReservationStatus";
 
 // Servicio Técnico (public)
-import ServicioPage from "./components/servicio/ServicioPage";
+import ServicioPage, { SERVICIO_COMING_SOON } from "./components/servicio/ServicioPage";
 import ServicioTurnoFlow from "./components/servicio/ServicioTurnoFlow";
 import ServicioTurnoStatus from "./components/servicio/ServicioTurnoStatus";
 import ServicioRedeem from "./components/servicio/ServicioRedeem";
@@ -268,9 +268,9 @@ function App() {
 
           {/* Servicio Técnico */}
           <Route path="/servicio" element={<ServicioPage />} />
-          <Route path="/servicio/turno/:type" element={<ServicioTurnoFlow />} />
+          <Route path="/servicio/turno/:type" element={SERVICIO_COMING_SOON ? <Navigate to="/servicio" replace /> : <ServicioTurnoFlow />} />
           <Route path="/servicio/turno-status/:id" element={<ServicioTurnoStatus />} />
-          <Route path="/servicio/canjear" element={<ServicioRedeem />} />
+          <Route path="/servicio/canjear" element={SERVICIO_COMING_SOON ? <Navigate to="/servicio" replace /> : <ServicioRedeem />} />
         </Routes>
       </div>
 

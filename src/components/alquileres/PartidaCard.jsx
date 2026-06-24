@@ -60,7 +60,9 @@ export default function PartidaCard({ partida, basePrice }) {
               <span className="partida-card__discount-badge">-{discount}%</span>
             )}
           </div>
+        </div>
 
+        <div style={{ paddingTop: 8, display: "flex", justifyContent: "flex-end" }}>
           {isFull ? (
             <span className="partida-card__full">COMPLETO</span>
           ) : (

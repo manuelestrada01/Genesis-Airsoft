@@ -117,25 +117,30 @@
 }
 
 .contact-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border-radius: 25px;
+  padding: 11px 22px;
+  border-radius: 999px;
   text-decoration: none;
-  font-weight: 700;
-  font-size: 13px;
-  border: none;
+  font-weight: 900;
+  font-size: 14px;
   cursor: pointer;
-  transition: filter var(--transition), transform var(--transition);
+  transition: opacity 0.2s, transform 0.2s;
   font-family: var(--font);
 }
 
-.contact-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
-.contact-btn img { width: 20px; height: 20px; }
+.contact-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.contact-btn img { width: 18px; height: 18px; }
 
-.whatsapp { background: #25d366; color: #fff; }
+.whatsapp {
+  background: var(--accent, #c8f400);
+  color: #000;
+  border: none;
+}
+
 .instagram {
-  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
-  color: #fff;
+  background: transparent;
+  color: var(--accent, #c8f400);
+  border: 1px solid rgba(200, 244, 0, 0.4);
 }
