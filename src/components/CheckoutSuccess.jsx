@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { logEvent } from "firebase/analytics";
 import { analytics } from "../firebase/config";
+import "./CheckoutSuccess.css";
 
 function CheckoutSuccess() {
   const { clearCart } = useContext(CartContext);
@@ -11,65 +12,76 @@ function CheckoutSuccess() {
   const navigate = useNavigate();
 
   const query = new URLSearchParams(location.search);
-  const paymentId = query.get("payment_id");
-  const status = query.get("status");
+  const paymentId = query.get("payment_id") || query.get("collection_id");
+  const status = query.get("status") || query.get("collection_status");
   const externalReference = query.get("external_reference");
 
-  // 🔥 Limpiar carrito apenas llegamos a esta pantalla
-useEffect(() => {
-  clearCart();
+  useEffect(() => {
+    clearCart();
+    setTimeout(() => {
+      window.dispatchEvent(new Event("cart-updated"));
+    }, 100);
 
-  if (paymentId) {
-    logEvent(analytics, "purchase", {
-      transaction_id: paymentId,
-      currency: "ARS",
-      ...(externalReference && { affiliation: externalReference }),
-    });
-  }
+    if (paymentId) {
+      logEvent(analytics, "purchase", {
+        transaction_id: paymentId,
+        currency: "ARS",
+        ...(externalReference && { affiliation: externalReference }),
+      });
+    }
+  }, []);
 
-  // 🔥 Forzar re-render global para que todas las pantallas actualicen el carrito
-  setTimeout(() => {
-    window.dispatchEvent(new Event("cart-updated"));
-  }, 100);
-}, []);
-
-
-
-  const handleGoHome = () => {
-    navigate("/");
-  };
+  const statusLabel = {
+    approved: "Aprobado",
+    pending:  "Pendiente",
+    rejected: "Rechazado",
+  }[status] ?? status;
 
   return (
-    <div style={{ padding: "40px", textAlign: "center" }}>
-      <h2>✅ ¡Pago realizado con éxito!</h2>
-      <p>
-        Gracias por tu compra en <b>Genesis Airsoft</b>.
-      </p>
+    <div className="success-page">
+      <div className="success-card">
+        <div className="success-icon-wrap">
+          <div className="success-icon-ring" />
+          <span className="success-icon-check">✓</span>
+        </div>
 
-      {paymentId && (
-        <p>
-          Tu ID de pago es: <b>{paymentId}</b>
+        <h1 className="success-title">¡Compra realizada!</h1>
+        <p className="success-subtitle">
+          Gracias por tu compra en <b>Genesis Airsoft</b>.
+          <br />Pronto recibirás tu pedido.
         </p>
-      )}
 
-      {status && (
-        <p>
-          Estado: <b>{status}</b>
+        {(paymentId || status || externalReference) && (
+          <div className="success-details">
+            {paymentId && (
+              <div className="success-detail-row">
+                <span className="success-detail-label">ID de pago</span>
+                <span className="success-detail-value">{paymentId}</span>
+              </div>
+            )}
+            {status && (
+              <div className="success-detail-row">
+                <span className="success-detail-label">Estado</span>
+                <span className="success-detail-value accent">{statusLabel}</span>
+              </div>
+            )}
+            {externalReference && (
+              <div className="success-detail-row">
+                <span className="success-detail-label">Referencia</span>
+                <span className="success-detail-value">{externalReference}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <p className="success-email-note">
+          Recibirás un email de confirmación con los detalles de tu pedido.
         </p>
-      )}
 
-      {externalReference && (
-        <p>
-          Referencia: <b>{externalReference}</b>
-        </p>
-      )}
-
-      <button
-        onClick={handleGoHome}
-        style={{ marginTop: "20px", padding: "10px 20px", cursor: "pointer" }}
-      >
-        Volver al inicio
-      </button>
+        <button className="success-btn" onClick={() => navigate("/")}>
+          Volver al inicio
+        </button>
+      </div>
     </div>
   );
 }

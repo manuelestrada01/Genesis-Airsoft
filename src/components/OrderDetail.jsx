@@ -317,34 +317,53 @@ const OrderDetail = () => {
 
             {/* ✅ Subida de comprobante (sin cambiar estética: usamos estilos inline mínimos) */}
             {canUploadProof && (
-              <div style={{ marginTop: 12 }}>
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                  <input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    onChange={onSelectFile}
-                    disabled={uploading}
-                  />
+              <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+                  {/* Custom file picker */}
+                  <label style={{
+                    display: "inline-flex", alignItems: "center", gap: 8,
+                    background: "rgba(200,244,0,0.1)", border: "1px solid rgba(200,244,0,0.3)",
+                    color: "#c8f400", fontWeight: 800, fontSize: 13,
+                    padding: "10px 18px", borderRadius: 8, cursor: "pointer",
+                    opacity: uploading ? 0.6 : 1, pointerEvents: uploading ? "none" : "auto",
+                    position: "relative",
+                  }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    {file ? file.name.length > 28 ? file.name.slice(0, 25) + "…" : file.name : "Seleccionar archivo"}
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      onChange={onSelectFile}
+                      disabled={uploading}
+                      style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
+                    />
+                  </label>
 
                   <button
                     type="button"
-                    className="tracking-btn"
                     onClick={handleUploadProof}
                     disabled={uploading || !file}
-                    style={{ textDecoration: "none" }}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 8,
+                      background: file && !uploading ? "#c8f400" : "rgba(200,244,0,0.15)",
+                      color: file && !uploading ? "#000" : "#555",
+                      border: "none", borderRadius: 8,
+                      padding: "10px 20px", fontWeight: 900, fontSize: 13,
+                      cursor: file && !uploading ? "pointer" : "not-allowed",
+                      transition: "background 0.2s",
+                    }}
                   >
                     {uploading ? `Subiendo... ${uploadPct}%` : "Subir comprobante"}
                   </button>
                 </div>
 
                 {uploadError && (
-                  <p className="checkout-error" style={{ marginTop: 10 }}>
+                  <p style={{ color: "#f87171", fontSize: 13, fontWeight: 700, margin: 0 }}>
                     {uploadError}
-                  </p>
-                )}
-                {successMsg && (
-                  <p style={{ marginTop: 10, color: "green" }}>
-                    {successMsg}
                   </p>
                 )}
               </div>
@@ -412,23 +431,16 @@ const OrderDetail = () => {
           <h3>Artículos</h3>
           <ul className="items-list">
             {order.items.map((item, i) => (
-              <li key={i} className="item-card">
-                <div>
+              <li key={i} className="item-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                <div style={{ flex: 1 }}>
                   <strong>{item.name || "Producto"}</strong>
-                </div>
-                <div>
-                  {item.quantity} × ${Number(item.price).toFixed(2)}
-                </div>
-                <div>
-                  Total: ${(item.quantity * item.price).toFixed(2)}
-                </div>
-
-                {/* ✅ si existe basePrice (transferencia), lo mostramos sin cambiar estética */}
-                {item.basePrice != null && (
-                  <div style={{ opacity: 0.75, fontSize: 12 }}>
-                    Precio base: ${Number(item.basePrice).toFixed(2)}
+                  <div style={{ color: "var(--text-muted, #888)", fontSize: 13, marginTop: 2 }}>
+                    {item.quantity} × ${Number(item.price).toLocaleString("es-AR")}
                   </div>
-                )}
+                </div>
+                <div style={{ color: "var(--accent, #c8f400)", fontWeight: 800, fontSize: 16, whiteSpace: "nowrap" }}>
+                  ${(item.quantity * item.price).toLocaleString("es-AR")}
+                </div>
               </li>
             ))}
           </ul>
