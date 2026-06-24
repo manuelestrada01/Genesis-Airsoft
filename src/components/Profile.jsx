@@ -6,6 +6,8 @@ import {
   where,
   getDocs,
   orderBy,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
 import AuthContext from "../context/AuthContext";
@@ -27,6 +29,15 @@ const Profile = () => {
   // Rental reservations
   const [rentals, setRentals] = useState([]);
   const [loadingRentals, setLoadingRentals] = useState(true);
+
+  // Service turnos
+  const [turnos, setTurnos] = useState([]);
+  const [loadingTurnos, setLoadingTurnos] = useState(true);
+
+  // Points
+  const [points, setPoints] = useState(0);
+  const [pointsHistory, setPointsHistory] = useState([]);
+  const [loadingPoints, setLoadingPoints] = useState(true);
 
   const [displayName, setDisplayName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -124,6 +135,46 @@ const Profile = () => {
 
   useEffect(() => {
     if (!loading && user) loadInitialOrders();
+  }, [user, loading]);
+
+  // Load service turnos
+  useEffect(() => {
+    const loadTurnos = async () => {
+      if (!user) return;
+      try {
+        const q = query(
+          collection(db, "servicioTurnos"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+        setTurnos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error("Error cargando turnos:", err);
+      } finally {
+        setLoadingTurnos(false);
+      }
+    };
+    if (!loading && user) loadTurnos();
+  }, [user, loading]);
+
+  // Load points
+  useEffect(() => {
+    const loadPoints = async () => {
+      if (!user) return;
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          setPoints(snap.data().points || 0);
+          setPointsHistory(snap.data().pointsHistory || []);
+        }
+      } catch (err) {
+        console.error("Error cargando puntos:", err);
+      } finally {
+        setLoadingPoints(false);
+      }
+    };
+    if (!loading && user) loadPoints();
   }, [user, loading]);
 
   // Load rental reservations
@@ -343,6 +394,139 @@ const Profile = () => {
                 <div className="empty-state">
                   <p>No tenés alquileres registrados.</p>
                 </div>
+              )}
+            </div>
+
+            {/* PANEL — MIS TURNOS DE SERVICIO */}
+            <div className="profile-panel">
+              <div className="panel-header">
+                <h3>Mis Turnos de Servicio</h3>
+                <span className="orders-count">
+                  {loadingTurnos ? "—" : turnos.length}
+                </span>
+              </div>
+
+              {loadingTurnos ? (
+                <div className="loading-state">
+                  <div className="spinner" />
+                  <p>Cargando turnos...</p>
+                </div>
+              ) : turnos.length > 0 ? (
+                <ul className="orders-list">
+                  {turnos.map((t) => {
+                    const turnoStatusMap = {
+                      pending_approval: "Pendiente",
+                      approved: "Aprobado",
+                      in_progress: "En proceso",
+                      completed: "Completado",
+                      cancelled: "Cancelado",
+                      rejected: "Rechazado",
+                    };
+                    const turnoStatusClass = {
+                      pending_approval: "status-pending",
+                      approved: "status-approved",
+                      in_progress: "status-pending",
+                      completed: "status-approved",
+                      cancelled: "status-rejected",
+                      rejected: "status-rejected",
+                    };
+                    const serviceLabel = t.serviceType === "tecnico"
+                      ? "Servicio Técnico"
+                      : `Mant. ${t.maintenanceSubtype || ""} ${t.maintenanceVariant || ""}`.trim();
+                    return (
+                      <li
+                        key={t.id}
+                        className="order-card"
+                        onClick={() => navigate(`/servicio/turno-status/${t.id}`)}
+                      >
+                        <div className="order-card-top">
+                          <span className="order-id">{serviceLabel}</span>
+                          <span className={`status-badge ${turnoStatusClass[t.status] || ""}`}>
+                            {turnoStatusMap[t.status] || t.status}
+                          </span>
+                        </div>
+                        <div className="order-card-mid">
+                          <div className="order-meta">
+                            <span className="meta-label">Fecha turno</span>
+                            <span className="meta-value">{t.scheduledDate || "—"}</span>
+                          </div>
+                          <div className="order-meta">
+                            <span className="meta-label">Total</span>
+                            <span className="meta-value order-total">
+                              {t.isRedeemed ? "Canjeado" : `$${Number(t.pricing?.total || 0).toLocaleString("es-AR")}`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="order-card-arrow">›</div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <div className="empty-state">
+                  <p>No tenés turnos de servicio.</p>
+                </div>
+              )}
+            </div>
+
+            {/* PANEL — MIS PUNTOS GENESIS */}
+            <div className="profile-panel points-panel">
+              <div className="panel-header">
+                <h3>Mis Puntos Genesis</h3>
+                {!loadingPoints && (
+                  <span className="orders-count">{points} pts</span>
+                )}
+              </div>
+
+              {loadingPoints ? (
+                <div className="loading-state">
+                  <div className="spinner" />
+                  <p>Cargando puntos...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="points-balance">
+                    <span className="points-number">{points}</span>
+                    <span className="points-label">puntos acumulados</span>
+                    <div className="points-bar-wrap">
+                      <div
+                        className="points-bar-fill"
+                        style={{ width: `${Math.min((points / 50) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="points-sub">
+                      {points >= 50
+                        ? "¡Podés canjear un servicio gratis!"
+                        : `${50 - points} pts para canjear un servicio gratis`}
+                    </p>
+                  </div>
+
+                  <button
+                    className="points-redeem-btn"
+                    onClick={() => navigate("/servicio/canjear")}
+                    disabled={points < 50}
+                  >
+                    {points >= 50 ? "Canjear ahora" : "Cómo canjear puntos"}
+                  </button>
+
+                  {pointsHistory.length > 0 && (
+                    <ul className="points-history">
+                      {pointsHistory.slice(0, 5).map((h, i) => (
+                        <li key={i} className="points-history-item">
+                          <span className={`points-delta ${h.delta > 0 ? "positive" : "negative"}`}>
+                            {h.delta > 0 ? `+${h.delta}` : h.delta}
+                          </span>
+                          <span className="points-reason">{h.reason}</span>
+                          <span className="points-date">
+                            {h.date?.toDate
+                              ? h.date.toDate().toLocaleDateString("es-AR")
+                              : typeof h.date === "string" ? h.date : "—"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </div>
 

@@ -144,6 +144,10 @@ const NavBarDesktop = () => {
           <li>
             <NavLink to="/alquileres">Alquileres</NavLink>
           </li>
+
+          <li>
+            <NavLink to="/servicio">Servicio Técnico</NavLink>
+          </li>
         </ul>
 
         {/* Actions — right */}

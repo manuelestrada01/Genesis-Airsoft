@@ -28,7 +28,8 @@
       "Bash(firebase login:ci --no-localhost)",
       "Bash(cmd:*)",
       "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(grep -E \"\\\\.jsx$\")"
     ]
   }
 }

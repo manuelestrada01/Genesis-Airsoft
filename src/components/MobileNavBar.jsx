@@ -96,6 +96,7 @@ const MobileNavBar = () => {
       { label: "Inicio", to: "/" },
       { label: "Contacto", to: "/contacto" },
       { label: "Alquileres", to: "/alquileres" },
+      { label: "Servicio Técnico", to: "/servicio" },
     ];
 
     // Admin (si corresponde)

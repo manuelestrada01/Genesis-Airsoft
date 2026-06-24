@@ -1090,3 +1090,513 @@ export const createManualReservation = onRequest(
     });
   }
 );
+
+// ======================================================================================
+// 11) CREATE SERVICIO TURNO — Reserva de turno de servicio técnico
+// ======================================================================================
+export const createServicioTurno = onRequest(
+  { secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      try {
+        if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        const serviceType = xss(req.body.serviceType || "");
+        const scheduledDate = xss(req.body.scheduledDate || "");
+        const userReq = req.body.user || {};
+        const replicaReq = req.body.replica || {};
+        const addonIds = Array.isArray(req.body.addons) ? req.body.addons : [];
+        const fallaReportada = xss(req.body.fallaReportada || "");
+        const maintenanceSubtype = xss(req.body.maintenanceSubtype || "");
+        const maintenanceVariant = xss(req.body.maintenanceVariant || "");
+        const isRedeemed = req.body.isRedeemed === true;
+
+        if (!serviceType || !scheduledDate || !userReq.name || !userReq.email) {
+          return res.status(400).json({ error: "Datos incompletos" });
+        }
+        if (serviceType === "tecnico" && !fallaReportada) {
+          return res.status(400).json({ error: "Debe describir la falla" });
+        }
+        if (serviceType === "mantenimiento" && (!maintenanceSubtype || !maintenanceVariant)) {
+          return res.status(400).json({ error: "Debe elegir subtipo y variante de mantenimiento" });
+        }
+
+        const userData = {
+          name: xss(userReq.name || ""),
+          email: xss(userReq.email || ""),
+          phone: xss(userReq.phone || ""),
+          instagram: xss(userReq.instagram || ""),
+        };
+
+        const replicaData = {
+          marca: xss(replicaReq.marca || ""),
+          modelo: xss(replicaReq.modelo || ""),
+          serie: xss(replicaReq.serie || ""),
+          tipo: xss(replicaReq.tipo || ""),
+          gearbox: xss(replicaReq.gearbox || ""),
+          fpsEstimado: xss(replicaReq.fpsEstimado || ""),
+        };
+
+        const firestore = admin.firestore();
+
+        // Load servicioConfig server-side
+        const configSnap = await firestore.doc("servicioConfig/default").get();
+        if (!configSnap.exists) {
+          return res.status(500).json({ error: "Configuración de servicio no encontrada. Configure el sistema primero." });
+        }
+        const config = configSnap.data();
+
+        // Validate addons against config
+        const validAddons = (config.addons || []).filter((a) => addonIds.includes(a.id));
+
+        // Server-side pricing
+        let serviceFee = 0;
+        if (isRedeemed) {
+          serviceFee = 0;
+        } else if (serviceType === "tecnico") {
+          serviceFee = Number(config.diagnosticFee || 17000);
+        } else {
+          const key = `${maintenanceSubtype}_${maintenanceVariant}`;
+          serviceFee = Number(config.maintenance?.[key] || 0);
+        }
+
+        const addonsTotal = validAddons.reduce((sum, a) => sum + Number(a.price || 0), 0);
+        const subtotal = serviceFee + addonsTotal;
+
+        // Transaction: check slots + create turno
+        const result = await firestore.runTransaction(async (t) => {
+          const slotRef = firestore.doc(`servicioSlots/${scheduledDate}`);
+          const slotSnap = await t.get(slotRef);
+
+          if (!slotSnap.exists || !slotSnap.data().enabled) {
+            throw new Error("Fecha no disponible para turnos");
+          }
+
+          const slotData = slotSnap.data();
+          if ((slotData.slotsReserved || 0) >= (slotData.maxSlots || 5)) {
+            throw new Error("No hay cupos disponibles para esa fecha");
+          }
+
+          // Check user doesn't already have active turno for same date
+          const existingSnap = await firestore
+            .collection("servicioTurnos")
+            .where("userId", "==", uid)
+            .where("scheduledDate", "==", scheduledDate)
+            .where("status", "in", ["pending_approval", "approved", "in_progress"])
+            .get();
+
+          if (!existingSnap.empty) {
+            throw new Error("Ya tenés un turno activo para esa fecha");
+          }
+
+          const turnoRef = firestore.collection("servicioTurnos").doc();
+          t.set(turnoRef, {
+            userId: uid,
+            user: userData,
+            serviceType,
+            fallaReportada: serviceType === "tecnico" ? fallaReportada : "",
+            maintenanceSubtype: serviceType === "mantenimiento" ? maintenanceSubtype : "",
+            maintenanceVariant: serviceType === "mantenimiento" ? maintenanceVariant : "",
+            addons: validAddons,
+            scheduledDate,
+            replica: replicaData,
+            pricing: {
+              serviceFee,
+              addonsTotal,
+              subtotal,
+              discountPercent: 0,
+              total: subtotal,
+            },
+            status: "pending_approval",
+            planilla: null,
+            isRedeemed,
+            pointsAwarded: false,
+            rejectionReason: "",
+            adminNotes: "",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            approvedAt: null,
+            completedAt: null,
+          });
+
+          t.update(slotRef, {
+            slotsReserved: admin.firestore.FieldValue.increment(1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          return { turnoId: turnoRef.id };
+        });
+
+        // Send emails
+        try {
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+          });
+
+          const serviceLabel = serviceType === "tecnico"
+            ? "Servicio Técnico (Diagnóstico)"
+            : `Service de Mantenimiento — ${maintenanceSubtype} ${maintenanceVariant}`;
+
+          const addonsHtml = validAddons.length
+            ? validAddons.map((a) => `<li>${a.name} — $${Number(a.price).toLocaleString("es-AR")}</li>`).join("")
+            : "<li>Sin mejoras adicionales</li>";
+
+          await transporter.sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: userData.email,
+            subject: "Turno de servicio técnico solicitado - Genesis Airsoft",
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#c8f400;">Tu turno fue registrado</h2>
+                <p>Hola <strong>${userData.name}</strong>,</p>
+                <p>Tu solicitud de turno fue recibida. Está <strong>pendiente de aprobación</strong>.</p>
+                <h3 style="color:#c8f400;">Detalle del turno</h3>
+                <p><strong>Servicio:</strong> ${serviceLabel}</p>
+                <p><strong>Fecha:</strong> ${scheduledDate}</p>
+                <p><strong>Réplica:</strong> ${replicaData.marca} ${replicaData.modelo} (${replicaData.tipo})</p>
+                ${serviceType === "tecnico" ? `<p><strong>Falla reportada:</strong> ${fallaReportada}</p>` : ""}
+                <h3 style="color:#c8f400;">Mejoras seleccionadas</h3>
+                <ul>${addonsHtml}</ul>
+                <p><strong>Total estimado:</strong> $${subtotal.toLocaleString("es-AR")}</p>
+                <p>Te avisaremos cuando tu turno sea aprobado.</p>
+              </div>
+            `,
+          });
+
+          await transporter.sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: GMAIL_EMAIL.value(),
+            subject: `Nuevo turno de servicio — ${userData.name} (${scheduledDate})`,
+            html: `
+              <h2>Nuevo turno de servicio técnico</h2>
+              <p><strong>Cliente:</strong> ${userData.name}</p>
+              <p><strong>Email:</strong> ${userData.email}</p>
+              <p><strong>Teléfono:</strong> ${userData.phone}</p>
+              <p><strong>Servicio:</strong> ${serviceLabel}</p>
+              <p><strong>Fecha:</strong> ${scheduledDate}</p>
+              <p><strong>Réplica:</strong> ${replicaData.marca} ${replicaData.modelo} (${replicaData.tipo})</p>
+              ${serviceType === "tecnico" ? `<p><strong>Falla:</strong> ${fallaReportada}</p>` : ""}
+              <p><strong>Total:</strong> $${subtotal.toLocaleString("es-AR")}</p>
+              <p><strong>ID Turno:</strong> ${result.turnoId}</p>
+              ${isRedeemed ? "<p><strong>⭐ TURNO CANJEADO CON PUNTOS</strong></p>" : ""}
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando emails de turno:", emailErr);
+        }
+
+        return res.status(200).json({ turnoId: result.turnoId });
+      } catch (err) {
+        logger.error("createServicioTurno error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
+      }
+    });
+  }
+);
+
+// ======================================================================================
+// 12) CANCEL SERVICIO TURNO — User-initiated cancellation
+// ======================================================================================
+export const cancelServicioTurno = onRequest(
+  {},
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+      try {
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        const { turnoId } = req.body;
+        if (!turnoId) return res.status(400).json({ error: "turnoId requerido" });
+
+        const firestore = admin.firestore();
+        const turnoRef = firestore.collection("servicioTurnos").doc(turnoId);
+
+        await firestore.runTransaction(async (t) => {
+          const snap = await t.get(turnoRef);
+          if (!snap.exists) throw new Error("Turno no encontrado");
+
+          const data = snap.data();
+          if (data.userId !== uid) throw new Error("No autorizado");
+          if (data.status !== "pending_approval") throw new Error("Solo se pueden cancelar turnos pendientes de aprobación");
+
+          t.update(turnoRef, {
+            status: "cancelled",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+
+          if (data.scheduledDate) {
+            const slotRef = firestore.doc(`servicioSlots/${data.scheduledDate}`);
+            t.update(slotRef, {
+              slotsReserved: admin.firestore.FieldValue.increment(-1),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        });
+
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        logger.error("cancelServicioTurno error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
+      }
+    });
+  }
+);
+
+// ======================================================================================
+// 13) ON SERVICIO STATUS CHANGE — Emails + points on completion
+// ======================================================================================
+export const onServicioStatusChange = onDocumentUpdated(
+  { document: "servicioTurnos/{docId}", secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  async (event) => {
+    const before = event.data.before.data();
+    const after = event.data.after.data();
+
+    if (before.status === after.status) return;
+
+    const user = after.user || {};
+    const firestore = admin.firestore();
+
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+      });
+
+      // Status → approved: notify user
+      if (after.status === "approved" && user.email) {
+        await transporter.sendMail({
+          from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+          to: user.email,
+          subject: "Tu turno fue aprobado - Genesis Airsoft",
+          html: `
+            <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+              <h2 style="color:#c8f400;">Turno aprobado</h2>
+              <p>Hola <strong>${user.name}</strong>,</p>
+              <p>Tu turno de servicio técnico para el <strong>${after.scheduledDate}</strong> fue <strong>aprobado</strong>.</p>
+              <p>Podés seguir el estado desde <a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="color:#c8f400;">tu página de turno</a>.</p>
+            </div>
+          `,
+        });
+      }
+
+      // Status → completed: notify user + award points
+      if (after.status === "completed" && user.email) {
+        await transporter.sendMail({
+          from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+          to: user.email,
+          subject: "Servicio completado - Genesis Airsoft",
+          html: `
+            <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+              <h2 style="color:#c8f400;">Servicio completado</h2>
+              <p>Hola <strong>${user.name}</strong>,</p>
+              <p>Tu servicio técnico fue completado. Ya podés descargar tu presupuesto desde <a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="color:#c8f400;">tu página de turno</a>.</p>
+              ${!after.isRedeemed ? "<p><strong>+10 puntos Genesis</strong> acreditados en tu cuenta.</p>" : ""}
+            </div>
+          `,
+        });
+
+        // Award points (only if not already awarded and not a redemption)
+        if (!after.pointsAwarded && !after.isRedeemed && after.userId) {
+          const userRef = firestore.doc(`users/${after.userId}`);
+          await firestore.runTransaction(async (t) => {
+            const userSnap = await t.get(userRef);
+            const currentPoints = userSnap.exists ? (userSnap.data().points || 0) : 0;
+            const presupuestoNum = after.planilla?.presupuestoNumber || event.params.docId;
+
+            const historyEntry = {
+              date: admin.firestore.FieldValue.serverTimestamp(),
+              delta: 10,
+              reason: `Servicio completado — ${presupuestoNum}`,
+              turnoId: event.params.docId,
+            };
+
+            t.set(userRef, {
+              points: currentPoints + 10,
+              pointsHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+
+            t.update(event.data.after.ref, {
+              pointsAwarded: true,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          });
+
+          logger.info(`+10 puntos acreditados a usuario ${after.userId}`);
+        }
+      }
+    } catch (err) {
+      logger.error("onServicioStatusChange error:", err);
+    }
+  }
+);
+
+// ======================================================================================
+// 14) REDEEM POINTS — Atomic points redemption
+// ======================================================================================
+export const redeemPoints = onRequest(
+  { secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+      try {
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        const redeemType = xss(req.body.redeemType || ""); // "service" | "bbs"
+        const scheduledDate = xss(req.body.scheduledDate || "");
+        const userReq = req.body.user || {};
+        const replicaReq = req.body.replica || {};
+
+        if (!redeemType || !["service", "bbs"].includes(redeemType)) {
+          return res.status(400).json({ error: "Tipo de canje inválido" });
+        }
+        if (redeemType === "service" && !scheduledDate) {
+          return res.status(400).json({ error: "Debe elegir una fecha para el service" });
+        }
+
+        const firestore = admin.firestore();
+        const userRef = firestore.doc(`users/${uid}`);
+        let turnoId = null;
+
+        await firestore.runTransaction(async (t) => {
+          const userSnap = await t.get(userRef);
+          const currentPoints = userSnap.exists ? (userSnap.data().points || 0) : 0;
+
+          if (currentPoints < 50) {
+            throw new Error("Puntos insuficientes. Necesitás 50 puntos para canjear.");
+          }
+
+          const reason = redeemType === "service"
+            ? "Canje: Service Primaria Común gratuito"
+            : "Canje: Arcturus RS SPORT BBs 0.28g";
+
+          const historyEntry = {
+            date: admin.firestore.FieldValue.serverTimestamp(),
+            delta: -50,
+            reason,
+          };
+
+          t.set(userRef, {
+            points: currentPoints - 50,
+            pointsHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+
+          if (redeemType === "service") {
+            // Check slot availability
+            const slotRef = firestore.doc(`servicioSlots/${scheduledDate}`);
+            const slotSnap = await t.get(slotRef);
+
+            if (!slotSnap.exists || !slotSnap.data().enabled) {
+              throw new Error("Fecha no disponible para turnos");
+            }
+            const slotData = slotSnap.data();
+            if ((slotData.slotsReserved || 0) >= (slotData.maxSlots || 5)) {
+              throw new Error("No hay cupos disponibles para esa fecha");
+            }
+
+            const userData = {
+              name: xss(userReq.name || ""),
+              email: xss(userReq.email || ""),
+              phone: xss(userReq.phone || ""),
+              instagram: xss(userReq.instagram || ""),
+            };
+            const replicaData = {
+              marca: xss(replicaReq.marca || ""),
+              modelo: xss(replicaReq.modelo || ""),
+              serie: xss(replicaReq.serie || ""),
+              tipo: xss(replicaReq.tipo || ""),
+              gearbox: xss(replicaReq.gearbox || ""),
+              fpsEstimado: xss(replicaReq.fpsEstimado || ""),
+            };
+
+            const turnoRef = firestore.collection("servicioTurnos").doc();
+            turnoId = turnoRef.id;
+
+            t.set(turnoRef, {
+              userId: uid,
+              user: userData,
+              serviceType: "mantenimiento",
+              maintenanceSubtype: "primaria",
+              maintenanceVariant: "comun",
+              fallaReportada: "",
+              addons: [],
+              scheduledDate,
+              replica: replicaData,
+              pricing: { serviceFee: 0, addonsTotal: 0, subtotal: 0, discountPercent: 0, total: 0 },
+              status: "pending_approval",
+              planilla: null,
+              isRedeemed: true,
+              pointsAwarded: false,
+              rejectionReason: "",
+              adminNotes: "",
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              approvedAt: null,
+              completedAt: null,
+            });
+
+            t.update(slotRef, {
+              slotsReserved: admin.firestore.FieldValue.increment(1),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        });
+
+        // Send confirmation email
+        try {
+          if (userReq.email) {
+            const transporter = nodemailer.createTransport({
+              service: "gmail",
+              auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+            });
+
+            const label = redeemType === "service"
+              ? "Service Primaria Común gratuito"
+              : "Pack Arcturus RS SPORT BBs 0.28g";
+
+            await transporter.sendMail({
+              from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+              to: xss(userReq.email || ""),
+              subject: `Canje realizado: ${label} - Genesis Airsoft`,
+              html: `
+                <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                  <h2 style="color:#c8f400;">Canje realizado</h2>
+                  <p>Canjeaste 50 puntos por: <strong>${label}</strong></p>
+                  ${turnoId ? `<p>Turno registrado para el ${scheduledDate}. Pendiente de aprobación.</p>` : "<p>Pasá a retirar tu premio en Genesis Airsoft.</p>"}
+                </div>
+              `,
+            });
+          }
+        } catch (emailErr) {
+          logger.error("Error email canje:", emailErr);
+        }
+
+        return res.status(200).json({ success: true, turnoId });
+      } catch (err) {
+        logger.error("redeemPoints error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
+      }
+    });
+  }
+);

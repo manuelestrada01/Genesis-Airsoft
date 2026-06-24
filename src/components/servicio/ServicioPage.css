@@ -1,0 +1,228 @@
+.sv-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.sv-hero {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.sv-title {
+  color: #fff;
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 900;
+  margin: 0 0 12px;
+}
+
+.sv-subtitle {
+  color: var(--text-muted, #888);
+  font-size: 16px;
+  font-weight: 600;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Cards grid */
+.sv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.sv-card {
+  background: var(--surface, #1a1a1a);
+  border: 1px solid var(--border, #2a2a2a);
+  border-radius: var(--radius-lg, 16px);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color var(--transition, 0.22s ease), transform var(--transition, 0.22s ease);
+}
+
+.sv-card:hover {
+  border-color: var(--accent, #c8f400);
+  transform: translateY(-2px);
+}
+
+.sv-card-badge {
+  display: inline-block;
+  background: rgba(200, 244, 0, 0.1);
+  border: 1px solid rgba(200, 244, 0, 0.3);
+  color: var(--accent, #c8f400);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  width: fit-content;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sv-card-badge--green {
+  background: rgba(200, 244, 0, 0.1);
+  border-color: rgba(200, 244, 0, 0.3);
+  color: var(--accent, #c8f400);
+}
+
+.sv-card-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.sv-card-desc {
+  color: var(--text-muted, #888);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sv-card-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sv-card-features li {
+  color: var(--text-muted, #888);
+  font-size: 14px;
+  font-weight: 600;
+  padding-left: 20px;
+  position: relative;
+}
+
+.sv-card-features li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent, #c8f400);
+  font-weight: 900;
+}
+
+/* Pricing */
+.sv-card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.sv-price-from {
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sv-price-amount {
+  color: var(--accent, #c8f400);
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.sv-price-label {
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sv-pricing-table {
+  background: var(--surface-2, #242424);
+  border-radius: var(--radius-md, 10px);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.sv-pricing-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted, #888);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sv-pricing-row span:last-child {
+  color: var(--accent, #c8f400);
+  font-weight: 900;
+}
+
+.sv-card-btn {
+  background: var(--accent, #c8f400);
+  color: #000;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  padding: 14px;
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--transition, 0.22s ease);
+  width: 100%;
+}
+
+.sv-card-btn:hover {
+  background: var(--accent-hover, #d6ff1a);
+}
+
+/* Info section */
+.sv-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  border-top: 1px solid var(--border, #2a2a2a);
+  padding-top: 40px;
+}
+
+.sv-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sv-info-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(200, 244, 0, 0.08);
+  color: var(--accent, #c8f400);
+  flex-shrink: 0;
+}
+
+.sv-info-item strong {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.sv-info-item p {
+  color: var(--text-muted, #888);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .sv-page {
+    padding: 24px 16px 60px;
+  }
+
+  .sv-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { FaWhatsapp } from "react-icons/fa";
 
 // Public components
@@ -28,6 +28,12 @@ import PartidaDetail from "./components/alquileres/PartidaDetail";
 import RentalReservationFlow from "./components/alquileres/RentalReservationFlow";
 import ReservationStatus from "./components/alquileres/ReservationStatus";
 
+// Servicio Técnico (public)
+import ServicioPage, { SERVICIO_COMING_SOON } from "./components/servicio/ServicioPage";
+import ServicioTurnoFlow from "./components/servicio/ServicioTurnoFlow";
+import ServicioTurnoStatus from "./components/servicio/ServicioTurnoStatus";
+import ServicioRedeem from "./components/servicio/ServicioRedeem";
+
 // Admin components
 import AdminDashboard from "./components/admin/AdminDashboard";
 import AdminProducts from "./components/admin/AdminProducts";
@@ -44,6 +50,12 @@ import AdminRentalReservationDetail from "./components/admin/AdminRentalReservat
 import AdminAddReservation from "./components/admin/AdminAddReservation";
 import AdminRentalConfig from "./components/admin/AdminRentalConfig";
 import AdminShippingLabel from "./components/admin/AdminShippingLabel";
+
+// Servicio Técnico (admin)
+import AdminServicioTurnos from "./components/admin/AdminServicioTurnos";
+import AdminServicioTurnoDetail from "./components/admin/AdminServicioTurnoDetail";
+import AdminServicioConfig from "./components/admin/AdminServicioConfig";
+import AdminServicioCalendar from "./components/admin/AdminServicioCalendar";
 
 // Hooks
 import useIsMobile from "./hooks/useIsMobile";
@@ -189,6 +201,40 @@ function App() {
             </AdminRoute>
           }
         />
+
+        {/* Servicio Técnico admin routes */}
+        <Route
+          path="/admin/servicio"
+          element={
+            <AdminRoute>
+              <AdminServicioTurnos />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/servicio/config"
+          element={
+            <AdminRoute>
+              <AdminServicioConfig />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/servicio/calendario"
+          element={
+            <AdminRoute>
+              <AdminServicioCalendar />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/servicio/:id"
+          element={
+            <AdminRoute>
+              <AdminServicioTurnoDetail />
+            </AdminRoute>
+          }
+        />
       </Routes>
 
       {/* ================= NAVBARS ================= */}
@@ -220,6 +266,12 @@ function App() {
           <Route path="/alquileres/partida/:id" element={<PartidaDetail />} />
           <Route path="/alquileres/reservar/:partidaId" element={<RentalReservationFlow />} />
           <Route path="/alquileres/reserva/:id" element={<ReservationStatus />} />
+
+          {/* Servicio Técnico */}
+          <Route path="/servicio" element={<ServicioPage />} />
+          <Route path="/servicio/turno/:type" element={SERVICIO_COMING_SOON ? <Navigate to="/servicio" replace /> : <ServicioTurnoFlow />} />
+          <Route path="/servicio/turno-status/:id" element={<ServicioTurnoStatus />} />
+          <Route path="/servicio/canjear" element={SERVICIO_COMING_SOON ? <Navigate to="/servicio" replace /> : <ServicioRedeem />} />
         </Routes>
       </div>
 
