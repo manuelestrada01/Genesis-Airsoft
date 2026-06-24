@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocs, collection, writeBatch, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import AdminSidebar from "./AdminSidebar";
 import "./admin.css";
@@ -86,15 +86,29 @@ export default function AdminServicioConfig() {
     setSaving(true);
     setMessage("");
     try {
+      const newSlotsPerDay = Number(config.defaultSlotsPerDay);
+
       await setDoc(doc(db, "servicioConfig", "default"), {
         ...config,
         diagnosticFee: Number(config.diagnosticFee),
-        defaultSlotsPerDay: Number(config.defaultSlotsPerDay),
+        defaultSlotsPerDay: newSlotsPerDay,
         validezDias: Number(config.validezDias),
         nextPresupuestoNumber: Number(config.nextPresupuestoNumber),
         updatedAt: serverTimestamp(),
       }, { merge: true });
-      setMessage("Configuración guardada correctamente");
+
+      // Update all existing servicioSlots with new maxSlots
+      const slotsSnap = await getDocs(collection(db, "servicioSlots"));
+      if (!slotsSnap.empty) {
+        const batch = writeBatch(db);
+        slotsSnap.forEach((slotDoc) => {
+          batch.update(slotDoc.ref, { maxSlots: newSlotsPerDay, updatedAt: serverTimestamp() });
+        });
+        await batch.commit();
+        setMessage(`Configuración guardada. ${slotsSnap.size} fechas actualizadas a ${newSlotsPerDay} cupos.`);
+      } else {
+        setMessage("Configuración guardada correctamente");
+      }
     } catch (err) {
       console.error("Error guardando config servicio:", err);
       setMessage("Error al guardar la configuración");

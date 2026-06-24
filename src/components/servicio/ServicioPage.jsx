@@ -5,7 +5,7 @@ import { db } from "../../firebase/config";
 import { gsap } from "gsap";
 import "./ServicioPage.css";
 
-export const SERVICIO_COMING_SOON = true; // Cambiar a false para habilitar el servicio
+export const SERVICIO_COMING_SOON = true;
 const COMING_SOON = SERVICIO_COMING_SOON;
 
 export default function ServicioPage() {

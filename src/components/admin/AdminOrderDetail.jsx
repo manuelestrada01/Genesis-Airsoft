@@ -4,6 +4,7 @@ import { doc, getDoc, updateDoc, serverTimestamp, writeBatch, increment } from "
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { db, storage } from "../../firebase/config";
 import ShippingLabelModal from "./ShippingLabelModal";
+import ConfirmDialog from "../ui/ConfirmDialog";
 import "./admin.css";
 
 export default function AdminOrderDetail() {
@@ -24,6 +25,16 @@ export default function AdminOrderDetail() {
 
   // Approve transfer
   const [approving, setApproving] = useState(false);
+
+  // Confirm dialog
+  const [confirmDialog, setConfirmDialog] = useState(null); // { title, message, onConfirm, danger? }
+
+  // Toast notification
+  const [toast, setToast] = useState(null); // { msg, type: "success"|"error" }
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -214,73 +225,51 @@ export default function AdminOrderDetail() {
   // ==========================================
   const saveTracking = async () => {
     if (!tracking.trim()) {
-      alert("El número de seguimiento no puede estar vacío.");
+      showToast("El número de seguimiento no puede estar vacío.", "error");
       return;
     }
 
-    if (!confirm("¿Guardar número de seguimiento en este pedido?")) return;
-
-    setSavingTracking(true);
-
-    try {
-      await updateDoc(doc(db, "orders", id), {
-        trackingNumber: tracking.trim(),
-        dispatched: true,
-      });
-
-      setOrder((prev) => ({
-        ...prev,
-        trackingNumber: tracking.trim(),
-        dispatched: true,
-      }));
-
-      alert("Número de seguimiento guardado correctamente ✔");
-    } catch (err) {
-      console.error("Error guardando seguimiento:", err);
-      alert("No se pudo guardar el número de seguimiento.");
-    } finally {
-      setSavingTracking(false);
-    }
+    setConfirmDialog({
+      title: "Guardar seguimiento",
+      message: "¿Guardar número de seguimiento en este pedido?",
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        setSavingTracking(true);
+        try {
+          await updateDoc(doc(db, "orders", id), {
+            trackingNumber: tracking.trim(),
+            dispatched: true,
+          });
+          setOrder((prev) => ({
+            ...prev,
+            trackingNumber: tracking.trim(),
+            dispatched: true,
+          }));
+          showToast("Número de seguimiento guardado ✔");
+        } catch (err) {
+          console.error("Error guardando seguimiento:", err);
+          showToast("No se pudo guardar el número de seguimiento.", "error");
+        } finally {
+          setSavingTracking(false);
+        }
+      },
+    });
   };
 
   // ==========================================
   // ✅ Aprobar transferencia
   // ==========================================
-  const approveTransfer = async () => {
-    if (!order) return;
-
-    const status = String(order.status || "");
-    const isTransfer =
-      order.paymentType === "bank_transfer" ||
-      order.paymentMethod === "bank_transfer" ||
-      status.includes("transfer");
-
-    if (!isTransfer) {
-      alert("Esta orden no parece ser por transferencia.");
-      return;
-    }
-
-    if (!proofUrl) {
-      const ok = confirm("No se detectó comprobante (URL). ¿Querés aprobar igual?");
-      if (!ok) return;
-    }
-
-    if (!confirm("¿Aprobar transferencia y marcar pedido como aprobado?")) return;
-
+  const _doApproveTransfer = async () => {
+    setConfirmDialog(null);
     setApproving(true);
-
     try {
       const batch = writeBatch(db);
-
-      // Update order status
       batch.update(doc(db, "orders", id), {
         status: "approved",
         paidAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         transferApprovedAt: serverTimestamp(),
       });
-
-      // Decrement stock for each item
       const items = Array.isArray(order.items) ? order.items : [];
       for (const item of items) {
         if (item.productId) {
@@ -289,17 +278,38 @@ export default function AdminOrderDetail() {
           });
         }
       }
-
       await batch.commit();
-
       setOrder((prev) => ({ ...prev, status: "approved" }));
-      alert("Transferencia aprobada ✔");
+      showToast("Transferencia aprobada ✔");
     } catch (e) {
       console.error("Error aprobando transferencia:", e);
-      alert("No se pudo aprobar la transferencia.");
+      showToast("No se pudo aprobar la transferencia.", "error");
     } finally {
       setApproving(false);
     }
+  };
+
+  const approveTransfer = () => {
+    if (!order) return;
+    const status = String(order.status || "");
+    const isTransfer =
+      order.paymentType === "bank_transfer" ||
+      order.paymentMethod === "bank_transfer" ||
+      status.includes("transfer");
+    if (!isTransfer) {
+      showToast("Esta orden no parece ser por transferencia.", "error");
+      return;
+    }
+
+    setConfirmDialog({
+      title: "Aprobar transferencia",
+      message: proofUrl
+        ? "¿Aprobar transferencia y marcar pedido como aprobado?"
+        : "No se detectó comprobante (URL). ¿Querés aprobar igual?",
+      danger: false,
+      confirmLabel: "Aprobar",
+      onConfirm: _doApproveTransfer,
+    });
   };
 
   // ==========================================
@@ -764,11 +774,44 @@ export default function AdminOrderDetail() {
 
       <ShippingLabelModal order={order} isOpen={labelOpen} onClose={() => setLabelOpen(false)} />
 
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 28, right: 28, zIndex: 9999,
+          background: toast.type === "error" ? "#1a0a0a" : "#0f1a00",
+          border: `1px solid ${toast.type === "error" ? "#7f1d1d" : "#3a5a00"}`,
+          borderLeft: `4px solid ${toast.type === "error" ? "#f87171" : "#c8f400"}`,
+          color: toast.type === "error" ? "#f87171" : "#c8f400",
+          padding: "12px 18px",
+          borderRadius: 10,
+          fontWeight: 800,
+          fontSize: 13,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.6)",
+          maxWidth: 320,
+          animation: "fadeInUp 0.2s ease",
+        }}>
+          {toast.msg}
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={!!confirmDialog}
+        title={confirmDialog?.title || ""}
+        message={confirmDialog?.message || ""}
+        confirmLabel={confirmDialog?.confirmLabel || "Confirmar"}
+        danger={confirmDialog?.danger ?? false}
+        onConfirm={confirmDialog?.onConfirm || (() => {})}
+        onCancel={() => setConfirmDialog(null)}
+      />
+
       {/* Responsive tweak simple */}
       <style>{`
         @media (max-width: 980px){
           .admin-content { padding: 16px !important; }
           .order-grid-wrap { grid-template-columns: 1fr !important; }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

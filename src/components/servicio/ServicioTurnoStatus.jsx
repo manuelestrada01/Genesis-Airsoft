@@ -224,12 +224,17 @@ export default function ServicioTurnoStatus() {
 
                 <div className="sts-upload-section">
                   <p className="sts-upload-label">Subí el comprobante de transferencia</p>
-                  <label className="sts-upload-btn">
+                  <label className="sts-upload-btn" style={{ opacity: uploadingComprobante ? 0.6 : 1, pointerEvents: uploadingComprobante ? "none" : "auto" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
                     {uploadingComprobante ? "Subiendo..." : "Seleccionar archivo"}
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp,application/pdf"
-                      style={{ display: "none" }}
+                      style={{ position: "absolute", width: 0, height: 0, opacity: 0, overflow: "hidden" }}
                       onChange={handleComprobanteUpload}
                       disabled={uploadingComprobante}
                     />
