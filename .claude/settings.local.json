@@ -18,7 +18,20 @@
       "Bash(wc -l /c/Users/jetsa/Genesis-Airsoft/src/components/admin/*.css /c/Users/jetsa/Genesis-Airsoft/src/App.css)",
       "Bash(git commit -m ':*)",
       "Bash(xargs grep:*)",
-      "Bash(grep -E \"\\\\.jsx$\")"
+      "Bash(grep -E \"\\\\.jsx$\")",
+      "Bash(firebase storage:rules:get)",
+      "Bash(firebase storage:rules)",
+      "Bash(firebase use:*)",
+      "Bash(gsutil cat:*)",
+      "Bash(firebase firestore:rules:get)",
+      "Bash(ls *.rules storage.rules firestore.rules)",
+      "Bash(ls \"C:\\\\Users\\\\jetsa\\\\Genesis-Airsoft\"/*.rules)",
+      "Bash(ls \"C:\\\\Users\\\\jetsa\\\\Genesis-Airsoft\"/firestore*)",
+      "Bash(firebase apps:list)",
+      "Bash(firebase --version)",
+      "Bash(firebase firestore:indexes)",
+      "Bash(firebase login:ci --no-localhost)",
+      "Bash(curl -s -H \"Authorization: Bearer $\\(firebase login:ci --no-localhost \\)\" \"https://firebaserules.googleapis.com/v1/projects/genesis-airsoft/rulesets\")"
     ]
   }
 }

@@ -1117,6 +1117,12 @@ export const createServicioTurno = onRequest(
         const maintenanceSubtype = xss(req.body.maintenanceSubtype || "");
         const maintenanceVariant = xss(req.body.maintenanceVariant || "");
         const isRedeemed = req.body.isRedeemed === true;
+        const locationReq = req.body.location || null;
+        const locationData = locationReq ? {
+          name: xss(locationReq.name || ""),
+          address: xss(locationReq.address || ""),
+          mapsUrl: xss(locationReq.mapsUrl || ""),
+        } : null;
 
         if (!serviceType || !scheduledDate || !userReq.name || !userReq.email) {
           return res.status(400).json({ error: "Datos incompletos" });
@@ -1214,6 +1220,7 @@ export const createServicioTurno = onRequest(
               discountPercent: 0,
               total: subtotal,
             },
+            location: locationData,
             status: "pending_approval",
             planilla: null,
             isRedeemed,
@@ -1357,6 +1364,65 @@ export const cancelServicioTurno = onRequest(
 );
 
 // ======================================================================================
+// 12b) APPROVE PRESUPUESTO — Client approves or rejects the presupuesto
+// ======================================================================================
+export const approvePresupuesto = onRequest(
+  { secrets: [GMAIL_EMAIL, GMAIL_PASSWORD] },
+  (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+      try {
+        const authHeader = req.headers.authorization || "";
+        const idToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+        if (!idToken) return res.status(401).json({ error: "No autorizado" });
+
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        const uid = decoded.uid;
+
+        const turnoId = xss(req.body.turnoId || "");
+        const action = xss(req.body.action || ""); // "approve" | "reject"
+        const rejectionReason = xss(req.body.rejectionReason || "");
+
+        if (!turnoId || !["approve", "reject"].includes(action)) {
+          return res.status(400).json({ error: "Datos inválidos" });
+        }
+
+        const firestore = admin.firestore();
+        const turnoRef = firestore.doc(`servicioTurnos/${turnoId}`);
+        const turnoSnap = await turnoRef.get();
+
+        if (!turnoSnap.exists) return res.status(404).json({ error: "Turno no encontrado" });
+        const turnoData = turnoSnap.data();
+
+        if (turnoData.userId !== uid) return res.status(403).json({ error: "No autorizado" });
+        if (turnoData.status !== "presupuesto_enviado") {
+          return res.status(400).json({ error: "Estado inválido para esta acción" });
+        }
+
+        if (action === "approve") {
+          await turnoRef.update({
+            status: "presupuesto_aprobado",
+            presupuestoApprovedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        } else {
+          await turnoRef.update({
+            status: "presupuesto_rechazado",
+            rejectionReason: rejectionReason || "Presupuesto rechazado por el cliente",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        return res.status(200).json({ success: true });
+      } catch (err) {
+        logger.error("approvePresupuesto error:", err);
+        return res.status(400).json({ error: err.message || "Error del servidor" });
+      }
+    });
+  }
+);
+
+// ======================================================================================
 // 13) ON SERVICIO STATUS CHANGE — Emails + points on completion
 // ======================================================================================
 export const onServicioStatusChange = onDocumentUpdated(
@@ -1370,73 +1436,178 @@ export const onServicioStatusChange = onDocumentUpdated(
     const user = after.user || {};
     const firestore = admin.firestore();
 
+    // Helper: create transporter lazily (keeps email failures isolated)
+    const getTransporter = () => nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
+    });
+
     try {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: { user: GMAIL_EMAIL.value(), pass: GMAIL_PASSWORD.value() },
-      });
+      // Status → presupuesto_enviado: notify user to review presupuesto
+      if (after.status === "presupuesto_enviado" && user.email) {
+        const planilla = after.planilla || {};
+        const totalStr = planilla.totalAPagar
+          ? `$${Number(planilla.totalAPagar).toLocaleString("es-AR")}`
+          : "—";
+        try {
+          await getTransporter().sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: user.email,
+            subject: "Presupuesto listo para revisar - Genesis Airsoft",
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#c8f400;">Tu presupuesto está listo</h2>
+                <p>Hola <strong>${user.name}</strong>,</p>
+                <p>El técnico preparó el presupuesto para tu réplica <strong>${after.replica?.marca || ""} ${after.replica?.modelo || ""}</strong>.</p>
+                <p><strong>Total a pagar: ${totalStr}</strong></p>
+                <p>Ingresá a tu turno para revisar el detalle completo y <strong>aprobar o rechazar el presupuesto</strong>:</p>
+                <p><a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="background:#c8f400;color:#000;padding:12px 24px;border-radius:8px;font-weight:900;text-decoration:none;display:inline-block;">Ver presupuesto →</a></p>
+                <p style="color:#888;font-size:12px;margin-top:20px;">N° Presupuesto: ${planilla.presupuestoNumber || "—"} | Técnico: ${planilla.tecnico || "—"}</p>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando email presupuesto_enviado:", emailErr);
+        }
+      }
+
+      // Status → presupuesto_aprobado: notify admin
+      if (after.status === "presupuesto_aprobado") {
+        try {
+          await getTransporter().sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: GMAIL_EMAIL.value(),
+            subject: `Presupuesto aprobado por ${user.name} - Turno ${event.params.docId.slice(0, 8)}`,
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#c8f400;">Presupuesto aprobado</h2>
+                <p><strong>${user.name}</strong> aprobó el presupuesto para su réplica.</p>
+                <p>Esperando que el cliente envíe el comprobante de pago de repuestos.</p>
+                <p><a href="https://genesisairsoft.com.ar/admin/servicio/${event.params.docId}" style="color:#c8f400;">Ver turno en admin →</a></p>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando email presupuesto_aprobado:", emailErr);
+        }
+      }
+
+      // Status → parts_payment_review: notify admin that client paid
+      if (after.status === "parts_payment_review") {
+        try {
+          await getTransporter().sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: GMAIL_EMAIL.value(),
+            subject: `Comprobante de repuestos recibido - ${user.name}`,
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#c8f400;">Pago de repuestos recibido</h2>
+                <p><strong>${user.name}</strong> subió el comprobante de pago de repuestos.</p>
+                <p>Confirmá el pago para marcar el servicio como completado.</p>
+                <p><a href="https://genesisairsoft.com.ar/admin/servicio/${event.params.docId}" style="color:#c8f400;">Revisar y confirmar →</a></p>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando email parts_payment_review:", emailErr);
+        }
+      }
+
+      // Status → presupuesto_rechazado: notify admin
+      if (after.status === "presupuesto_rechazado") {
+        try {
+          await getTransporter().sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: GMAIL_EMAIL.value(),
+            subject: `Presupuesto rechazado por ${user.name}`,
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#f87171;">Presupuesto rechazado</h2>
+                <p><strong>${user.name}</strong> rechazó el presupuesto.</p>
+                <p>Motivo: ${after.rejectionReason || "Sin motivo indicado"}</p>
+                <p><a href="https://genesisairsoft.com.ar/admin/servicio/${event.params.docId}" style="color:#c8f400;">Ver turno en admin →</a></p>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando email presupuesto_rechazado:", emailErr);
+        }
+      }
 
       // Status → approved: notify user
       if (after.status === "approved" && user.email) {
-        await transporter.sendMail({
-          from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
-          to: user.email,
-          subject: "Tu turno fue aprobado - Genesis Airsoft",
-          html: `
-            <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
-              <h2 style="color:#c8f400;">Turno aprobado</h2>
-              <p>Hola <strong>${user.name}</strong>,</p>
-              <p>Tu turno de servicio técnico para el <strong>${after.scheduledDate}</strong> fue <strong>aprobado</strong>.</p>
-              <p>Podés seguir el estado desde <a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="color:#c8f400;">tu página de turno</a>.</p>
-            </div>
-          `,
-        });
+        try {
+          await getTransporter().sendMail({
+            from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+            to: user.email,
+            subject: "Tu turno fue aprobado - Genesis Airsoft",
+            html: `
+              <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                <h2 style="color:#c8f400;">Turno aprobado</h2>
+                <p>Hola <strong>${user.name}</strong>,</p>
+                <p>Tu turno de servicio técnico para el <strong>${after.scheduledDate}</strong> fue <strong>aprobado</strong>.</p>
+                <p>Podés seguir el estado desde <a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="color:#c8f400;">tu página de turno</a>.</p>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          logger.error("Error enviando email aprobado:", emailErr);
+        }
       }
 
-      // Status → completed: notify user + award points
-      if (after.status === "completed" && user.email) {
-        await transporter.sendMail({
-          from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
-          to: user.email,
-          subject: "Servicio completado - Genesis Airsoft",
-          html: `
-            <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
-              <h2 style="color:#c8f400;">Servicio completado</h2>
-              <p>Hola <strong>${user.name}</strong>,</p>
-              <p>Tu servicio técnico fue completado. Ya podés descargar tu presupuesto desde <a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="color:#c8f400;">tu página de turno</a>.</p>
-              ${!after.isRedeemed ? "<p><strong>+10 puntos Genesis</strong> acreditados en tu cuenta.</p>" : ""}
-            </div>
-          `,
-        });
-
-        // Award points (only if not already awarded and not a redemption)
+      // Status → completed: award points FIRST (fully independent of email)
+      if (after.status === "completed") {
         if (!after.pointsAwarded && !after.isRedeemed && after.userId) {
-          const userRef = firestore.doc(`users/${after.userId}`);
-          await firestore.runTransaction(async (t) => {
-            const userSnap = await t.get(userRef);
-            const currentPoints = userSnap.exists ? (userSnap.data().points || 0) : 0;
-            const presupuestoNum = after.planilla?.presupuestoNumber || event.params.docId;
+          try {
+            const userRef = firestore.doc(`users/${after.userId}`);
+            await firestore.runTransaction(async (t) => {
+              const userSnap = await t.get(userRef);
+              const currentPoints = userSnap.exists ? (userSnap.data().points || 0) : 0;
+              const presupuestoNum = after.planilla?.presupuestoNumber || event.params.docId;
 
-            const historyEntry = {
-              date: admin.firestore.FieldValue.serverTimestamp(),
-              delta: 10,
-              reason: `Servicio completado — ${presupuestoNum}`,
-              turnoId: event.params.docId,
-            };
+              const historyEntry = {
+                date: admin.firestore.FieldValue.serverTimestamp(),
+                delta: 10,
+                reason: `Servicio completado — ${presupuestoNum}`,
+                turnoId: event.params.docId,
+              };
 
-            t.set(userRef, {
-              points: currentPoints + 10,
-              pointsHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            }, { merge: true });
+              t.set(userRef, {
+                points: currentPoints + 10,
+                pointsHistory: admin.firestore.FieldValue.arrayUnion(historyEntry),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              }, { merge: true });
 
-            t.update(event.data.after.ref, {
-              pointsAwarded: true,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              t.update(event.data.after.ref, {
+                pointsAwarded: true,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              });
             });
-          });
+            logger.info(`+10 puntos acreditados a usuario ${after.userId}`);
+          } catch (pointsErr) {
+            logger.error("Error acreditando puntos:", pointsErr);
+          }
+        }
 
-          logger.info(`+10 puntos acreditados a usuario ${after.userId}`);
+        // Notify user via email (isolated — failure cannot block points)
+        if (user.email) {
+          try {
+            await getTransporter().sendMail({
+              from: `"Genesis Airsoft" <${GMAIL_EMAIL.value()}>`,
+              to: user.email,
+              subject: "Servicio completado - Genesis Airsoft",
+              html: `
+                <div style="background:#0f0f0f;color:#fff;padding:30px;font-family:Montserrat,sans-serif;">
+                  <h2 style="color:#c8f400;">Servicio completado</h2>
+                  <p>Hola <strong>${user.name}</strong>,</p>
+                  <p>Tu servicio técnico fue completado. Ya podés descargar tu presupuesto desde <a href="https://genesisairsoft.com.ar/servicio/turno-status/${event.params.docId}" style="color:#c8f400;">tu página de turno</a>.</p>
+                  ${!after.isRedeemed ? "<p><strong>+10 puntos Genesis</strong> acreditados en tu cuenta.</p>" : ""}
+                </div>
+              `,
+            });
+          } catch (emailErr) {
+            logger.error("Error enviando email de completado:", emailErr);
+          }
         }
       }
     } catch (err) {

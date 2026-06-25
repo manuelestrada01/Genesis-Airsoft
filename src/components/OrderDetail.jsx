@@ -383,21 +383,48 @@ const OrderDetail = () => {
         <div className="section">
           <h3>Estado del Pedido</h3>
 
-          <div className="timeline">
-            <div className={`step ${order.status === "approved" ? "active" : ""}`}>
-              <div className="circle"></div>
-              <p>Pagado</p>
-            </div>
-
-            <div className={`step ${order.status === "approved" ? "active" : ""}`}>
-              <div className="circle"></div>
-              <p>Preparando</p>
-            </div>
-
-            <div className={`step ${order.dispatched ? "active" : ""}`}>
-              <div className="circle"></div>
-              <p>Despachado</p>
-            </div>
+          <div className="order-stepper">
+            {[
+              {
+                label: "Pago confirmado",
+                active: order.status === "approved" || order.dispatched,
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                ),
+              },
+              {
+                label: "Preparando",
+                active: order.status === "approved" || order.dispatched,
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                  </svg>
+                ),
+              },
+              {
+                label: "Despachado",
+                active: order.dispatched,
+                icon: (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+                  </svg>
+                ),
+              },
+            ].map((s, i, arr) => (
+              <div key={i} className="stepper-item">
+                <div className={`stepper-node ${s.active ? "stepper-node--active" : ""}`}>
+                  {s.icon}
+                </div>
+                <span className={`stepper-label ${s.active ? "stepper-label--active" : ""}`}>
+                  {s.label}
+                </span>
+                {i < arr.length - 1 && (
+                  <div className={`stepper-line ${arr[i + 1].active ? "stepper-line--active" : ""}`} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
 

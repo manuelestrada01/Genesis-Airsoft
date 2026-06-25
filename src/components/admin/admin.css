@@ -46,7 +46,9 @@
 }
 
 .admin-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 9px;
   padding: 8px 12px;
   border-radius: 6px;
   color: var(--text-muted, #888);

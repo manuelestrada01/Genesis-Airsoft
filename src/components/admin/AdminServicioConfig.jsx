@@ -24,6 +24,7 @@ const DEFAULT_CONFIG = {
   transferAlias: "",
   transferCVU: "",
   transferHolder: "",
+  locations: [{ name: "", address: "", mapsUrl: "" }],
 };
 
 export default function AdminServicioConfig() {
@@ -265,6 +266,71 @@ export default function AdminServicioConfig() {
               />
             </div>
           </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+            <h3 style={{ color: "#c8f400", fontSize: 14, fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "0.5px" }}>Ubicaciones (locales)</h3>
+            <button
+              type="button"
+              className="af-save-btn"
+              style={{ padding: "6px 14px", fontSize: 12 }}
+              onClick={() => handleChange("locations", [...(config.locations || []), { name: "", address: "", mapsUrl: "" }])}
+            >
+              + Agregar ubicación
+            </button>
+          </div>
+
+          {(config.locations || []).map((loc, i) => (
+            <div key={i} style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", borderRadius: 10, padding: "14px 16px", display: "grid", gap: 10 }}>
+              <div className="af-row" style={{ alignItems: "flex-end" }}>
+                <div className="af-field" style={{ flex: 1 }}>
+                  <label className="af-label">Nombre del local</label>
+                  <input
+                    className="af-input"
+                    value={loc.name}
+                    onChange={(e) => {
+                      const locs = [...config.locations];
+                      locs[i] = { ...locs[i], name: e.target.value };
+                      handleChange("locations", locs);
+                    }}
+                    placeholder="CABA / Mendoza..."
+                  />
+                </div>
+                <div className="af-field" style={{ flex: 1 }}>
+                  <label className="af-label">Dirección (texto)</label>
+                  <input
+                    className="af-input"
+                    value={loc.address}
+                    onChange={(e) => {
+                      const locs = [...config.locations];
+                      locs[i] = { ...locs[i], address: e.target.value };
+                      handleChange("locations", locs);
+                    }}
+                    placeholder="Bruselas 867, CABA"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleChange("locations", config.locations.filter((_, idx) => idx !== i))}
+                  style={{ background: "transparent", border: "1px solid #3a1a1a", borderRadius: 8, color: "#f87171", cursor: "pointer", padding: "8px 12px", fontWeight: 900, fontSize: 13, flexShrink: 0, marginBottom: 0, alignSelf: "flex-end" }}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="af-field">
+                <label className="af-label">Link Google Maps</label>
+                <input
+                  className="af-input"
+                  value={loc.mapsUrl}
+                  onChange={(e) => {
+                    const locs = [...config.locations];
+                    locs[i] = { ...locs[i], mapsUrl: e.target.value };
+                    handleChange("locations", locs);
+                  }}
+                  placeholder="https://www.google.com/maps/place/..."
+                />
+              </div>
+            </div>
+          ))}
 
           <hr className="af-divider" />
 

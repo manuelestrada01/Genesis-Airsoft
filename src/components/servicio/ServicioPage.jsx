@@ -5,12 +5,13 @@ import { db } from "../../firebase/config";
 import { gsap } from "gsap";
 import "./ServicioPage.css";
 
-export const SERVICIO_COMING_SOON = true;
+export const SERVICIO_COMING_SOON = false;
 const COMING_SOON = SERVICIO_COMING_SOON;
 
 export default function ServicioPage() {
   const navigate = useNavigate();
   const gridRef = useRef(null);
+  const pageRef = useRef(null);
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
@@ -20,24 +21,38 @@ export default function ServicioPage() {
   }, []);
 
   useEffect(() => {
-    if (gridRef.current) {
-      gsap.from(gridRef.current.children, {
-        opacity: 0,
-        y: 30,
-        duration: 0.5,
-        stagger: 0.12,
-        ease: "power2.out",
-        clearProps: "all",
-      });
-    }
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+
+      tl.from(".sv-title", { opacity: 0, y: 60, duration: 0.9 })
+        .from(".sv-subtitle", { opacity: 0, y: 30, duration: 0.7 }, "-=0.5")
+        .from(".sv-card", {
+          opacity: 0,
+          y: 50,
+          scale: 0.94,
+          duration: 0.75,
+          stagger: 0.15,
+          clearProps: "all",
+        }, "-=0.3")
+        .from(".sv-info-item", {
+          opacity: 0,
+          y: 24,
+          duration: 0.5,
+          stagger: 0.08,
+          clearProps: "all",
+        }, "-=0.3");
+    }, pageRef);
+
+    return () => ctx.revert();
   }, []);
+
 
   const diagnosticFee = config?.diagnosticFee || 17000;
   const primaComun = config?.maintenance?.primaria_comun || 25000;
   const secComun = config?.maintenance?.secundaria_comun || 18000;
 
   return (
-    <div className="sv-page">
+    <div className="sv-page" ref={pageRef}>
       <div className="sv-hero">
         <h1 className="sv-title">Servicio Técnico</h1>
         <p className="sv-subtitle">

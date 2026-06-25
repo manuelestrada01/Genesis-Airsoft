@@ -5,11 +5,14 @@ import PartidaCard from "./PartidaCard";
 import { gsap } from "gsap";
 import "./AlquileresPage.css";
 
+
+
 export default function AlquileresPage() {
   const [partidas, setPartidas] = useState([]);
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const gridRef = useRef(null);
+  const pageRef = useRef(null);
 
   useEffect(() => {
     const load = async () => {
@@ -46,18 +49,29 @@ export default function AlquileresPage() {
 
   // GSAP entrance
   useEffect(() => {
-    if (!loading && gridRef.current) {
-      gsap.from(gridRef.current.children, {
-        opacity: 0,
-        duration: 0.5,
-        stagger: 0.12,
-        ease: "power2.out",
-      });
-    }
+    if (loading) return;
+
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+
+      tl.from(".alq-title", { opacity: 0, y: 60, duration: 0.9 })
+        .from(".alq-subtitle", { opacity: 0, y: 30, duration: 0.7 }, "-=0.5")
+        .from(".alq-price-badge", { opacity: 0, y: 20, scale: 0.9, duration: 0.5, clearProps: "all" }, "-=0.4")
+        .from(".partida-card", {
+          opacity: 0,
+          y: 50,
+          scale: 0.94,
+          duration: 0.75,
+          stagger: 0.15,
+          clearProps: "all",
+        }, "-=0.3");
+    }, pageRef);
+
+    return () => ctx.revert();
   }, [loading, partidas]);
 
   return (
-    <div className="alq-page">
+    <div className="alq-page" ref={pageRef}>
       <div className="alq-hero">
         <h1 className="alq-title">Alquileres</h1>
         <p className="alq-subtitle">
