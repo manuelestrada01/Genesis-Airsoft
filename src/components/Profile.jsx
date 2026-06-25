@@ -144,11 +144,16 @@ const Profile = () => {
       try {
         const q = query(
           collection(db, "servicioTurnos"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
+          where("userId", "==", user.uid)
         );
         const snap = await getDocs(q);
-        setTurnos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => {
+          const ta = a.createdAt?.toDate?.() ?? new Date(0);
+          const tb = b.createdAt?.toDate?.() ?? new Date(0);
+          return tb - ta;
+        });
+        setTurnos(docs);
       } catch (err) {
         console.error("Error cargando turnos:", err);
       } finally {
@@ -282,40 +287,44 @@ const Profile = () => {
                     {orders.map((order) => (
                       <li
                         key={order.id}
-                        className="order-card"
+                        className={`order-card order-card--${order.status}`}
                         onClick={() => navigate(`/order/${order.id}`)}
                       >
-                        <div className="order-card-top">
-                          <span className="order-id">#{order.id.slice(0, 10)}…</span>
-                          <span className={`status-badge status-${order.status}`}>
-                            {getStatusLabel(order.status)}
-                          </span>
-                        </div>
+                        <div className="order-card-inner">
+                          {/* Row 1: ID + status */}
+                          <div className="order-card-row order-card-row--top">
+                            <span className="order-id">
+                              <span className="order-id-hash">#</span>
+                              {order.id.slice(0, 12).toUpperCase()}
+                            </span>
+                            <span className={`status-badge status-${order.status}`}>
+                              {getStatusLabel(order.status)}
+                            </span>
+                          </div>
 
-                        <div className="order-card-mid">
-                          <div className="order-meta">
-                            <span className="meta-label">Fecha</span>
-                            <span className="meta-value">
+                          {/* Row 2: date + total */}
+                          <div className="order-card-row order-card-row--main">
+                            <span className="order-date">
                               {order.createdAt?.toDate
-                                ? order.createdAt.toDate().toLocaleDateString("es-AR")
+                                ? order.createdAt.toDate().toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })
                                 : "—"}
                             </span>
-                          </div>
-                          <div className="order-meta">
-                            <span className="meta-label">Total</span>
-                            <span className="meta-value order-total">
-                              ${order.total?.toLocaleString("es-AR")}
+                            <span className="order-total-amount">
+                              ${Number(order.total || 0).toLocaleString("es-AR")}
                             </span>
                           </div>
-                          <div className="order-meta">
-                            <span className="meta-label">Despachado</span>
-                            <span className={`dispatch-badge ${order.dispatched ? "done" : "not-done"}`}>
-                              {order.dispatched ? "Sí" : "No"}
+
+                          {/* Row 3: dispatch indicator + chevron */}
+                          <div className="order-card-row order-card-row--footer">
+                            <span className={`order-dispatch ${order.dispatched ? "order-dispatch--sent" : ""}`}>
+                              <span className="order-dispatch-dot" />
+                              {order.dispatched ? "Despachado" : "Sin despachar"}
                             </span>
+                            <svg className="order-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="9 18 15 12 9 6"/>
+                            </svg>
                           </div>
                         </div>
-
-                        <div className="order-card-arrow">›</div>
                       </li>
                     ))}
                   </ul>
@@ -363,29 +372,36 @@ const Profile = () => {
                         className="order-card"
                         onClick={() => navigate(`/alquileres/reserva/${r.id}`)}
                       >
-                        <div className="order-card-top">
-                          <span className="order-id">#{r.id.slice(0, 10)}…</span>
-                          <span className={`status-badge ${rentalStatusClass[r.status] || ""}`}>
-                            {rentalStatusMap[r.status] || r.status}
-                          </span>
-                        </div>
-                        <div className="order-card-mid">
-                          <div className="order-meta">
-                            <span className="meta-label">Fecha</span>
-                            <span className="meta-value">
-                              {r.createdAt?.toDate
-                                ? r.createdAt.toDate().toLocaleDateString("es-AR")
-                                : "—"}
+                        <div className="order-card-inner">
+                          <div className="order-card-row">
+                            <span className="order-id">
+                              <span className="order-id-hash">#</span>
+                              {r.id.slice(0, 12).toUpperCase()}
+                            </span>
+                            <span className={`status-badge ${rentalStatusClass[r.status] || ""}`}>
+                              {rentalStatusMap[r.status] || r.status}
                             </span>
                           </div>
-                          <div className="order-meta">
-                            <span className="meta-label">Seña</span>
-                            <span className="meta-value order-total">
+                          <div className="order-card-row">
+                            <span className="order-date">
+                              {r.createdAt?.toDate
+                                ? r.createdAt.toDate().toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })
+                                : "—"}
+                            </span>
+                            <span className="order-total-amount">
                               ${(r.pricing?.deposit || 0).toLocaleString("es-AR")}
                             </span>
                           </div>
+                          <div className="order-card-row order-card-row--footer">
+                            <span className="order-dispatch">
+                              <span className="order-dispatch-dot" />
+                              Seña
+                            </span>
+                            <svg className="order-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                          </div>
                         </div>
-                        <div className="order-card-arrow">›</div>
                       </li>
                     );
                   })}
@@ -439,25 +455,29 @@ const Profile = () => {
                         className="order-card"
                         onClick={() => navigate(`/servicio/turno-status/${t.id}`)}
                       >
-                        <div className="order-card-top">
-                          <span className="order-id">{serviceLabel}</span>
-                          <span className={`status-badge ${turnoStatusClass[t.status] || ""}`}>
-                            {turnoStatusMap[t.status] || t.status}
-                          </span>
-                        </div>
-                        <div className="order-card-mid">
-                          <div className="order-meta">
-                            <span className="meta-label">Fecha turno</span>
-                            <span className="meta-value">{t.scheduledDate || "—"}</span>
+                        <div className="order-card-inner">
+                          <div className="order-card-row">
+                            <span className="order-id" style={{ color: "#aaa", fontSize: "0.78rem" }}>{serviceLabel}</span>
+                            <span className={`status-badge ${turnoStatusClass[t.status] || ""}`}>
+                              {turnoStatusMap[t.status] || t.status}
+                            </span>
                           </div>
-                          <div className="order-meta">
-                            <span className="meta-label">Total</span>
-                            <span className="meta-value order-total">
+                          <div className="order-card-row">
+                            <span className="order-date">{t.scheduledDate || "—"}</span>
+                            <span className="order-total-amount">
                               {t.isRedeemed ? "Canjeado" : `$${Number(t.pricing?.total || 0).toLocaleString("es-AR")}`}
                             </span>
                           </div>
+                          <div className="order-card-row order-card-row--footer">
+                            <span className="order-dispatch">
+                              <span className="order-dispatch-dot" />
+                              Turno de servicio
+                            </span>
+                            <svg className="order-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                          </div>
                         </div>
-                        <div className="order-card-arrow">›</div>
                       </li>
                     );
                   })}

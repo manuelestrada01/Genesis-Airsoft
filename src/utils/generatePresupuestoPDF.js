@@ -95,7 +95,7 @@ export function generatePresupuestoPDF(turno) {
 
   // Left box: DATOS DEL PRESUPUESTO
   drawSectionHeader(doc, "DATOS DEL PRESUPUESTO", M, y, colW, GREEN, WHITE);
-  y += 8;
+  y += 6;
 
   const leftRows = [
     ["N° Presupuesto", presupuestoNumber],
@@ -109,19 +109,19 @@ export function generatePresupuestoPDF(turno) {
   leftRows.forEach(([label, value], i) => {
     const bg = i % 2 === 0 ? [245, 245, 245] : WHITE;
     setFill(bg);
-    doc.rect(M, leftY - 4, colW, 6, "F");
+    doc.rect(M, leftY, colW, 6, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
     setColor(MID);
-    doc.text(label, M + 2, leftY);
+    doc.text(label, M + 2, leftY + 4);
     doc.setFont("helvetica", "normal");
     setColor(DARK_TXT);
-    doc.text(value || "—", M + colW * 0.45, leftY);
+    doc.text(value || "—", M + colW * 0.45, leftY + 4);
     leftY += 6;
   });
 
   // Right box: DATOS DEL CLIENTE
-  drawSectionHeader(doc, "DATOS DEL CLIENTE", rx, y - 8, colW, GREEN, WHITE);
+  drawSectionHeader(doc, "DATOS DEL CLIENTE", rx, y - 6, colW, GREEN, WHITE);
 
   const clientRows = [
     ["Cliente", user.name || "—"],
@@ -135,16 +135,16 @@ export function generatePresupuestoPDF(turno) {
   clientRows.forEach(([label, value], i) => {
     const bg = i % 2 === 0 ? [245, 245, 245] : WHITE;
     setFill(bg);
-    doc.rect(rx, rightY - 4, colW, 6, "F");
+    doc.rect(rx, rightY, colW, 6, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
     setColor(MID);
-    doc.text(label, rx + 2, rightY);
+    doc.text(label, rx + 2, rightY + 4);
     doc.setFont("helvetica", "normal");
     setColor(DARK_TXT);
     const maxW = colW * 0.55 - 2;
     const truncVal = doc.splitTextToSize(value || "—", maxW)[0];
-    doc.text(truncVal, rx + colW * 0.44, rightY);
+    doc.text(truncVal, rx + colW * 0.44, rightY + 4);
     rightY += 6;
   });
 
@@ -152,7 +152,7 @@ export function generatePresupuestoPDF(turno) {
 
   // ── DATOS DE LA RÉPLICA ──────────────────────────────────────────────────
   drawSectionHeader(doc, "DATOS DE LA RÉPLICA", M, y, pageW - M * 2, GREEN, WHITE);
-  y += 8;
+  y += 6;
 
   const replicaCols = [
     ["Marca", replica.marca || "—", "Tipo", replica.tipo || "—"],
@@ -163,22 +163,22 @@ export function generatePresupuestoPDF(turno) {
   replicaCols.forEach(([l1, v1, l2, v2], i) => {
     const bg = i % 2 === 0 ? [245, 245, 245] : WHITE;
     setFill(bg);
-    doc.rect(M, y - 4, pageW - M * 2, 6, "F");
+    doc.rect(M, y, pageW - M * 2, 6, "F");
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7.5);
     setColor(MID);
-    doc.text(l1, M + 2, y);
+    doc.text(l1, M + 2, y + 4);
     doc.setFont("helvetica", "normal");
     setColor(DARK_TXT);
-    doc.text(v1, M + 35, y);
+    doc.text(v1, M + 35, y + 4);
 
     doc.setFont("helvetica", "bold");
     setColor(MID);
-    doc.text(l2, pageW / 2 + 2, y);
+    doc.text(l2, pageW / 2 + 2, y + 4);
     doc.setFont("helvetica", "normal");
     setColor(DARK_TXT);
-    doc.text(v2, pageW / 2 + 28, y);
+    doc.text(v2, pageW / 2 + 28, y + 4);
 
     y += 6;
   });
@@ -198,11 +198,11 @@ export function generatePresupuestoPDF(turno) {
   doc.setFontSize(8.5);
   setColor(DARK_TXT);
   setFill([250, 250, 250]);
-  doc.rect(M, y - 3, pageW - M * 2, fallaH, "F");
+  doc.rect(M, y, pageW - M * 2, fallaH, "F");
   setDraw([220, 220, 220]);
   doc.setLineWidth(0.2);
-  doc.rect(M, y - 3, pageW - M * 2, fallaH, "S");
-  doc.text(fallaLines, M + 3, y + 2);
+  doc.rect(M, y, pageW - M * 2, fallaH, "S");
+  doc.text(fallaLines, M + 3, y + 5);
   y += fallaH + 4;
 
   const obsLines = doc.splitTextToSize(obsText, pageW - M * 2 - 6);
@@ -211,13 +211,13 @@ export function generatePresupuestoPDF(turno) {
   drawSectionHeader(doc, "OBSERVACIONES", M, y, pageW - M * 2, GREEN, WHITE);
   y += 6;
   setFill([250, 250, 250]);
-  doc.rect(M, y - 3, pageW - M * 2, obsH, "F");
+  doc.rect(M, y, pageW - M * 2, obsH, "F");
   setDraw([220, 220, 220]);
-  doc.rect(M, y - 3, pageW - M * 2, obsH, "S");
+  doc.rect(M, y, pageW - M * 2, obsH, "S");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   setColor(DARK_TXT);
-  doc.text(obsLines, M + 3, y + 2);
+  doc.text(obsLines, M + 3, y + 5);
   y += obsH + 4;
 
   // ── ITEMS TABLE ──────────────────────────────────────────────────────────

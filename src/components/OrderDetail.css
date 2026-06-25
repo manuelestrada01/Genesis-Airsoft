@@ -63,26 +63,74 @@
 .status-badge.approved { background: rgba(200,244,0,0.15); color: var(--accent); }
 .status-badge.pending  { background: rgba(255,166,0,0.15); color: #ffb347; }
 
-/* Timeline */
-.timeline {
+/* Stepper */
+.order-stepper {
   display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+  align-items: flex-start;
+  gap: 0;
+  margin-top: 18px;
+  padding: 0 4px;
 }
 
-.step { text-align: center; opacity: 0.35; }
-.step.active { opacity: 1; }
-.step p { color: var(--text-muted); font-size: 12px; margin-top: 6px; }
+.stepper-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
 
-.circle {
-  width: 20px;
-  height: 20px;
-  margin: auto;
+.stepper-node {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2, #1e1e1e);
+  border: 2px solid #333;
+  color: #444;
+  position: relative;
+  z-index: 1;
+  transition: border-color 0.3s, background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
-.step.active .circle { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+.stepper-node--active {
+  border-color: var(--accent, #c8f400);
+  background: rgba(200, 244, 0, 0.12);
+  color: var(--accent, #c8f400);
+  box-shadow: 0 0 14px rgba(200, 244, 0, 0.25);
+}
+
+.stepper-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #444;
+  text-align: center;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.stepper-label--active {
+  color: var(--text-muted, #aaa);
+}
+
+.stepper-line {
+  position: absolute;
+  top: 17px;
+  left: calc(50% + 17px);
+  width: calc(100% - 34px);
+  height: 2px;
+  background: #2a2a2a;
+  transition: background 0.3s;
+}
+
+.stepper-line--active {
+  background: linear-gradient(90deg, var(--accent, #c8f400), rgba(200,244,0,0.3));
+}
 
 /* Items */
 .items-list { list-style: none; padding: 0; }

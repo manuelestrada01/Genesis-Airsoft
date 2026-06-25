@@ -395,13 +395,21 @@
 .stf-summary-row--falla {
   flex-direction: column;
   align-items: flex-start;
+  gap: 6px;
 }
 
 .stf-summary-row--falla span:last-child {
-  color: var(--text-muted, #888);
+  color: #e0e0e0;
   text-align: left;
-  font-weight: 600;
-  line-height: 1.5;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.6;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .stf-summary-pricing {

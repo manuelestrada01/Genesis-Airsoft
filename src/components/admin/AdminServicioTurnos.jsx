@@ -10,22 +10,36 @@ const STATUS_FILTERS = [
   { key: "pending_approval", label: "Pendientes" },
   { key: "approved", label: "Aprobados" },
   { key: "in_progress", label: "En proceso" },
+  { key: "presupuesto_enviado", label: "Presupuesto enviado" },
+  { key: "presupuesto_aprobado", label: "Presupuesto aprobado" },
+  { key: "parts_payment_review", label: "Pago repuestos" },
   { key: "completed", label: "Completados" },
   { key: "rejected", label: "Rechazados" },
 ];
 
 const STATUS_BADGE = {
-  pending_approval: { label: "PENDIENTE", color: "#d97706" },
-  approved: { label: "APROBADO", color: "#2563eb" },
-  in_progress: { label: "EN PROCESO", color: "#ea580c" },
-  completed: { label: "COMPLETADO", color: "#16a34a" },
-  cancelled: { label: "CANCELADO", color: "#6b7280" },
-  rejected: { label: "RECHAZADO", color: "#dc2626" },
+  pending_approval:      { label: "PENDIENTE",           color: "#d97706" },
+  approved:              { label: "APROBADO",             color: "#2563eb" },
+  in_progress:           { label: "EN PROCESO",           color: "#ea580c" },
+  presupuesto_enviado:   { label: "PRESUP. ENVIADO",      color: "#3b82f6" },
+  presupuesto_aprobado:  { label: "PRESUP. APROBADO",     color: "#7cb800" },
+  parts_payment_review:  { label: "PAGO REPUESTOS",       color: "#ea580c" },
+  presupuesto_rechazado: { label: "PRESUP. RECHAZADO",    color: "#dc2626" },
+  completed:             { label: "COMPLETADO",           color: "#16a34a" },
+  cancelled:             { label: "CANCELADO",            color: "#6b7280" },
+  rejected:              { label: "RECHAZADO",            color: "#dc2626" },
 };
+
+const TYPE_FILTERS = [
+  { key: "all", label: "Todos" },
+  { key: "tecnico", label: "Servicio Técnico" },
+  { key: "mantenimiento", label: "Mantenimiento" },
+];
 
 export default function AdminServicioTurnos() {
   const [turnos, setTurnos] = useState([]);
   const [filter, setFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -44,7 +58,9 @@ export default function AdminServicioTurnos() {
     load();
   }, []);
 
-  const filtered = filter === "all" ? turnos : turnos.filter((t) => t.status === filter);
+  const filtered = turnos
+    .filter((t) => filter === "all" || t.status === filter)
+    .filter((t) => typeFilter === "all" || t.serviceType === typeFilter);
 
   const formatDate = (ts) => {
     if (!ts) return "—";
@@ -82,20 +98,34 @@ export default function AdminServicioTurnos() {
         </div>
 
         {/* Filters */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-          {STATUS_FILTERS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setFilter(key)}
-              className="admin-filter-btn"
-              style={{ background: filter === key ? "#c8f400" : "#1a1a1a", color: filter === key ? "#000" : "#fff" }}
-            >
-              {label}
-            </button>
-          ))}
-          <span style={{ color: "#888", fontSize: 13, fontWeight: 700, alignSelf: "center" }}>
-            {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
-          </span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {TYPE_FILTERS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTypeFilter(key)}
+                className="admin-filter-btn"
+                style={{ background: typeFilter === key ? "#c8f400" : "#1a1a1a", color: typeFilter === key ? "#000" : "#fff" }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {STATUS_FILTERS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setFilter(key)}
+                className="admin-filter-btn"
+                style={{ background: filter === key ? "#c8f400" : "#1a1a1a", color: filter === key ? "#000" : "#fff" }}
+              >
+                {label}
+              </button>
+            ))}
+            <span style={{ color: "#888", fontSize: 13, fontWeight: 700, alignSelf: "center" }}>
+              {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
+            </span>
+          </div>
         </div>
 
         {loading ? (

@@ -8,6 +8,7 @@ import "./ServicioTurnoFlow.css";
 
 const FUNCTION_URL = "https://us-central1-genesis-airsoft.cloudfunctions.net/createServicioTurno";
 const TIPOS_REPLICA = ["AEG", "GBB", "HPA", "Bolt Action", "Spring"];
+const TIPOS_CON_GEARBOX = ["AEG", "HPA"];
 const STEPS = ["Datos", "Réplica", "Servicio", "Fecha", "Confirmar"];
 
 export default function ServicioTurnoFlow() {
@@ -36,6 +37,9 @@ export default function ServicioTurnoFlow() {
 
   // Date
   const [scheduledDate, setScheduledDate] = useState("");
+
+  // Location
+  const [selectedLocation, setSelectedLocation] = useState(null); // { name, address, mapsUrl }
 
   // Redirect if not logged in
   useEffect(() => {
@@ -120,6 +124,8 @@ export default function ServicioTurnoFlow() {
       if (!userData.name.trim()) return "El nombre es obligatorio";
       if (!userData.email.trim()) return "El email es obligatorio";
       if (!userData.phone.trim()) return "El teléfono es obligatorio";
+      const locs = config?.locations?.filter(l => l.name || l.address) || [];
+      if (locs.length > 0 && !selectedLocation) return "Elegí una ubicación donde realizar el servicio";
     }
     if (step === 2) {
       if (!replica.marca.trim()) return "La marca es obligatoria";
@@ -164,6 +170,7 @@ export default function ServicioTurnoFlow() {
           maintenanceVariant: type === "mantenimiento" ? maintenanceVariant : "",
           addons: selectedAddons,
           isRedeemed: false,
+          location: selectedLocation || null,
         }),
       });
 
@@ -227,6 +234,42 @@ export default function ServicioTurnoFlow() {
               </div>
             </div>
           </div>
+          {/* Location selector — only if config has locations */}
+          {(config?.locations || []).filter(l => l.name || l.address).length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <h3 className="stf-section-title">¿Dónde realizás el service?</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {config.locations.filter(l => l.name || l.address).map((loc, i) => {
+                  const isSelected = selectedLocation?.name === loc.name && selectedLocation?.address === loc.address;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setSelectedLocation(loc)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 12,
+                        padding: "12px 16px", borderRadius: 10, cursor: "pointer",
+                        border: isSelected ? "2px solid #c8f400" : "2px solid #2a2a2a",
+                        background: isSelected ? "rgba(200,244,0,0.07)" : "#1a1a1a",
+                        textAlign: "left", transition: "all 0.15s",
+                      }}
+                    >
+                      <span style={{
+                        width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                        border: isSelected ? "5px solid #c8f400" : "2px solid #444",
+                        background: "transparent", transition: "all 0.15s",
+                      }} />
+                      <div>
+                        <div style={{ color: isSelected ? "#c8f400" : "#fff", fontWeight: 800, fontSize: 14 }}>{loc.name}</div>
+                        {loc.address && <div style={{ color: "#888", fontWeight: 600, fontSize: 12, marginTop: 2 }}>{loc.address}</div>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="stf-actions">
             <button className="stf-btn stf-btn--primary" onClick={goNext}>Siguiente →</button>
           </div>
@@ -255,10 +298,12 @@ export default function ServicioTurnoFlow() {
                   {TIPOS_REPLICA.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
-              <div className="stf-field">
-                <label>Gearbox</label>
-                <input name="gearbox" value={replica.gearbox} onChange={handleReplicaChange} placeholder="V2, V3, V6..." />
-              </div>
+              {TIPOS_CON_GEARBOX.includes(replica.tipo) && (
+                <div className="stf-field">
+                  <label>Gearbox</label>
+                  <input name="gearbox" value={replica.gearbox} onChange={handleReplicaChange} placeholder="V2, V3, V6..." />
+                </div>
+              )}
             </div>
             <div className="stf-row">
               <div className="stf-field">
@@ -302,8 +347,8 @@ export default function ServicioTurnoFlow() {
                 <h4 className="stf-option-label">Tipo de service</h4>
                 <div className="stf-options">
                   {[
-                    { value: "primaria", label: "Primaria", desc: "Gearbox completo + hop-up + canon" },
-                    { value: "secundaria", label: "Secundaria", desc: "Internos e inner" },
+                    { value: "primaria", label: "Primaria", desc: "Gearbox completo + Inner" },
+                    { value: "secundaria", label: "Secundaria", desc: "Internos + Inner" },
                   ].map((opt) => (
                     <div
                       key={opt.value}
@@ -462,6 +507,9 @@ export default function ServicioTurnoFlow() {
                 <div className="stf-summary-row stf-summary-row--falla"><span>Falla reportada</span><span>{fallaReportada}</span></div>
               )}
               <div className="stf-summary-row"><span>Fecha</span><span>{scheduledDate}</span></div>
+              {selectedLocation && (
+                <div className="stf-summary-row"><span>Local</span><span>{selectedLocation.name}{selectedLocation.address ? ` — ${selectedLocation.address}` : ""}</span></div>
+              )}
             </div>
 
             <div className="stf-summary-pricing">
