@@ -7,6 +7,7 @@ import "./ServicioPage.css";
 
 export const SERVICIO_COMING_SOON = false;
 const COMING_SOON = SERVICIO_COMING_SOON;
+export const POINTS_ENABLED = false;
 
 export default function ServicioPage() {
   const navigate = useNavigate();
@@ -216,6 +217,7 @@ export default function ServicioPage() {
             <p>Elegí el día que mejor te quede</p>
           </div>
         </div>
+        {POINTS_ENABLED && (
         <div className="sv-info-item">
           <span className="sv-info-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -227,6 +229,7 @@ export default function ServicioPage() {
             <p>Acumulá puntos y canjealos por premios</p>
           </div>
         </div>
+        )}
         <div className="sv-info-item">
           <span className="sv-info-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

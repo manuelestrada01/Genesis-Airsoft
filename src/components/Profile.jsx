@@ -18,6 +18,7 @@ import {
   reauthenticateWithCredential,
 } from "firebase/auth";
 import "./Profile.css";
+import { POINTS_ENABLED } from "./servicio/ServicioPage";
 
 const Profile = () => {
   const { user, logoutUser, loading, auth } = useContext(AuthContext);
@@ -490,7 +491,7 @@ const Profile = () => {
             </div>
 
             {/* PANEL — MIS PUNTOS GENESIS */}
-            <div className="profile-panel points-panel">
+            {POINTS_ENABLED && <div className="profile-panel points-panel">
               <div className="panel-header">
                 <h3>Mis Puntos Genesis</h3>
                 {!loadingPoints && (
@@ -548,7 +549,7 @@ const Profile = () => {
                   )}
                 </>
               )}
-            </div>
+            </div>}
 
           </div>
           {/* CONFIG MODAL */}

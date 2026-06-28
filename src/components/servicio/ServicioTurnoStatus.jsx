@@ -7,6 +7,7 @@ import AuthContext from "../../context/AuthContext";
 import { generatePresupuestoPDF } from "../../utils/generatePresupuestoPDF";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import "./ServicioTurnoStatus.css";
+import { POINTS_ENABLED } from "./ServicioPage";
 
 const CANCEL_URL = "https://us-central1-genesis-airsoft.cloudfunctions.net/cancelServicioTurno";
 const APPROVE_PRESUPUESTO_URL = "https://us-central1-genesis-airsoft.cloudfunctions.net/approvePresupuesto";
@@ -491,7 +492,7 @@ export default function ServicioTurnoStatus() {
 
         {t.status === "completed" && (
           <div className="sts-message sts-message--completed">
-            Servicio completado.{!t.isRedeemed && " Se acreditaron +10 puntos Genesis en tu cuenta."}
+            Servicio completado.{POINTS_ENABLED && !t.isRedeemed && " Se acreditaron +10 puntos Genesis en tu cuenta."}
           </div>
         )}
 

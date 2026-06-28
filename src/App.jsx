@@ -29,7 +29,7 @@ import RentalReservationFlow from "./components/alquileres/RentalReservationFlow
 import ReservationStatus from "./components/alquileres/ReservationStatus";
 
 // Servicio Técnico (public)
-import ServicioPage, { SERVICIO_COMING_SOON } from "./components/servicio/ServicioPage";
+import ServicioPage, { SERVICIO_COMING_SOON, POINTS_ENABLED } from "./components/servicio/ServicioPage";
 import ServicioTurnoFlow from "./components/servicio/ServicioTurnoFlow";
 import ServicioTurnoStatus from "./components/servicio/ServicioTurnoStatus";
 import ServicioRedeem from "./components/servicio/ServicioRedeem";
@@ -271,7 +271,7 @@ function App() {
           <Route path="/servicio" element={<ServicioPage />} />
           <Route path="/servicio/turno/:type" element={SERVICIO_COMING_SOON ? <Navigate to="/servicio" replace /> : <ServicioTurnoFlow />} />
           <Route path="/servicio/turno-status/:id" element={<ServicioTurnoStatus />} />
-          <Route path="/servicio/canjear" element={SERVICIO_COMING_SOON ? <Navigate to="/servicio" replace /> : <ServicioRedeem />} />
+          <Route path="/servicio/canjear" element={(SERVICIO_COMING_SOON || !POINTS_ENABLED) ? <Navigate to="/servicio" replace /> : <ServicioRedeem />} />
         </Routes>
       </div>
 
