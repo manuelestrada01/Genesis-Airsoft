@@ -200,7 +200,7 @@ export default function ServicioPage() {
           </span>
           <div>
             <strong>Técnico especializado</strong>
-            <p>Manuel Estrada — Genesis Airsoft</p>
+            <p>Mendoza y CABA</p>
           </div>
         </div>
         <div className="sv-info-item">
