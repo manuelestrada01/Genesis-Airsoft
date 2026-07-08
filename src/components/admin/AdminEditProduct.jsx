@@ -24,6 +24,33 @@ const sanitizeHTML = (html) =>
     ALLOWED_ATTR: []
   });
 
+function AdminDialog({ dialog, onClose }) {
+  if (!dialog) return null;
+  return (
+    <div className="adialog-overlay" onClick={() => dialog.type === "alert" && onClose(true)}>
+      <div className="adialog-card" onClick={(e) => e.stopPropagation()}>
+        <p className="adialog-message">{dialog.message}</p>
+        <div className="adialog-actions">
+          {dialog.type === "confirm" ? (
+            <>
+              <button className="adialog-btn adialog-cancel" onClick={() => onClose(false)}>
+                Cancelar
+              </button>
+              <button className="adialog-btn adialog-confirm" onClick={() => onClose(true)}>
+                Aceptar
+              </button>
+            </>
+          ) : (
+            <button className="adialog-btn adialog-confirm" onClick={() => onClose(true)}>
+              Aceptar
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminEditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -32,6 +59,18 @@ export default function AdminEditProduct() {
   const [saving, setSaving] = useState(false);
   const [product, setProduct] = useState(null);
   const [newImages, setNewImages] = useState([]);
+  const [dialog, setDialog] = useState(null);
+
+  const showConfirm = (message) =>
+    new Promise((resolve) => setDialog({ message, type: "confirm", resolve }));
+
+  const showAlert = (message) =>
+    new Promise((resolve) => setDialog({ message, type: "alert", resolve }));
+
+  const closeDialog = (result) => {
+    if (dialog?.resolve) dialog.resolve(result);
+    setDialog(null);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -40,7 +79,7 @@ export default function AdminEditProduct() {
         const snap = await getDoc(ref);
 
         if (!snap.exists()) {
-          alert("Producto no encontrado.");
+          await showAlert("Producto no encontrado.");
           navigate("/admin/products");
           return;
         }
@@ -79,7 +118,8 @@ export default function AdminEditProduct() {
   };
 
   const handleDeleteImage = async (img) => {
-    if (!confirm("¿Eliminar esta imagen?")) return;
+    const ok = await showConfirm("¿Eliminar esta imagen?");
+    if (!ok) return;
 
     try {
       await deleteProductImage(img.imagePath);
@@ -94,7 +134,7 @@ export default function AdminEditProduct() {
 
       setProduct({ ...product, images: newList, cover: newCover });
     } catch (err) {
-      alert("No se pudo eliminar la imagen");
+      await showAlert("No se pudo eliminar la imagen.");
     }
   };
 
@@ -105,14 +145,14 @@ export default function AdminEditProduct() {
     const discount = Number(product.discount);
     const stock = Number(product.stock);
 
-    if (!product.name.trim()) return alert("El nombre es obligatorio.");
-    if (!product.category.trim()) return alert("La categoría es obligatoria.");
-    if (isNaN(price) || price <= 0) return alert("Precio inválido.");
+    if (!product.name.trim()) return showAlert("El nombre es obligatorio.");
+    if (!product.category.trim()) return showAlert("La categoría es obligatoria.");
+    if (isNaN(price) || price <= 0) return showAlert("Precio inválido.");
+    if (discount < 0 || discount > 90) return showAlert("Descuento inválido.");
+    if (stock < 0) return showAlert("El stock no puede ser negativo.");
 
-    if (discount < 0 || discount > 90) return alert("Descuento inválido.");
-    if (stock < 0) return alert("El stock no puede ser negativo.");
-
-    if (!confirm("¿Guardar cambios?")) return;
+    const ok = await showConfirm("¿Guardar cambios?");
+    if (!ok) return;
 
     setSaving(true);
 
@@ -152,10 +192,10 @@ export default function AdminEditProduct() {
         paused: product.paused,
       });
 
-      alert("Producto actualizado ✔");
+      await showAlert("Producto actualizado ✔");
       navigate("/admin/products");
     } catch (err) {
-      alert("No se pudieron guardar los cambios.");
+      await showAlert("No se pudieron guardar los cambios.");
       console.error(err);
     } finally {
       setSaving(false);
@@ -243,6 +283,7 @@ export default function AdminEditProduct() {
                 <option value="Magazines">Magazines</option>
                 <option value="Repuestos">Repuestos</option>
                 <option value="Baterias">Baterias</option>
+                <option value="Mantenimiento">Mantenimiento</option>
               </select>
             </div>
           </div>
@@ -334,6 +375,8 @@ export default function AdminEditProduct() {
 
         </form>
       </div>
+
+      <AdminDialog dialog={dialog} onClose={closeDialog} />
     </div>
   );
 }

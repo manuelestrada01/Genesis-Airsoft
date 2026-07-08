@@ -1,3 +1,65 @@
+/* ======== DIALOG MODAL ======== */
+
+.adialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.adialog-card {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 28px 32px;
+  min-width: 300px;
+  max-width: 420px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+.adialog-message {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.adialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.adialog-btn {
+  padding: 8px 20px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.adialog-btn:hover {
+  opacity: 0.85;
+}
+
+.adialog-cancel {
+  background: #2a2a2a;
+  color: #888;
+  border: 1px solid #333;
+}
+
+.adialog-confirm {
+  background: #c8f400;
+  color: #0f0f0f;
+}
+
 /* ======== LAYOUT GENERAL ======== */
 
 .admin-container {

@@ -207,6 +207,7 @@ export default function AdminAddProduct() {
                 <option value="Magazines">Magazines</option>
                 <option value="Repuestos">Repuestos</option>
                 <option value="Baterias">Baterias</option>
+                <option value="Mantenimiento">Mantenimiento</option>
               </select>
             </div>
           </div>
