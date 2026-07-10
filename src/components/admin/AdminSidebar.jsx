@@ -18,6 +18,7 @@ const IcoSettings = () => <Icon><circle cx="12" cy="12" r="3"/><path d="M19.4 15
 const IcoWrench = () => <Icon><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></Icon>;
 const IcoTag = () => <Icon><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></Icon>;
 const IcoReservas = () => <Icon><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+const IcoPresupuesto = () => <Icon><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></Icon>;
 
 export default function AdminSidebar() {
   return (
@@ -46,6 +47,10 @@ export default function AdminSidebar() {
         <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
 
         <Link to="/admin/etiqueta" className="admin-link"><IcoTag /> Etiqueta de Despacho</Link>
+
+        <div style={{ borderTop: "1px solid #2a2a2a", margin: "12px 0" }} />
+
+        <Link to="/admin/presupuestos-manuales" className="admin-link"><IcoPresupuesto /> Presupuestos Manuales</Link>
       </nav>
     </div>
   );

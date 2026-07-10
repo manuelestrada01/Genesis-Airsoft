@@ -51,6 +51,10 @@ import AdminAddReservation from "./components/admin/AdminAddReservation";
 import AdminRentalConfig from "./components/admin/AdminRentalConfig";
 import AdminShippingLabel from "./components/admin/AdminShippingLabel";
 
+// Presupuestos Manuales (admin)
+import AdminPresupuestosManuales from "./components/admin/AdminPresupuestosManuales";
+import AdminPresupuestoManualDetail from "./components/admin/AdminPresupuestoManualDetail";
+
 // Servicio Técnico (admin)
 import AdminServicioTurnos from "./components/admin/AdminServicioTurnos";
 import AdminServicioTurnoDetail from "./components/admin/AdminServicioTurnoDetail";
@@ -198,6 +202,24 @@ function App() {
           element={
             <AdminRoute>
               <AdminShippingLabel />
+            </AdminRoute>
+          }
+        />
+
+        {/* Presupuestos Manuales */}
+        <Route
+          path="/admin/presupuestos-manuales"
+          element={
+            <AdminRoute>
+              <AdminPresupuestosManuales />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/presupuestos-manuales/:id"
+          element={
+            <AdminRoute>
+              <AdminPresupuestoManualDetail />
             </AdminRoute>
           }
         />
