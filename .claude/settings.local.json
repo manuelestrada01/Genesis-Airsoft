@@ -40,7 +40,16 @@
       "Bash(firebase --version)",
       "Bash(firebase firestore:indexes)",
       "Bash(firebase login:ci --no-localhost)",
-      "Bash(curl -s -H \"Authorization: Bearer $\\(firebase login:ci --no-localhost \\)\" \"https://firebaserules.googleapis.com/v1/projects/genesis-airsoft/rulesets\")"
+      "Bash(curl -s -H \"Authorization: Bearer $\\(firebase login:ci --no-localhost \\)\" \"https://firebaserules.googleapis.com/v1/projects/genesis-airsoft/rulesets\")",
+      "Bash(ls:*)",
+      "Skill(claude-in-chrome)",
+      "Bash(firebase firestore:rules)",
+      "Bash(firebase firestore:get-rules)",
+      "Bash(firebase --help)",
+      "Bash(curl -s \"https://firebaserules.googleapis.com/v1/projects/genesis-airsoft/releases/cloud.firestore\" -H \"Authorization: Bearer $\\(gcloud auth print-access-token \\)\")",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)[:5]\\)\")",
+      "Bash(node -e ':*)",
+      "Bash(node:*)"
     ]
   }
 }

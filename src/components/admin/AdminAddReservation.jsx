@@ -24,12 +24,14 @@ export default function AdminAddReservation() {
     email: "",
     phone: "",
     dni: "",
-    status: "confirmed",
+    status: "fully_paid",
     marcadoraNumber: "",
     notes: "",
     discountOverride: "",
   });
   const [selectedExtras, setSelectedExtras] = useState([]);
+  const [extraDoubled, setExtraDoubled] = useState({}); // { [extraId]: true } when x2
+  const [customExtra, setCustomExtra] = useState({ enabled: false, name: "", price: "" });
 
   useEffect(() => {
     const load = async () => {
@@ -65,9 +67,22 @@ export default function AdminAddReservation() {
   };
 
   const toggleExtra = (id) => {
-    setSelectedExtras((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    setSelectedExtras((prev) => {
+      if (prev.includes(id)) {
+        setExtraDoubled((d) => { const n = { ...d }; delete n[id]; return n; });
+        return prev.filter((x) => x !== id);
+      }
+      return [...prev, id];
+    });
+  };
+
+  const toggleDouble = (id) => {
+    setExtraDoubled((prev) => {
+      const willDouble = !prev[id];
+      // Also ensure extra is selected when doubling
+      if (willDouble) setSelectedExtras((s) => s.includes(id) ? s : [...s, id]);
+      return { ...prev, [id]: willDouble };
+    });
   };
 
   // Derived pricing
@@ -76,7 +91,8 @@ export default function AdminAddReservation() {
   const depositPercent = config?.depositPercent || 50;
   const allExtras = config?.extras || [];
   const chosenExtras = allExtras.filter((e) => selectedExtras.includes(e.id));
-  const extrasTotal = chosenExtras.reduce((sum, e) => sum + Number(e.price), 0);
+  const customExtraPrice = customExtra.enabled && customExtra.price ? Number(customExtra.price) : 0;
+  const extrasTotal = chosenExtras.reduce((sum, e) => sum + Number(e.price) * (extraDoubled[e.id] ? 2 : 1), 0) + customExtraPrice;
 
   const rawDiscount =
     form.discountOverride !== ""
@@ -112,6 +128,10 @@ export default function AdminAddReservation() {
             dni: form.dni.trim(),
           },
           extras: selectedExtras,
+          extrasQuantities: extraDoubled,
+          customExtra: customExtra.enabled && customExtra.price
+            ? { name: customExtra.name.trim() || "Otro", price: Number(customExtra.price) }
+            : null,
           status: form.status,
           marcadoraNumber: form.marcadoraNumber || "",
           notes: form.notes.trim(),
@@ -197,20 +217,73 @@ export default function AdminAddReservation() {
             <>
               <label className="af-label">Extras</label>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-                {allExtras.map((e) => (
-                  <label key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+                {allExtras.map((e) => {
+                  const isChecked = selectedExtras.includes(e.id);
+                  const isDoubled = isChecked && !!extraDoubled[e.id];
+                  const effectivePrice = Number(e.price) * (isDoubled ? 2 : 1);
+                  return (
+                    <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer", flex: 1 }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleExtra(e.id)}
+                          style={{ width: 18, height: 18, accentColor: "#c8f400" }}
+                        />
+                        <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{e.name}</span>
+                        <span style={{ color: isDoubled ? "#c8f400" : "#888", fontWeight: 700, fontSize: 13, marginLeft: "auto" }}>
+                          +${effectivePrice.toLocaleString("es-AR")}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => toggleDouble(e.id)}
+                        style={{
+                          padding: "3px 10px", borderRadius: 6,
+                          border: `1px solid ${isDoubled ? "#c8f400" : isChecked ? "#444" : "#2a2a2a"}`,
+                          background: isDoubled ? "#c8f400" : "transparent",
+                          color: isDoubled ? "#000" : isChecked ? "#888" : "#444",
+                          fontWeight: 800, fontSize: 12, cursor: "pointer", whiteSpace: "nowrap",
+                        }}
+                      >
+                        ×2
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Otro — precio manual */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
                     <input
                       type="checkbox"
-                      checked={selectedExtras.includes(e.id)}
-                      onChange={() => toggleExtra(e.id)}
+                      checked={customExtra.enabled}
+                      onChange={(e) => setCustomExtra((prev) => ({ ...prev, enabled: e.target.checked }))}
                       style={{ width: 18, height: 18, accentColor: "#c8f400" }}
                     />
-                    <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{e.name}</span>
-                    <span style={{ color: "#888", fontWeight: 700, fontSize: 13, marginLeft: "auto" }}>
-                      +${Number(e.price).toLocaleString("es-AR")}
-                    </span>
+                    <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>OTRO (precio manual)</span>
                   </label>
-                ))}
+                  {customExtra.enabled && (
+                    <div style={{ display: "flex", gap: 10, paddingLeft: 30 }}>
+                      <input
+                        className="af-input"
+                        style={{ flex: 1 }}
+                        placeholder="Descripción..."
+                        value={customExtra.name}
+                        onChange={(e) => setCustomExtra((prev) => ({ ...prev, name: e.target.value }))}
+                      />
+                      <input
+                        className="af-input"
+                        style={{ width: 140 }}
+                        type="number"
+                        min="0"
+                        placeholder="Precio $"
+                        value={customExtra.price}
+                        onChange={(e) => setCustomExtra((prev) => ({ ...prev, price: e.target.value }))}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               <hr className="af-divider" />
             </>
@@ -264,24 +337,42 @@ export default function AdminAddReservation() {
                 <span>Alquiler base{discountPct > 0 ? ` (-${discountPct}%)` : ""}</span>
                 <span>${discountedBase.toLocaleString("es-AR")}</span>
               </div>
-              {chosenExtras.map((e) => (
-                <div key={e.id} style={{ display: "flex", justifyContent: "space-between", color: "#888", marginBottom: 4, paddingLeft: 12 }}>
-                  <span>{e.name}</span>
-                  <span>+${Number(e.price).toLocaleString("es-AR")}</span>
+              {chosenExtras.map((e) => {
+                const qty = extraDoubled[e.id] ? 2 : 1;
+                return (
+                  <div key={e.id} style={{ display: "flex", justifyContent: "space-between", color: "#888", marginBottom: 4, paddingLeft: 12 }}>
+                    <span>{e.name}{qty === 2 ? " ×2" : ""}</span>
+                    <span>+${(Number(e.price) * qty).toLocaleString("es-AR")}</span>
+                  </div>
+                );
+              })}
+              {customExtra.enabled && customExtra.price > 0 && (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#888", marginBottom: 4, paddingLeft: 12 }}>
+                  <span>{customExtra.name.trim() || "Otro"}</span>
+                  <span>+${Number(customExtra.price).toLocaleString("es-AR")}</span>
                 </div>
-              ))}
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", color: "#fff", borderTop: "1px solid #2a2a2a", paddingTop: 8, marginTop: 4 }}>
                 <span>Total completo</span>
                 <span>${totalFull.toLocaleString("es-AR")}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#c8f400", marginTop: 4 }}>
-                <span>Seña ({depositPercent}%)</span>
-                <span>${deposit.toLocaleString("es-AR")}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", color: "#888", marginTop: 4 }}>
-                <span>Saldo día de partida</span>
-                <span>${remainingOnDay.toLocaleString("es-AR")}</span>
-              </div>
+              {form.status === "fully_paid" ? (
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#c8f400", marginTop: 4 }}>
+                  <span>✓ Pagado completo</span>
+                  <span>${totalFull.toLocaleString("es-AR")}</span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: form.status === "confirmed" ? "#c8f400" : "#888", marginTop: 4 }}>
+                    <span>Seña ({depositPercent}%){form.status === "pending_payment" ? " — pendiente" : ""}</span>
+                    <span>${deposit.toLocaleString("es-AR")}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", color: "#888", marginTop: 4 }}>
+                    <span>Saldo día de partida</span>
+                    <span>${remainingOnDay.toLocaleString("es-AR")}</span>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -290,7 +381,8 @@ export default function AdminAddReservation() {
             <div className="af-field">
               <label className="af-label">Estado inicial</label>
               <select className="af-select" name="status" value={form.status} onChange={handleChange}>
-                <option value="confirmed">Confirmada (ya pagó)</option>
+                <option value="fully_paid">Pagó todo (seña + saldo)</option>
+                <option value="confirmed">Confirmada (pagó seña)</option>
                 <option value="pending_payment">Pendiente de pago</option>
               </select>
             </div>

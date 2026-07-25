@@ -998,7 +998,7 @@ export const createManualReservation = onRequest(
         const decoded = await admin.auth().verifyIdToken(idToken);
         if (decoded.role !== "admin") return res.status(403).json({ error: "Acceso denegado" });
 
-        const { partidaId, user: userReq, extras: extrasIds, status, marcadoraNumber, notes, discountOverride } = req.body;
+        const { partidaId, user: userReq, extras: extrasIds, extrasQuantities, customExtra: customExtraReq, status, marcadoraNumber, notes, discountOverride } = req.body;
 
         if (!partidaId || !userReq?.name || !userReq?.email || !userReq?.phone || !userReq?.dni) {
           return res.status(400).json({ error: "Datos incompletos" });
@@ -1011,8 +1011,9 @@ export const createManualReservation = onRequest(
           dni: xss(userReq.dni || ""),
         };
 
-        const validStatus = ["confirmed", "pending_payment"].includes(status) ? status : "confirmed";
+        const validStatus = ["fully_paid", "confirmed", "pending_payment"].includes(status) ? status : "fully_paid";
         const safeExtrasIds = Array.isArray(extrasIds) ? extrasIds : [];
+        const safeQuantities = extrasQuantities && typeof extrasQuantities === "object" ? extrasQuantities : {};
 
         const firestore = admin.firestore();
 
@@ -1021,10 +1022,19 @@ export const createManualReservation = onRequest(
         if (!configSnap.exists) return res.status(500).json({ error: "Configuración no encontrada" });
         const config = configSnap.data();
 
-        const validExtras = (config.extras || []).filter((e) => safeExtrasIds.includes(e.id));
+        const validExtras = (config.extras || [])
+          .filter((e) => safeExtrasIds.includes(e.id))
+          .map((e) => ({ ...e, quantity: safeQuantities[e.id] === true || safeQuantities[e.id] === 2 ? 2 : 1 }));
+
+        // Custom "Otro" extra
+        const customExtraData = customExtraReq?.price > 0
+          ? { id: "custom", name: xss(customExtraReq.name || "Otro"), price: Number(customExtraReq.price), quantity: 1 }
+          : null;
+
         const basePrice = Number(config.basePrice || 24000);
         const depositPercent = Number(config.depositPercent || 50);
-        const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price), 0);
+        const extrasTotal = validExtras.reduce((sum, e) => sum + Number(e.price) * e.quantity, 0)
+          + (customExtraData ? customExtraData.price : 0);
 
         let reservationId;
         await firestore.runTransaction(async (t) => {
@@ -1064,14 +1074,15 @@ export const createManualReservation = onRequest(
             userId: null,
             isManual: true,
             user: userData,
-            extras: validExtras,
+            extras: [...validExtras, ...(customExtraData ? [customExtraData] : [])],
             pricing,
             status: validStatus,
             marcadoraNumber: marcadoraNumber ? Number(marcadoraNumber) : null,
             notes: xss(notes || ""),
             expiresAt: null,
-            paidAt: validStatus === "confirmed" ? admin.firestore.FieldValue.serverTimestamp() : null,
-            confirmedAt: validStatus === "confirmed" ? admin.firestore.FieldValue.serverTimestamp() : null,
+            paidAt: ["confirmed", "fully_paid"].includes(validStatus) ? admin.firestore.FieldValue.serverTimestamp() : null,
+            fullyPaidAt: validStatus === "fully_paid" ? admin.firestore.FieldValue.serverTimestamp() : null,
+            confirmedAt: ["confirmed", "fully_paid"].includes(validStatus) ? admin.firestore.FieldValue.serverTimestamp() : null,
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           });
